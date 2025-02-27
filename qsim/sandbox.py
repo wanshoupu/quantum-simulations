@@ -36,6 +36,8 @@ def plot_circuit_sim():
     result = simulator.run(circuit, repetitions=1024)
     # Fix: Use the correct measurement key names
     counts = result.multi_measurement_histogram(keys=["m0", "m1"])
+    print(f"Quantum circuit: \n {circuit}")
+
     # Plot results
     plt.bar([str(k) for k in counts.keys()], counts.values())
     plt.xlabel("Measurement Outcomes")

@@ -279,6 +279,7 @@ ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
 scipy==1.13.1
     # via
+    #   -r requirements.in
     #   cirq-core
     #   pyquil
 six==1.17.0

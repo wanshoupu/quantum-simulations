@@ -6,3 +6,4 @@ requests
 rsa
 psutil
 protobuf
+scipy
