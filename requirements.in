@@ -7,3 +7,4 @@ rsa
 psutil
 protobuf
 scipy
+qiskit

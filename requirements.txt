@@ -66,6 +66,8 @@ defusedxml==0.7.1
     # via nbconvert
 deprecated==1.2.18
     # via pyquil
+dill==0.3.9
+    # via qiskit
 duet==0.2.9
     # via cirq-core
 exceptiongroup==1.2.2
@@ -179,6 +181,8 @@ numpy==1.26.4
     #   matplotlib
     #   pandas
     #   pyquil
+    #   qiskit
+    #   rustworkx
     #   scipy
 packaging==24.2
     # via
@@ -192,6 +196,8 @@ pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.4
     # via jedi
+pbr==6.1.1
+    # via stevedore
 pexpect==4.9.0
     # via ipython
 pillow==11.1.0
@@ -244,6 +250,7 @@ python-dateutil==2.9.0.post0
     #   matplotlib
     #   pandas
     #   qcs-api-client
+    #   qiskit
 python-rapidjson==1.20
     # via rpcq
 pytz==2025.1
@@ -254,6 +261,8 @@ pyzmq==26.2.1
     #   rpcq
 qcs-api-client==0.21.6
     # via pyquil
+qiskit==1.4.1
+    # via -r requirements.in
 requests==2.32.3
     # via
     #   -r requirements.in
@@ -277,11 +286,14 @@ ruamel-yaml==0.18.10
     # via rpcq
 ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
+rustworkx==0.16.0
+    # via qiskit
 scipy==1.13.1
     # via
     #   -r requirements.in
     #   cirq-core
     #   pyquil
+    #   qiskit
 six==1.17.0
     # via
     #   python-dateutil
@@ -297,9 +309,14 @@ soupsieve==2.6
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
+stevedore==5.4.1
+    # via qiskit
+symengine==0.13.0
+    # via qiskit
 sympy==1.13.3
     # via
     #   cirq-core
+    #   qiskit
     #   torch
 tenacity==8.5.0
     # via pyquil
@@ -338,6 +355,7 @@ typing-extensions==4.12.2
     #   ipython
     #   mistune
     #   pydantic
+    #   qiskit
     #   torch
 tzdata==2025.1
     # via pandas
@@ -357,3 +375,6 @@ zipp==3.21.0
     # via
     #   importlib-metadata
     #   importlib-resources
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
