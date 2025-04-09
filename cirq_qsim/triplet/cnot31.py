@@ -1,6 +1,6 @@
 import cirq
 
-from common.simple_matrix import mformat
+from common.format_matrix import mformat
 
 if __name__ == '__main__':
     # Define 3 qubits
