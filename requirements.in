@@ -8,3 +8,5 @@ psutil
 protobuf
 scipy
 qiskit
+physics-tenpy
+quimb

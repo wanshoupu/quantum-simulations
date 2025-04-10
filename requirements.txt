@@ -13,6 +13,10 @@ attrs==21.4.0
     #   cirq-ft
     #   jsonschema
     #   qcs-api-client
+autoray==0.7.1
+    # via
+    #   cotengra
+    #   quimb
 beautifulsoup4==4.13.3
     # via nbconvert
 bleach[css]==6.2.0
@@ -58,8 +62,12 @@ comm==0.2.2
     # via ipywidgets
 contourpy==1.3.0
     # via matplotlib
+cotengra==0.7.2
+    # via quimb
 cycler==0.12.1
     # via matplotlib
+cytoolz==1.0.1
+    # via quimb
 decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
@@ -145,6 +153,8 @@ kiwisolver==1.4.7
     # via matplotlib
 lark==0.11.3
     # via pyquil
+llvmlite==0.43.0
+    # via numba
 markupsafe==3.0.2
     # via
     #   jinja2
@@ -173,15 +183,20 @@ networkx==3.2.1
     #   cirq-core
     #   pyquil
     #   torch
+numba==0.60.0
+    # via quimb
 numpy==1.26.4
     # via
     #   -r requirements.in
     #   cirq-core
     #   contourpy
     #   matplotlib
+    #   numba
     #   pandas
+    #   physics-tenpy
     #   pyquil
     #   qiskit
+    #   quimb
     #   rustworkx
     #   scipy
 packaging==24.2
@@ -200,6 +215,8 @@ pbr==6.1.1
     # via stevedore
 pexpect==4.9.0
     # via ipython
+physics-tenpy==1.0.5
+    # via -r requirements.in
 pillow==11.1.0
     # via matplotlib
 platformdirs==4.3.6
@@ -219,7 +236,9 @@ protobuf==5.29.3
     #   grpcio-status
     #   proto-plus
 psutil==6.1.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   quimb
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
@@ -263,6 +282,8 @@ qcs-api-client==0.21.6
     # via pyquil
 qiskit==1.4.1
     # via -r requirements.in
+quimb==1.10.0
+    # via -r requirements.in
 requests==2.32.3
     # via
     #   -r requirements.in
@@ -292,8 +313,10 @@ scipy==1.13.1
     # via
     #   -r requirements.in
     #   cirq-core
+    #   physics-tenpy
     #   pyquil
     #   qiskit
+    #   quimb
 six==1.17.0
     # via
     #   python-dateutil
@@ -324,12 +347,16 @@ tinycss2==1.4.0
     # via bleach
 toml==0.10.2
     # via qcs-api-client
+toolz==1.0.0
+    # via cytoolz
 torch==2.4.1
     # via -r requirements.in
 tornado==6.4.2
     # via jupyter-client
 tqdm==4.67.1
-    # via cirq-core
+    # via
+    #   cirq-core
+    #   quimb
 traitlets==5.14.3
     # via
     #   comm
