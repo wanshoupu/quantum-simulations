@@ -31,11 +31,22 @@ class MatrixFormatter:
             r[idx] = self.nformat(x[idx])
         return r
 
+    def tostr(self, x: np.ndarray[np.complex64]) -> str:
+        m = self.mformat(x)
+        s = m.shape
+        f = max(len(repr(m[i])) for i in np.ndindex(s))
+        rows = []
+        for row in m:
+            r = [str(e).rjust(f) for e in row]
+            rows.append(' '.join(r))
+        return '[[' + ']\n ['.join(rows) + ']]'
+
 
 if __name__ == '__main__':
     matrix = np.array([[1.0, 2.345678], [3 + 0j, 4 + 5j], [-3 - 0j, -4 - 5j], [-2.0, -5.5], [+2.0, -5.5]], dtype=np.complex64)
     formatter = MatrixFormatter()
     print(formatter.mformat(matrix))
+    print(formatter.tostr(matrix))
     shape = (4, 4)  # Example shape, change as needed
 
     # Generate random binary matrix (0s and 1s)
@@ -47,3 +58,4 @@ if __name__ == '__main__':
     # Print the result
     print(complex_binary_matrix)
     print(formatter.mformat(complex_binary_matrix))
+    print(formatter.tostr(complex_binary_matrix))
