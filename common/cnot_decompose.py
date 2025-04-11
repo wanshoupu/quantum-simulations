@@ -86,29 +86,14 @@ def gray(n1, n2):
     return result
 
 
-def swap_perm(n, i, j):
-    indexes = list(range(n))
-    indexes[i], indexes[j] = indexes[j], indexes[i]
-    return indexes
-
-
-def swap_decompose(m: np.ndarray):
-    n = m.shape[0]
-    if np.array_equal(m, np.eye(n)):
-        return m
-    indexes = [i for i in range(n) if m[i, i] != 1]
-    if len(indexes) > 2:
-        raise ValueError(f'Two-level matrix is expected but got multilevel matrix {m}')
-    if len(indexes) < 2:
-        indexes.append(indexes[-1] + 1)
-    r1, r2 = indexes
-    gcs = gray(r1, r2)
-    components = [permeye(swap_perm(n, a, b)) for a, b in zip(gcs, gcs[1:])]
-    v = functools.reduce(lambda a, b: a @ b, components + [m] + components[:-1][::-1])
-    return components + [v]
-
-
-def swapindex(n, i, j):
+def xindexes(n, i, j):
+    """
+    Generate indexes list(range(n)) with the ith and jth swapped
+    :param n: length of indexes
+    :param i: ith index
+    :param j: jth index
+    :return: indexes list(range(n)) with the ith and jth swapped
+    """
     indexes = list(range(n))
     indexes[i], indexes[j] = indexes[j], indexes[i]
     return indexes
@@ -147,13 +132,57 @@ def _test_swap_decompose8():
     m[r2, r2] = 4j
     formatter = MatrixFormatter()
     print(f'test = \n{formatter.mformat(m)}')
-    ms = swap_decompose(m)
+    ms = cnot_decompose(m)
     print(f'decompose =')
     for x in ms:
         print(formatter.mformat(x), ',')
     print()
     m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
     assert np.all(m3 == m), f'm3 != m: \n{formatter.tostr(m3)},\n\n{formatter.tostr(m)}'
+
+
+def _test_xindexes():
+    import random
+    random.seed(3)
+    for _ in range(10):
+        n = random.randint(10, 100)
+        a = random.randrange(n)
+        b = random.randrange(n)
+        xs = xindexes(n, a, b)
+        assert xs[a] == b and xs[b] == a
+
+
+def _test_permeye():
+    import random
+    random.seed(3)
+    for _ in range(10):
+        n = random.randint(10, 16)
+        a = random.randrange(n)
+        b = random.randrange(n)
+        xs = xindexes(n, a, b)
+        pi = permeye(xs)
+        if a == b:
+            assert pi[a, a] == 1 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+        else:
+            assert pi[a, b] == 1 == pi[b, a], f'off diagonal {a},{b}\n{pi}'
+            assert pi[a, a] == 0 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+
+
+def cnot_decompose(m: np.ndarray):
+    n = m.shape[0]
+    if np.array_equal(m, np.eye(n)):
+        return m
+    indexes = [i for i in range(n) if m[i, i] != 1]
+    if len(indexes) > 2:
+        raise ValueError(f'Two-level matrix is expected but got multilevel matrix {m}')
+    if len(indexes) < 2:
+        indexes.append(indexes[-1] + 1)
+    r1, r2 = indexes
+    gcs = gray(r1, r2)
+    components = [permeye(xindexes(n, a, b)) for a, b in zip(gcs, gcs[1:])]
+    palindrome = components[::-1] + [m] + components
+    v = functools.reduce(lambda a, b: a @ b, palindrome)
+    return components + [v]
 
 
 def _test_swap_decompose4():
@@ -165,15 +194,19 @@ def _test_swap_decompose4():
     m[r2, r2] = 4j
     formatter = MatrixFormatter()
     print(f'test = \n{formatter.mformat(m)}')
-    ms = swap_decompose(m)
+    ms = cnot_decompose(m)
     print(f'decompose =')
     for x in ms:
         print(formatter.mformat(x), ',')
     print()
-    m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
+    s, v = ms[:-1], ms[-1]
+    palindrome = s + [v] + s[::-1]
+    m3 = functools.reduce(lambda x, y: x @ y, palindrome)
     assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
 
 
 if __name__ == '__main__':
     # _test_gray_code()
+    # _test_xindexes()
+    # _test_permeye()
     _test_swap_decompose4()
