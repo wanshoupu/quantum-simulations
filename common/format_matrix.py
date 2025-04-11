@@ -9,12 +9,12 @@ class MatrixFormatter:
         if precision:
             np.set_printoptions(precision=precision)
 
-    def nformat(self, x: complex) -> object:
+    def nformat(self, x: np.complex64) -> object:
         """Convert to real if possible, otherwise to integer if exact."""
         if np.isclose(x.imag, 0):  # Check if imaginary part is negligible
-            real_part = np.real(x)
+            real_part = 0 if np.isclose(x.real, 0) else np.real(x)
             if np.isclose(real_part % 1, 0):  # Check if it's effectively an integer
-                return int(round(real_part))
+                return int(real_part)
             if self.precision:
                 return round(real_part, self.precision)  # Round to n decimal places if real
             return real_part
