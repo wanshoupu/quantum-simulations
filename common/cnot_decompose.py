@@ -72,6 +72,7 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 import functools
 
 import numpy as np
+from sympy.codegen.ast import complex64
 
 from common.format_matrix import MatrixFormatter
 
@@ -161,7 +162,7 @@ def cnot_decompose(m: np.ndarray):
         indexes.append(indexes[-1] + 1)
     r1, r2 = indexes
     gcs = gray(r1, r2)
-    components = [permeye(xindexes(n, a, b)) for a, b in zip(gcs, gcs[1:])]
+    components = [permeye(xindexes(n, a, b)) for a, b in zip(gcs, gcs[1:-1])]
     palindrome = components[::-1] + [m] + components
     v = functools.reduce(lambda a, b: a @ b, palindrome)
     return components + [v]
@@ -169,17 +170,13 @@ def cnot_decompose(m: np.ndarray):
 
 def _test_cnot_decompose8():
     r1, r2 = 3, 4
-    m = np.diag([1 + 0j] * 8)
-    m[r1, r1] = 1j
-    m[r1, r2] = 2j
-    m[r2, r1] = 3j
-    m[r2, r2] = 4j
+    m = _test_matrix_2l(8, r1, r2)
     formatter = MatrixFormatter()
-    print(f'test = \n{formatter.mformat(m)}')
+    print(f'test = \n{formatter.tostr(m)}')
     ms = cnot_decompose(m)
     print(f'decompose =')
     for x in ms:
-        print(formatter.mformat(x), ',')
+        print(formatter.tostr(x), ',')
     print()
     m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
     assert np.all(m3 == m), f'm3 != m: \n{formatter.tostr(m3)},\n\n{formatter.tostr(m)}'
@@ -187,17 +184,13 @@ def _test_cnot_decompose8():
 
 def _test_cnot_decompose4():
     r1, r2 = 1, 2
-    m = np.diag([1 + 0j] * 4)
-    m[r1, r1] = 1j
-    m[r2, r1] = 2j
-    m[r1, r2] = 3j
-    m[r2, r2] = 4j
+    m = _test_matrix_2l(4, r1, r2)
     formatter = MatrixFormatter()
-    print(f'test = \n{formatter.mformat(m)}')
+    print(f'test = \n{formatter.tostr(m)}')
     ms = cnot_decompose(m)
     print(f'decompose =')
     for x in ms:
-        print(formatter.mformat(x), ',')
+        print(formatter.tostr(x), ',')
     print()
     s, v = ms[:-1], ms[-1]
     palindrome = s + [v] + s[::-1]
@@ -205,8 +198,47 @@ def _test_cnot_decompose4():
     assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
 
 
+def _test_cnot_decompose_random():
+    import random
+    random.seed(5)
+    for _ in range(10):
+        nqubit = random.randint(2, 5)
+        n = 1 << nqubit
+        r2 = random.randrange(n)
+        while True:
+            r1 = random.randrange(n)
+            if r1 != r2:
+                break
+        m = _test_matrix_2l(n, r1, r2)
+        formatter = MatrixFormatter()
+        print(f'test = \n{formatter.tostr(m)}')
+        ms = cnot_decompose(m)
+        print(f'decompose =')
+        for x in ms:
+            print(formatter.tostr(x), ',')
+        print()
+        s, v = ms[:-1], ms[-1]
+        palindrome = s + [v] + s[::-1]
+        m3 = functools.reduce(lambda x, y: x @ y, palindrome)
+        assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
+
+
+def _test_matrix_2l(n, r1, r2):
+    import random
+    random.seed(3)
+    rr = lambda: random.randint(0,10)
+    m = np.diag([1 + 0j] * n)
+    r1, r2 = min(r1, r2), max(r1, r2)
+    m[r1, r1] = complex(rr(), rr())
+    m[r2, r1] = complex(rr(), rr())
+    m[r1, r2] = complex(rr(), rr())
+    m[r2, r2] = complex(rr(), rr())
+    return m
+
+
 if __name__ == '__main__':
     # _test_gray_code()
     # _test_xindexes()
     # _test_permeye()
-    _test_cnot_decompose8()
+    # _test_cnot_decompose4()
+    _test_cnot_decompose_random()
