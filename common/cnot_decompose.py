@@ -73,8 +73,6 @@ import functools
 
 import numpy as np
 
-from common.format_matrix import MatrixFormatter
-
 
 def gray(n1, n2):
     result = [n1]
@@ -108,48 +106,6 @@ def permeye(indexes):
     return np.diag([1] * len(indexes))[indexes]
 
 
-def _test_gray_code():
-    import random
-    for _ in range(10):
-        a = random.randint(10, 100)
-        b = random.randint(10, 100)
-        print(f'{a}, {b}')
-        blength = max(a.bit_length(), b.bit_length())
-        mybin = lambda x: bin(x)[2:].zfill(blength)
-        gcs = gray(a, b)
-        print(gcs)
-        for m, n in zip(gcs, gcs[1:]):
-            print(mybin(m), mybin(n))
-            assert mybin(m ^ n).count('1') == 1
-
-
-def _test_xindexes():
-    import random
-    random.seed(3)
-    for _ in range(10):
-        n = random.randint(10, 100)
-        a = random.randrange(n)
-        b = random.randrange(n)
-        xs = xindexes(n, a, b)
-        assert xs[a] == b and xs[b] == a
-
-
-def _test_permeye():
-    import random
-    random.seed(3)
-    for _ in range(10):
-        n = random.randint(10, 16)
-        a = random.randrange(n)
-        b = random.randrange(n)
-        xs = xindexes(n, a, b)
-        pi = permeye(xs)
-        if a == b:
-            assert pi[a, a] == 1 == pi[b, b], f'diagonal {a},{b}\n{pi}'
-        else:
-            assert pi[a, b] == 1 == pi[b, a], f'off diagonal {a},{b}\n{pi}'
-            assert pi[a, a] == 0 == pi[b, b], f'diagonal {a},{b}\n{pi}'
-
-
 def validate(m: np.ndarray):
     n, k = m.shape
     if n != k:
@@ -180,48 +136,71 @@ def cnot_decompose(m: np.ndarray):
     return components + [v]
 
 
-def _test_cnot_decompose8():
-    r1, r2 = 3, 4
-    m = _test_matrix_2l(8, r1, r2)
-    formatter = MatrixFormatter()
-    print(f'test = \n{formatter.tostr(m)}')
-    ms = cnot_decompose(m)
-    print(f'decompose =')
-    for x in ms:
-        print(formatter.tostr(x), ',')
-    print()
-    m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
-    assert np.all(m3 == m), f'm3 != m: \n{formatter.tostr(m3)},\n\n{formatter.tostr(m)}'
-
-
-def _test_cnot_decompose4():
-    r1, r2 = 1, 2
-    m = _test_matrix_2l(4, r1, r2)
-    formatter = MatrixFormatter()
-    print(f'test = \n{formatter.tostr(m)}')
-    ms = cnot_decompose(m)
-    print(f'decompose =')
-    for x in ms:
-        print(formatter.tostr(x), ',')
-    print()
-    s, v = ms[:-1], ms[-1]
-    palindrome = s + [v] + s[::-1]
-    m3 = functools.reduce(lambda x, y: x @ y, palindrome)
-    assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
-
-
-def _test_cnot_decompose_random():
+if __name__ == '__main__':
+    from common.format_matrix import MatrixFormatter
     import random
-    random.seed(5)
-    for _ in range(10):
-        nqubit = random.randint(2, 5)
-        n = 1 << nqubit
-        r2 = random.randrange(n)
-        while True:
-            r1 = random.randrange(n)
-            if r1 != r2:
-                break
-        m = _test_matrix_2l(n, r1, r2)
+    from common.mgen import random_matrix_2l
+
+
+    def _test_gray_code():
+        import random
+        for _ in range(10):
+            a = random.randint(10, 100)
+            b = random.randint(10, 100)
+            print(f'{a}, {b}')
+            blength = max(a.bit_length(), b.bit_length())
+            mybin = lambda x: bin(x)[2:].zfill(blength)
+            gcs = gray(a, b)
+            print(gcs)
+            for m, n in zip(gcs, gcs[1:]):
+                print(mybin(m), mybin(n))
+                assert mybin(m ^ n).count('1') == 1
+
+
+    def _test_xindexes():
+        import random
+        random.seed(3)
+        for _ in range(10):
+            n = random.randint(10, 100)
+            a = random.randrange(n)
+            b = random.randrange(n)
+            xs = xindexes(n, a, b)
+            assert xs[a] == b and xs[b] == a
+
+
+    def _test_permeye():
+        import random
+        random.seed(3)
+        for _ in range(10):
+            n = random.randint(10, 16)
+            a = random.randrange(n)
+            b = random.randrange(n)
+            xs = xindexes(n, a, b)
+            pi = permeye(xs)
+            if a == b:
+                assert pi[a, a] == 1 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+            else:
+                assert pi[a, b] == 1 == pi[b, a], f'off diagonal {a},{b}\n{pi}'
+                assert pi[a, a] == 0 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+
+
+    def _test_cnot_decompose8():
+        r1, r2 = 3, 4
+        m = random_matrix_2l(8, r1, r2)
+        formatter = MatrixFormatter()
+        print(f'test = \n{formatter.tostr(m)}')
+        ms = cnot_decompose(m)
+        print(f'decompose =')
+        for x in ms:
+            print(formatter.tostr(x), ',')
+        print()
+        m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
+        assert np.all(m3 == m), f'm3 != m: \n{formatter.tostr(m3)},\n\n{formatter.tostr(m)}'
+
+
+    def _test_cnot_decompose4():
+        r1, r2 = 1, 2
+        m = random_matrix_2l(4, r1, r2)
         formatter = MatrixFormatter()
         print(f'test = \n{formatter.tostr(m)}')
         ms = cnot_decompose(m)
@@ -235,20 +214,30 @@ def _test_cnot_decompose_random():
         assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
 
 
-def _test_matrix_2l(n, r1, r2):
-    import random
-    random.seed(3)
-    rr = lambda: random.randint(0, 10)
-    m = np.diag([1 + 0j] * n)
-    r1, r2 = min(r1, r2), max(r1, r2)
-    m[r1, r1] = complex(rr(), rr())
-    m[r2, r1] = complex(rr(), rr())
-    m[r1, r2] = complex(rr(), rr())
-    m[r2, r2] = complex(rr(), rr())
-    return m
+    def _test_cnot_decompose_random():
+        random.seed(5)
+        for _ in range(10):
+            nqubit = random.randint(2, 5)
+            n = 1 << nqubit
+            r2 = random.randrange(n)
+            while True:
+                r1 = random.randrange(n)
+                if r1 != r2:
+                    break
+            m = random_matrix_2l(n, r1, r2)
+            formatter = MatrixFormatter()
+            print(f'test = \n{formatter.tostr(m)}')
+            ms = cnot_decompose(m)
+            print(f'decompose =')
+            for x in ms:
+                print(formatter.tostr(x), ',')
+            print()
+            s, v = ms[:-1], ms[-1]
+            palindrome = s + [v] + s[::-1]
+            m3 = functools.reduce(lambda x, y: x @ y, palindrome)
+            assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
 
 
-if __name__ == '__main__':
     # _test_gray_code()
     # _test_xindexes()
     # _test_permeye()
