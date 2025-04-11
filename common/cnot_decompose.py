@@ -123,24 +123,6 @@ def _test_gray_code():
             assert mybin(m ^ n).count('1') == 1
 
 
-def _test_swap_decompose8():
-    r1, r2 = 3, 4
-    m = np.diag([1 + 0j] * 8)
-    m[r1, r1] = 1j
-    m[r1, r2] = 2j
-    m[r2, r1] = 3j
-    m[r2, r2] = 4j
-    formatter = MatrixFormatter()
-    print(f'test = \n{formatter.mformat(m)}')
-    ms = cnot_decompose(m)
-    print(f'decompose =')
-    for x in ms:
-        print(formatter.mformat(x), ',')
-    print()
-    m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
-    assert np.all(m3 == m), f'm3 != m: \n{formatter.tostr(m3)},\n\n{formatter.tostr(m)}'
-
-
 def _test_xindexes():
     import random
     random.seed(3)
@@ -185,7 +167,25 @@ def cnot_decompose(m: np.ndarray):
     return components + [v]
 
 
-def _test_swap_decompose4():
+def _test_cnot_decompose8():
+    r1, r2 = 3, 4
+    m = np.diag([1 + 0j] * 8)
+    m[r1, r1] = 1j
+    m[r1, r2] = 2j
+    m[r2, r1] = 3j
+    m[r2, r2] = 4j
+    formatter = MatrixFormatter()
+    print(f'test = \n{formatter.mformat(m)}')
+    ms = cnot_decompose(m)
+    print(f'decompose =')
+    for x in ms:
+        print(formatter.mformat(x), ',')
+    print()
+    m3 = functools.reduce(lambda x, y: x @ y, ms + ms[:-1][::-1])
+    assert np.all(m3 == m), f'm3 != m: \n{formatter.tostr(m3)},\n\n{formatter.tostr(m)}'
+
+
+def _test_cnot_decompose4():
     r1, r2 = 1, 2
     m = np.diag([1 + 0j] * 4)
     m[r1, r1] = 1j
@@ -209,4 +209,4 @@ if __name__ == '__main__':
     # _test_gray_code()
     # _test_xindexes()
     # _test_permeye()
-    _test_swap_decompose4()
+    _test_cnot_decompose8()
