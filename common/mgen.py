@@ -2,7 +2,6 @@ import numpy as np
 import random
 
 
-
 def random_unitary(n):
     """Generate a random n x n unitary matrix."""
     # Step 1: Generate a random complex matrix
@@ -17,7 +16,6 @@ def random_unitary(n):
 
 
 def random_matrix_2l(n, r1, r2):
-    random.seed(3)
     rr = lambda: random.randint(0, 10)
     m = np.diag([1 + 0j] * n)
     r1, r2 = min(r1, r2), max(r1, r2)
@@ -28,13 +26,56 @@ def random_matrix_2l(n, r1, r2):
     return m
 
 
+def permeye(indexes):
+    """
+    Create a square identity matrix n x n, with the permuted indexes
+    :param indexes: a permutation of indexes of list(range(len(indexes)))
+    :return: the resultant matrix
+    """
+    return np.diag([1] * len(indexes))[indexes]
+
+
+def cyclic_matrix(n, i=0, j=None, c=1):
+    """
+    create a cyclic permuted matrix from identity
+    :param n: dimension
+    :param i: starting index of the cyclic permutation (inclusive). default 0
+    :param j: ending index of the cyclic permutation (exclusive). default n
+    :param c: shift cycles, default 1
+    :return:
+    """
+    if j is None:
+        j = n
+    indexes = list(range(n))
+    xs = indexes[:i] + np.roll(indexes[i:j], c).tolist() + indexes[j:]
+    return permeye(xs)
+
+
 if __name__ == '__main__':
     from common.format_matrix import MatrixFormatter
+    from common.cnot_decompose import permeye
 
+    # random.seed(3)
     formatter = MatrixFormatter()
-    m2l = random_matrix_2l(10, 1, 6)
-    print(formatter.tostr(m2l))
 
-    randu = random_unitary(2)
-    print(formatter.tostr(randu))
-    print(formatter.tostr(randu.T @ np.conj(randu)))
+
+    def _test_2l():
+        m2l = random_matrix_2l(10, 1, 6)
+        print(formatter.tostr(m2l))
+
+
+    def _test_unitary():
+        randu = random_unitary(2)
+        print(formatter.tostr(randu))
+        identity = randu.T @ np.conj(randu)
+        assert np.all(np.isclose(identity, np.eye(*identity.shape))), print(formatter.tostr())
+
+
+    def _test_cyclic():
+        cm = cyclic_matrix(8, 2)
+        print(formatter.tostr(cm))
+
+
+    # _test_cyclic()
+    # _test_unitary()
+    _test_2l()
