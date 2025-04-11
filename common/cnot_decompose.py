@@ -72,7 +72,6 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 import functools
 
 import numpy as np
-from sympy.codegen.ast import complex64
 
 from common.format_matrix import MatrixFormatter
 
@@ -151,13 +150,26 @@ def _test_permeye():
             assert pi[a, a] == 0 == pi[b, b], f'diagonal {a},{b}\n{pi}'
 
 
+def validate(m: np.ndarray):
+    n, k = m.shape
+    if n != k:
+        raise ValueError(f'Square unitary matrix is expected but got shape {n, k}')
+
+    indexes = [i for i in range(n) if not np.isclose(m[i, i], 1)]
+    if len(indexes) > 2:
+        raise ValueError(f'Two-level unitary matrix is expected but got multilevel matrix {m}')
+
+    indx = [(i, j) for i, j in np.ndindex(m.shape) if i != j and not np.isclose(m[i, j], 0j)]
+    if len(indx) > 2:
+        raise ValueError(f'Matrix has more than two non-zero off-diagonal element {indx}')
+
+
 def cnot_decompose(m: np.ndarray):
     n = m.shape[0]
     if np.array_equal(m, np.eye(n)):
         return m
-    indexes = [i for i in range(n) if m[i, i] != 1]
-    if len(indexes) > 2:
-        raise ValueError(f'Two-level matrix is expected but got multilevel matrix {m}')
+    validate(m)
+    indexes = [i for i in range(n) if not np.isclose(m[i, i], 1)]
     if len(indexes) < 2:
         indexes.append(indexes[-1] + 1)
     r1, r2 = indexes
@@ -226,7 +238,7 @@ def _test_cnot_decompose_random():
 def _test_matrix_2l(n, r1, r2):
     import random
     random.seed(3)
-    rr = lambda: random.randint(0,10)
+    rr = lambda: random.randint(0, 10)
     m = np.diag([1 + 0j] * n)
     r1, r2 = min(r1, r2), max(r1, r2)
     m[r1, r1] = complex(rr(), rr())
