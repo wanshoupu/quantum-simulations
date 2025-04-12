@@ -9,7 +9,8 @@ if __name__ == '__main__':
         cirq.M(q2),
         cirq.M(q1),
     )
+    print(circuit)
+
     simulator = cirq.Simulator()
     result = simulator.run(circuit, repetitions=100)
-    print(circuit)
     print(result)

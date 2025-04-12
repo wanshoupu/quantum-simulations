@@ -52,8 +52,8 @@ def cyclic_matrix(n, i=0, j=None, c=1):
 
 
 if __name__ == '__main__':
-    from common.format_matrix import MatrixFormatter
-    from common.cnot_decompose import permeye
+    from format_matrix import MatrixFormatter
+    from cnot_decompose import permeye
 
     # random.seed(3)
     formatter = MatrixFormatter()
@@ -76,6 +76,6 @@ if __name__ == '__main__':
         print(formatter.tostr(cm))
 
 
-    # _test_cyclic()
-    # _test_unitary()
+    _test_cyclic()
+    _test_unitary()
     _test_2l()

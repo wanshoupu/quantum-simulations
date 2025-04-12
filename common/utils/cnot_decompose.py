@@ -73,7 +73,7 @@ import functools
 
 import numpy as np
 
-from common.mat2l import validm2l
+from mat2l import validm2l
 
 
 def gray(n1, n2):
@@ -133,9 +133,9 @@ def cnot_decompose(m: np.ndarray):
 
 
 if __name__ == '__main__':
-    from common.format_matrix import MatrixFormatter
+    from format_matrix import MatrixFormatter
     import random
-    from common.mgen import random_matrix_2l
+    from mgen import random_matrix_2l
 
 
     def _test_gray_code():
@@ -234,8 +234,8 @@ if __name__ == '__main__':
             assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
 
 
-    # _test_gray_code()
-    # _test_xindexes()
-    # _test_permeye()
-    # _test_cnot_decompose4()
+    _test_gray_code()
+    _test_xindexes()
+    _test_permeye()
+    _test_cnot_decompose4()
     _test_cnot_decompose_random()
