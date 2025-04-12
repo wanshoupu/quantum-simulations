@@ -52,8 +52,8 @@ def cyclic_matrix(n, i=0, j=None, c=1):
 
 
 if __name__ == '__main__':
-    from format_matrix import MatrixFormatter
-    from cnot_decompose import permeye
+    from common.utils.format_matrix import MatrixFormatter
+    from common.utils.cnot_decompose import permeye
 
     # random.seed(3)
     formatter = MatrixFormatter()

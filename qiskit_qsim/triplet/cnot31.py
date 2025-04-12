@@ -4,7 +4,7 @@ from qiskit.quantum_info import Operator
 import sys
 import platform
 import qiskit
-from common.format_matrix import mformat
+from common.utils.format_matrix import MatrixFormatter
 
 if __name__ == '__main__':
     # Create a new circuit with two qubits
@@ -14,9 +14,10 @@ if __name__ == '__main__':
     print(f"Qiskit version: {qiskit.__version__}")
 
     # Perform a controlled-X gate on qubit 0, controlled by qubit 2
+    formatter = MatrixFormatter()
     qc.cx(2, 0)
     unitary_matrix = Operator(qc).data
-    print(mformat(unitary_matrix))
+    print(formatter.mformat(unitary_matrix))
     # There is an issue with the unitary matrix. Expected:
     # [[1 0 0 0 0 0 0 0]
     #  [0 0 0 0 0 1 0 0]

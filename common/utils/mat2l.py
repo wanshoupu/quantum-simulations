@@ -58,8 +58,8 @@ def validm2l(m: np.ndarray):
 
 
 if __name__ == '__main__':
-    from mgen import cyclic_matrix, random_matrix_2l, random_unitary
-    from format_matrix import MatrixFormatter
+    from common.utils.mgen import cyclic_matrix, random_matrix_2l, random_unitary
+    from common.utils.format_matrix import MatrixFormatter
     import random
 
     random.seed(3)

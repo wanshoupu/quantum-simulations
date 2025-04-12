@@ -1,6 +1,6 @@
 import cirq
 
-from common.format_matrix import mformat
+from common.utils.format_matrix import MatrixFormatter
 
 if __name__ == '__main__':
     # Define 3 qubits
@@ -10,8 +10,8 @@ if __name__ == '__main__':
     circuit = cirq.Circuit(
         cirq.CX(q2, q0)
     )
-
-    print(mformat(circuit.unitary(qubit_order=[q0, q1, q2])))
+    formatter = MatrixFormatter()
+    print(formatter.mformat(circuit.unitary(qubit_order=[q0, q1, q2])))
 
     # Explicitly specify all qubits when printing
     print(circuit.to_text_diagram(qubit_order=[q0, q1, q2]))

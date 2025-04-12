@@ -73,7 +73,7 @@ import functools
 
 import numpy as np
 
-from mat2l import validm2l
+from common.utils.mat2l import validm2l
 
 
 def gray(n1, n2):
@@ -133,9 +133,9 @@ def cnot_decompose(m: np.ndarray):
 
 
 if __name__ == '__main__':
-    from format_matrix import MatrixFormatter
+    from common.utils.format_matrix import MatrixFormatter
     import random
-    from mgen import random_matrix_2l
+    from common.utils.mgen import random_matrix_2l
 
 
     def _test_gray_code():

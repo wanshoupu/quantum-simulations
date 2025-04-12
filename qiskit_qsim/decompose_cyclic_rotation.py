@@ -3,8 +3,8 @@ import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Operator
 
-from common.cnot_decompose import permeye, cnot_decompose
-from common.format_matrix import MatrixFormatter
+from common.utils.cnot_decompose import permeye, cnot_decompose
+from common.utils.format_matrix import MatrixFormatter
 from matplotlib import pyplot as plt
 from qiskit.circuit.library import UnitaryGate
 
