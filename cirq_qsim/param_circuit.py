@@ -7,7 +7,8 @@ if __name__ == '__main__':
     theta = sympy.Symbol("theta")  # Define a symbolic variable
     param_circuit = cirq.Circuit(
         cirq.rx(theta)(q0),  # Rotation around X-axis with symbolic theta
-        cirq.measure(q0, key="m0")
+        cirq.measure(q0, key="m0"),
+        cirq.measure(q1, key="m1"),
     )
     print("Parameterized Circuit:\n", param_circuit)
 
