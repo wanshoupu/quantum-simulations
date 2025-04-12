@@ -16,13 +16,12 @@ class Bytecode:
         self.children.append(child)
 
     def __repr__(self):
-        rows = ['Code:']
         if self.children:
-            rows.append('children:')
+            rows = ['Node data:', formatter.tostr(self.data), 'children:']
             for c in self.children:
                 rows.append(repr(c))
             return '\n'.join(rows)
-        return 'leaf:\n' + formatter.tostr(self.data)
+        return 'Leaf data:\n' + formatter.tostr(self.data)
 
 
 class BytecodeIter:
