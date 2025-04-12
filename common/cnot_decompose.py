@@ -73,6 +73,8 @@ import functools
 
 import numpy as np
 
+from common.mat2l import validm2l
+
 
 def gray(n1, n2):
     result = [n1]
@@ -106,18 +108,12 @@ def permeye(indexes):
     return np.diag([1] * len(indexes))[indexes]
 
 
-def validate(m: np.ndarray):
+def validate(m):
     n, k = m.shape
     if n != k:
         raise ValueError(f'Square unitary matrix is expected but got shape {n, k}')
-
-    indexes = [i for i in range(n) if not np.isclose(m[i, i], 1)]
-    if len(indexes) > 2:
+    if not validm2l(m):
         raise ValueError(f'Two-level unitary matrix is expected but got multilevel matrix {m}')
-
-    indx = [(i, j) for i, j in np.ndindex(m.shape) if i != j and not np.isclose(m[i, j], 0j)]
-    if len(indx) > 2:
-        raise ValueError(f'Matrix has more than two non-zero off-diagonal element {indx}')
 
 
 def cnot_decompose(m: np.ndarray):

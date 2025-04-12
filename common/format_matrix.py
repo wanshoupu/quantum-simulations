@@ -19,7 +19,9 @@ class MatrixFormatter:
                 return round(real_part, self.precision)  # Round to n decimal places if real
             return real_part
         # Return complex if it cannot be simplified
-        return complex(self.nformat(x.real), self.nformat(x.imag))
+        if self.precision:
+            return np.round(x, self.precision)
+        return x
 
     def mformat(self, x: np.ndarray[np.complex64]) -> ndarray[object]:
         """
