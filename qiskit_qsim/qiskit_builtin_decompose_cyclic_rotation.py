@@ -1,12 +1,11 @@
-import cirq
 import numpy as np
+from matplotlib import pyplot as plt
 from qiskit import QuantumCircuit
+from qiskit.circuit.library import UnitaryGate
 from qiskit.quantum_info import Operator
 
-from common.utils.cnot_decompose import permeye, cnot_decompose
+from common.utils.cnot_decompose import permeye
 from common.utils.format_matrix import MatrixFormatter
-from matplotlib import pyplot as plt
-from qiskit.circuit.library import UnitaryGate
 
 
 def cyclic_matrix(n, i):

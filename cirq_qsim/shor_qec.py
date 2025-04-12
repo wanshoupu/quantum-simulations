@@ -1,7 +1,7 @@
 import cirq
 
 if __name__ == '__main__':
-    q0, q1, q2 = cirq.LineQubit(3)
+    q0, q1, q2 = cirq.LineQubit.range(3)
     qbs = [cirq.LineQubit.range(3) for _ in range(3)]
     circuit = cirq.Circuit(
         cirq.X(q0),
