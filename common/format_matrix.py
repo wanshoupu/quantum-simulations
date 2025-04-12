@@ -11,16 +11,15 @@ class MatrixFormatter:
 
     def nformat(self, x: np.complex64) -> object:
         """Convert to real if possible, otherwise to integer if exact."""
+        if self.precision:
+            x = np.round(x, self.precision)
+
         if np.isclose(x.imag, 0):  # Check if imaginary part is negligible
             real_part = 0 if np.isclose(x.real, 0) else np.real(x)
             if np.isclose(real_part % 1, 0):  # Check if it's effectively an integer
                 return int(real_part)
-            if self.precision:
-                return round(real_part, self.precision)  # Round to n decimal places if real
             return real_part
         # Return complex if it cannot be simplified
-        if self.precision:
-            return np.round(x, self.precision)
         return x
 
     def mformat(self, x: np.ndarray[np.complex64]) -> ndarray[object]:
@@ -46,7 +45,7 @@ class MatrixFormatter:
 
 if __name__ == '__main__':
     matrix = np.array([[1.0, 2.345678], [3 + 0j, 4 + 5j], [-3 - 0j, -4 - 5j], [-2.0, -5.5], [+2.0, -5.5]], dtype=np.complex64)
-    formatter = MatrixFormatter()
+    formatter = MatrixFormatter(precision=2)
     print(formatter.mformat(matrix))
     print(formatter.tostr(matrix))
     shape = (4, 4)  # Example shape, change as needed
