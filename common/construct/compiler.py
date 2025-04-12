@@ -18,7 +18,9 @@ def compile(u: np.ndarray) -> Bytecode:
 
 def _dec(u):
     if validm2l(u):
-        return cnot_decompose(u)
+        ms = cnot_decompose(u)
+        c, v = ms[:-1], ms[-1]
+        return c + [v] + c[::-1]
     return mat2l_decompose(u)
 
 
