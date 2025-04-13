@@ -1,5 +1,4 @@
 from typing import List, Optional
-import numpy as np
 from numpy.typing import NDArray
 from common.utils.format_matrix import MatrixFormatter
 
