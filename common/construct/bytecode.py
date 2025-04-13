@@ -1,6 +1,6 @@
 from typing import List, Optional
 import numpy as np
-
+from numpy.typing import NDArray
 from common.utils.format_matrix import MatrixFormatter
 
 formatter = MatrixFormatter()
@@ -9,7 +9,7 @@ formatter = MatrixFormatter()
 class Bytecode:
     def __init__(self, data, parent=None, children=None):
         self.parent: Optional[Bytecode] = parent
-        self.data: np.ndarray = data
+        self.data: NDArray = data
         self.children: List[Bytecode] = children or []
 
     def append(self, child: 'Bytecode'):

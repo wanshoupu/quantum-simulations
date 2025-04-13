@@ -72,8 +72,9 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 import functools
 
 import numpy as np
+from numpy.typing import NDArray
 
-from common.utils.mat2l import validm2l
+from common.utils.mat2l_decompose import validm2l
 
 
 def gray(n1, n2):
@@ -116,7 +117,7 @@ def validate(m):
         raise ValueError(f'Two-level unitary matrix is expected but got multilevel matrix {m}')
 
 
-def cnot_decompose(m: np.ndarray):
+def cnot_decompose(m: NDArray):
     n = m.shape[0]
     if np.array_equal(m, np.eye(n)):
         return m

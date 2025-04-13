@@ -2,11 +2,12 @@ import numpy as np
 
 from bytecode import Bytecode
 from common.utils.cnot_decompose import cnot_decompose
-from common.utils.mat2l import mat2l_decompose, validm2l
+from common.utils.mat2l_decompose import mat2l_decompose, validm2l
 from common.utils.mgen import cyclic_matrix
+from numpy.typing import NDArray
 
 
-def compile(u: np.ndarray) -> Bytecode:
+def compile(u: NDArray) -> Bytecode:
     root = Bytecode(u)
     coms = _dec(u)
     if len(coms) > 1:

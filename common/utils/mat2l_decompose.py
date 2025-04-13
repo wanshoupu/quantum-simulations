@@ -5,6 +5,7 @@ import functools
 from typing import List
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 def mat2l_decompose(m: np.ndarray) -> List[np.ndarray]:
@@ -18,7 +19,7 @@ def mat2l_decompose(m: np.ndarray) -> List[np.ndarray]:
             continue
         for i in range(n + 1, s[0]):
             # this is weird! I have to use complex64 to assign complex to it.
-            c = np.eye(*s).astype(np.complex64)
+            c = np.eye(*s).astype(np.complexfloating)
             if np.isclose(m[i, n], 0):
                 # check if c will end up with identity
                 if np.isclose(m[n, n], 1):
