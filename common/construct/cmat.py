@@ -4,7 +4,7 @@ It also contains the controlled mat (cmat) which is represented by a core unitar
 """
 
 import itertools
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 from attr import dataclass
@@ -45,7 +45,7 @@ class UnitaryM:
 
 
 class CUnitary(UnitaryM):
-    def __init__(self, m: NDArray, controls: Tuple[bool]):
+    def __init__(self, m: NDArray, controls: Tuple[Optional[bool]]):
         """
         Instantiate a controlled single-qubit unitary matrix.
         :param m: the 2 x 2 core matrix.
