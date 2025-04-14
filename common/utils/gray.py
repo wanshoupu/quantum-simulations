@@ -3,15 +3,6 @@ from typing import Iterable, Tuple, Optional
 import numpy as np
 
 
-def permeye(indexes):
-    """
-    Create a square identity matrix n x n, with the permuted indexes
-    :param indexes: a permutation of indexes of list(range(len(indexes)))
-    :return: the resultant matrix
-    """
-    return np.diag([1] * len(indexes))[indexes]
-
-
 def gray_code(n1, n2):
     """
     Generate Gray code between n1 and n2 (inclusive)

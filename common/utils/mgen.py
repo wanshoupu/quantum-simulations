@@ -21,7 +21,7 @@ def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
     m = np.array([[complex(rr(), rr()), complex(rr(), rr())],
                   [complex(rr(), rr()), complex(rr(), rr())]])
     r1, r2 = min(r1, r2), max(r1, r2)
-    return UnitaryM(n, m, indexes=(r1, r2))
+    return UnitaryM(n, m, (r1, r2))
 
 def random_matrix_2l(n, r1, r2):
     rr = lambda: random.randint(0, 10)
@@ -72,9 +72,8 @@ def cyclic_matrix(n, i=0, j=None, c=1):
 
 if __name__ == '__main__':
     from common.utils.format_matrix import MatrixFormatter
-    from common.utils.cnot_decompose import permeye
 
-    # random.seed(3)
+    random.seed(3)
     formatter = MatrixFormatter()
 
 
