@@ -68,7 +68,7 @@ if __name__ == '__main__':
         randu = random_unitary(2)
         print(formatter.tostr(randu))
         identity = randu.T @ np.conj(randu)
-        assert np.all(np.isclose(identity, np.eye(*identity.shape))), print(formatter.tostr())
+        assert np.all(np.isclose(identity, np.eye(*identity.shape))), print(formatter.tostr(identity))
 
 
     def _test_cyclic():
