@@ -1,6 +1,7 @@
 """
 This module contains sparse matrices, 'UnitaryM', as arbitrary unitary operator, consisting of the total dimension, the core submatrix, and the identity indexes.
 It also contains the controlled mat (cmat) which is represented by a core unitary matrix and a list of control qubits.
+This module differs from scipy.sparse in that we provide convenience specifically for quantum computer controlled unitary matrices.
 """
 from dataclasses import dataclass, field
 from itertools import product
