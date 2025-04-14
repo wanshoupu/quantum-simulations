@@ -1,7 +1,9 @@
 from typing import List
 from abc import ABC, abstractmethod
 import numpy as np
-from sympy.physics.quantum.gate import Gate, CGate
+import sympy.physics.quantum.matrixutils
+from sympy.physics.quantum import represent
+from sympy.physics.quantum.gate import Gate, CGate, XGate
 from typing_extensions import override
 from numpy.typing import NDArray
 
@@ -19,7 +21,6 @@ class UnitaryInterpreter(ABC):
         meta = CGate
 
     def target(self, m: NDArray) -> int:
-
         pass
 
     @abstractmethod
@@ -56,4 +57,7 @@ class QiskitUnitaryInterpreter(UnitaryInterpreter):
 
 
 if __name__ == '__main__':
-    pass
+    x = XGate(1)
+    m = represent(x, nqubits=3)
+    print(m)
+    print(np.array(m))
