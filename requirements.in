@@ -10,3 +10,4 @@ scipy
 qiskit
 physics-tenpy
 quimb
+pytest
