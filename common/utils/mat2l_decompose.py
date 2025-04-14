@@ -17,25 +17,22 @@ def mat2l_decompose(m: NDArray) -> List[UnitaryM]:
     for n in range(s[0] - 1):
         if validm2l(m):
             break
-        if np.all(np.isclose(m[n + 1:, n], np.zeros(s[0] - n - 1))):
+        if np.allclose(m[n + 1:, n], 0):
             continue
         for i in range(n + 1, s[0]):
-            # this is weird! I have to use complex64 to assign complex to it.
+            # this is weird! I have to use complex to assign complex to it.
             # check if c will end up with identity
             if np.isclose(m[i, n], 0) and np.isclose(m[n, n], 1):
                 continue
             den = np.sqrt(np.conj(m[n, n]) * m[n, n] + np.conj(m[i, n]) * m[i, n])
-            c = np.eye(2).astype(np.complexfloating)
-            c[0, 0] = np.conj(m[n, n]) / den
-            c[1, 0] = m[i, n] / den
-            c[0, 1] = np.conjugate(m[i, n] / den)
-            c[1, 1] = -m[n, n] / den
+            c = np.array([[np.conj(m[n, n]) / den, np.conj(m[i, n]) / den],
+                          [m[i, n] / den, -m[n, n] / den]])
             m2l = UnitaryM(s[0], np.conj(c).T, indexes=(n, i))
             result.append(m2l)
-            m = m2l.inflate() @ m
+            m = np.conj(m2l.inflate()).T @ m
     idxs = coreindexes(m)
     m2l = m[np.ix_(idxs, idxs)]
-    if not np.all(np.isclose(m2l, np.eye(2))):
+    if not np.allclose(m2l, np.eye(2)):
         result.append(UnitaryM(s[0], m2l, indexes=tuple(idxs)))
     return result
 
@@ -46,6 +43,7 @@ if __name__ == '__main__':
     import random
 
     random.seed(3)
+    np.random.seed(3)
 
 
     def _test_mat2l_cyclic():
@@ -53,7 +51,7 @@ if __name__ == '__main__':
         print(formatter.tostr(m))
         tlms = mat2l_decompose(m)
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{m}\n, recovered\n{recovered}'
+        assert np.allclose(recovered.inflate(), m), f'original\n{m}\n, recovered\n{recovered}'
 
 
     def _test_mat2l_2x2_noop():
@@ -64,7 +62,7 @@ if __name__ == '__main__':
         for x in tlms:
             print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
+        assert np.allclose(recovered.inflate(), m), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_3x3_2l():
@@ -75,7 +73,7 @@ if __name__ == '__main__':
         for x in tlms:
             print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered.inflate(), mp)), f'original\n{formatter.tostr(mp)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
+        assert np.allclose(recovered.inflate(), mp), f'original\n{formatter.tostr(mp)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_noop():
@@ -86,7 +84,7 @@ if __name__ == '__main__':
         for x in tlms:
             print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
+        assert np.allclose(recovered.inflate(), m), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_3x3():
@@ -98,7 +96,7 @@ if __name__ == '__main__':
         for x in tlms:
             print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
+        assert np.allclose(recovered.inflate(), m), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_random():
@@ -112,15 +110,15 @@ if __name__ == '__main__':
             for x in tlms:
                 print(formatter.tostr(x.inflate()), ',\n')
             recovered = functools.reduce(lambda a, b: a @ b, tlms)
-            assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
+            assert np.allclose(recovered.inflate(), m), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     formatter = MatrixFormatter(precision=5)
     random.seed(3)
 
-    # _test_mat2l_2x2_noop()
+    _test_mat2l_2x2_noop()
     _test_mat2l_3x3_2l()
-    # _test_mat2l_3x3()
-    # _test_mat2l_cyclic()
-    # _test_mat2l_noop()
-    # _test_mat2l_random()
+    _test_mat2l_3x3()
+    _test_mat2l_cyclic()
+    _test_mat2l_noop()
+    _test_mat2l_random()
