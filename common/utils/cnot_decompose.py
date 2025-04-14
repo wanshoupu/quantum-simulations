@@ -74,7 +74,7 @@ import functools
 import numpy as np
 from numpy.typing import NDArray
 
-from common.utils.mat2l_decompose import validm2l
+from common.construct.cmat import validm2l
 
 
 def gray(n1, n2):

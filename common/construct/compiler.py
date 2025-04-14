@@ -2,7 +2,8 @@ import numpy as np
 
 from bytecode import Bytecode
 from common.utils.cnot_decompose import cnot_decompose
-from common.utils.mat2l_decompose import mat2l_decompose, validm2l
+from common.utils.mat2l_decompose import mat2l_decompose
+from common.construct.cmat import validm2l
 from common.utils.mgen import cyclic_matrix
 from numpy.typing import NDArray
 

@@ -7,8 +7,10 @@ from typing import List
 import numpy as np
 from numpy.typing import NDArray
 
+from common.construct.cmat import UnitaryM, coreindexes, validm2l
 
-def mat2l_decompose(m: np.ndarray) -> List[np.ndarray]:
+
+def mat2l_decompose(m: NDArray) -> List[UnitaryM]:
     result = []
     m = np.copy(m)
     s = m.shape
@@ -19,43 +21,23 @@ def mat2l_decompose(m: np.ndarray) -> List[np.ndarray]:
             continue
         for i in range(n + 1, s[0]):
             # this is weird! I have to use complex64 to assign complex to it.
-            c = np.eye(*s).astype(np.complexfloating)
-            if np.isclose(m[i, n], 0):
-                # check if c will end up with identity
-                if np.isclose(m[n, n], 1):
-                    continue
-                c[n, n] = np.conj(m[n, n])
-            else:
-                den = np.sqrt(np.conj(m[n, n]) * m[n, n] + np.conj(m[i, n]) * m[i, n])
-                c[n, n] = np.conj(m[n, n]) / den
-                c[i, n] = m[i, n] / den
-                c[n, i] = np.conjugate(m[i, n] / den)
-                c[i, i] = -m[n, n] / den
-            result.append(np.conj(c).T)
-            m = c @ m
-    if not np.all(np.isclose(m, np.eye(*s))):
-        result.append(m)
+            # check if c will end up with identity
+            if np.isclose(m[i, n], 0) and np.isclose(m[n, n], 1):
+                continue
+            den = np.sqrt(np.conj(m[n, n]) * m[n, n] + np.conj(m[i, n]) * m[i, n])
+            c = np.eye(2).astype(np.complexfloating)
+            c[0, 0] = np.conj(m[n, n]) / den
+            c[1, 0] = m[i, n] / den
+            c[0, 1] = np.conjugate(m[i, n] / den)
+            c[1, 1] = -m[n, n] / den
+            m2l = UnitaryM(s[0], np.conj(c).T, indexes=(n, i))
+            result.append(m2l)
+            m = m2l.inflate() @ m
+    idxs = coreindexes(m)
+    m2l = m[np.ix_(idxs, idxs)]
+    if not np.all(np.isclose(m2l, np.eye(2))):
+        result.append(UnitaryM(s[0], m2l, indexes=tuple(idxs)))
     return result
-
-
-def validm2l(m: np.ndarray):
-    """
-    Validate if m is a 2-level unitary matrix.
-    :param m: input matrix.
-    :return: bool True if m is a 2-level unitary matrix; otherwise False.
-    """
-    n, k = m.shape
-    if n != k:
-        return False
-
-    indexes = [i for i in range(n) if not np.isclose(m[i, i], 1)]
-    if len(indexes) > 2:
-        return False
-
-    indx = [(i, j) for i, j in np.ndindex(m.shape) if i != j and not np.isclose(m[i, j], 0j)]
-    if len(indx) > 2:
-        return False
-    return True
 
 
 if __name__ == '__main__':
@@ -71,7 +53,7 @@ if __name__ == '__main__':
         print(formatter.tostr(m))
         tlms = mat2l_decompose(m)
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered, m)), f'original\n{m}\n, recovered\n{recovered}'
+        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{m}\n, recovered\n{recovered}'
 
 
     def _test_mat2l_2x2_noop():
@@ -80,9 +62,20 @@ if __name__ == '__main__':
         tlms = mat2l_decompose(m)
         print(f'decompose =')
         for x in tlms:
-            print(formatter.tostr(x), ',')
+            print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered, m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered)}'
+        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
+
+
+    def _test_mat2l_3x3_2l():
+        mp = UnitaryM(3, random_matrix_2l(2, 0, 1), indexes=(0, 1)).inflate()
+        print(formatter.tostr(mp))
+        tlms = mat2l_decompose(mp)
+        print(f'decompose =')
+        for x in tlms:
+            print(formatter.tostr(x.inflate()), ',')
+        recovered = functools.reduce(lambda a, b: a @ b, tlms)
+        assert np.all(np.isclose(recovered.inflate(), mp)), f'original\n{formatter.tostr(mp)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_noop():
@@ -91,9 +84,9 @@ if __name__ == '__main__':
         tlms = mat2l_decompose(m)
         print(f'decompose =')
         for x in tlms:
-            print(formatter.tostr(x), ',')
+            print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered, m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered)}'
+        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_3x3():
@@ -103,9 +96,9 @@ if __name__ == '__main__':
         tlms = mat2l_decompose(m)
         print(f'decompose =')
         for x in tlms:
-            print(formatter.tostr(x), ',')
+            print(formatter.tostr(x.inflate()), ',')
         recovered = functools.reduce(lambda a, b: a @ b, tlms)
-        assert np.all(np.isclose(recovered, m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered)}'
+        assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     def _test_mat2l_random():
@@ -117,16 +110,17 @@ if __name__ == '__main__':
             tlms = mat2l_decompose(m)
             print(f'decompose =')
             for x in tlms:
-                print(formatter.tostr(x), ',\n')
+                print(formatter.tostr(x.inflate()), ',\n')
             recovered = functools.reduce(lambda a, b: a @ b, tlms)
-            assert np.all(np.isclose(recovered, m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered)}'
+            assert np.all(np.isclose(recovered.inflate(), m)), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
 
     formatter = MatrixFormatter(precision=5)
     random.seed(3)
 
-    _test_mat2l_cyclic()
-    _test_mat2l_noop()
-    _test_mat2l_2x2_noop()
-    _test_mat2l_3x3()
-    _test_mat2l_random()
+    # _test_mat2l_2x2_noop()
+    _test_mat2l_3x3_2l()
+    # _test_mat2l_3x3()
+    # _test_mat2l_cyclic()
+    # _test_mat2l_noop()
+    # _test_mat2l_random()

@@ -9,6 +9,7 @@ from typing import Tuple, Optional
 import numpy as np
 from attr import dataclass
 from numba.core.typing.npydecl import NdIndex
+from numpy._typing import NDArray
 from numpy.typing import NDArray
 
 
@@ -139,3 +140,13 @@ if __name__ == '__main__':
     _test_UnitaryM_init()
     _test_create()
     _test_CUnitary_init()
+
+
+def validm2l(m: NDArray):
+    """
+    Validate if m is a 2-level unitary matrix.
+    :param m: input matrix.
+    :return: bool True if m is a 2-level unitary matrix; otherwise False.
+    """
+    count = len(coreindexes(m))
+    return count <= 2
