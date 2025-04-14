@@ -25,9 +25,9 @@ def mat2l_decompose(m: NDArray) -> List[UnitaryM]:
             if np.isclose(m[i, n], 0) and np.isclose(m[n, n], 1):
                 continue
             den = np.sqrt(np.conj(m[n, n]) * m[n, n] + np.conj(m[i, n]) * m[i, n])
-            c = np.array([[np.conj(m[n, n]) / den, np.conj(m[i, n]) / den],
-                          [m[i, n] / den, -m[n, n] / den]])
-            m2l = UnitaryM(s[0], np.conj(c).T, indexes=(n, i))
+            c = np.array([[m[n, n] / den, np.conj(m[i, n]) / den],
+                          [m[i, n] / den, -np.conj(m[n, n]) / den]])
+            m2l = UnitaryM(s[0], c, indexes=(n, i))
             result.append(m2l)
             m = np.conj(m2l.inflate()).T @ m
     idxs = coreindexes(m)
