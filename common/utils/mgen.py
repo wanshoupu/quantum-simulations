@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from scipy.stats import unitary_group
 
 from common.construct.cmat import UnitaryM
 
@@ -16,21 +17,23 @@ def random_unitary(n):
     Q = Q @ np.diag(D)
     return Q
 
+
 def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
     rr = lambda: random.randint(0, 10)
-    m = np.array([[complex(rr(), rr()), complex(rr(), rr())],
-                  [complex(rr(), rr()), complex(rr(), rr())]])
+    u = unitary_group.rvs(2)
     r1, r2 = min(r1, r2), max(r1, r2)
-    return UnitaryM(n, m, (r1, r2))
+    return UnitaryM(n, u, (r1, r2))
+
 
 def random_matrix_2l(n, r1, r2):
+    u = unitary_group.rvs(2)
     rr = lambda: random.randint(0, 10)
     m = np.diag([1 + 0j] * n)
     r1, r2 = min(r1, r2), max(r1, r2)
-    m[r1, r1] = complex(rr(), rr())
-    m[r2, r1] = complex(rr(), rr())
-    m[r1, r2] = complex(rr(), rr())
-    m[r2, r2] = complex(rr(), rr())
+    m[r1, r1] = u[0, 0]
+    m[r2, r1] = u[1, 0]
+    m[r1, r2] = u[0, 1]
+    m[r2, r2] = u[1, 1]
     return m
 
 
@@ -41,6 +44,7 @@ def permeye(indexes):
     :return: the resultant matrix
     """
     return np.diag([1] * len(indexes))[indexes]
+
 
 def xindexes(n, i, j):
     """
@@ -53,6 +57,7 @@ def xindexes(n, i, j):
     indexes = list(range(n))
     indexes[i], indexes[j] = indexes[j], indexes[i]
     return indexes
+
 
 def cyclic_matrix(n, i=0, j=None, c=1):
     """

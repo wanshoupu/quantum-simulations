@@ -27,13 +27,13 @@ def mat2l_decompose(m: NDArray) -> List[UnitaryM]:
             den = np.sqrt(np.conj(m[n, n]) * m[n, n] + np.conj(m[i, n]) * m[i, n])
             c = np.array([[m[n, n] / den, np.conj(m[i, n]) / den],
                           [m[i, n] / den, -np.conj(m[n, n]) / den]])
-            m2l = UnitaryM(s[0], c, indexes=(n, i))
+            m2l = UnitaryM(s[0], c, (n, i))
             result.append(m2l)
             m = np.conj(m2l.inflate()).T @ m
-    idxs = coreindexes(m)
-    m2l = m[np.ix_(idxs, idxs)]
+    ridxs, cidxs = coreindexes(m)
+    m2l = m[np.ix_(ridxs, cidxs)]
     if not np.allclose(m2l, np.eye(2)):
-        result.append(UnitaryM(s[0], m2l, indexes=tuple(idxs)))
+        result.append(UnitaryM(s[0], m2l, ridxs, cidxs))
     return result
 
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
 
     def _test_mat2l_3x3_2l():
-        mp = UnitaryM(3, random_matrix_2l(2, 0, 1), indexes=(0, 1)).inflate()
+        mp = UnitaryM(3, random_matrix_2l(2, 0, 1), (0, 1)).inflate()
         print(formatter.tostr(mp))
         tlms = mat2l_decompose(mp)
         print(f'decompose =')
