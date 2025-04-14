@@ -1,6 +1,8 @@
 import numpy as np
 import random
 
+from common.construct.cmat import UnitaryM
+
 
 def random_unitary(n):
     """Generate a random n x n unitary matrix."""
@@ -14,6 +16,12 @@ def random_unitary(n):
     Q = Q @ np.diag(D)
     return Q
 
+def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
+    rr = lambda: random.randint(0, 10)
+    m = np.array([[complex(rr(), rr()), complex(rr(), rr())],
+                  [complex(rr(), rr()), complex(rr(), rr())]])
+    r1, r2 = min(r1, r2), max(r1, r2)
+    return UnitaryM(n, m, indexes=(r1, r2))
 
 def random_matrix_2l(n, r1, r2):
     rr = lambda: random.randint(0, 10)
@@ -34,6 +42,17 @@ def permeye(indexes):
     """
     return np.diag([1] * len(indexes))[indexes]
 
+def xindexes(n, i, j):
+    """
+    Generate indexes list(range(n)) with the ith and jth swapped
+    :param n: length of indexes
+    :param i: ith index
+    :param j: jth index
+    :return: indexes list(range(n)) with the ith and jth swapped
+    """
+    indexes = list(range(n))
+    indexes[i], indexes[j] = indexes[j], indexes[i]
+    return indexes
 
 def cyclic_matrix(n, i=0, j=None, c=1):
     """
@@ -71,11 +90,36 @@ if __name__ == '__main__':
         assert np.all(np.isclose(identity, np.eye(*identity.shape))), print(formatter.tostr(identity))
 
 
+    def _test_permeye():
+        for _ in range(10):
+            n = random.randint(10, 16)
+            a = random.randrange(n)
+            b = random.randrange(n)
+            xs = xindexes(n, a, b)
+            pi = permeye(xs)
+            if a == b:
+                assert pi[a, a] == 1 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+            else:
+                assert pi[a, b] == 1 == pi[b, a], f'off diagonal {a},{b}\n{pi}'
+                assert pi[a, a] == 0 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+
+
     def _test_cyclic():
         cm = cyclic_matrix(8, 2)
         print(formatter.tostr(cm))
 
 
+    def _test_xindexes():
+        for _ in range(10):
+            n = random.randint(10, 100)
+            a = random.randrange(n)
+            b = random.randrange(n)
+            xs = xindexes(n, a, b)
+            assert xs[a] == b and xs[b] == a
+
+
     _test_cyclic()
     _test_unitary()
     _test_2l()
+    _test_xindexes()
+    _test_permeye()

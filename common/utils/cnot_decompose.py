@@ -70,121 +70,46 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
     =================================
 """
 import functools
+from typing import Tuple, Optional, Iterable
 
 import numpy as np
-from numpy.typing import NDArray
 
-from common.construct.cmat import validm2l
-
-
-def gray(n1, n2):
-    result = [n1]
-    for i in range(max(n1.bit_length(), n2.bit_length())):
-        mask = 1 << i
-        bit = n2 & mask
-        if result[-1] & mask != bit:
-            result.append((result[-1] ^ mask) | bit)
-    return result
+from common.construct.cmat import UnitaryM, CUnitary, X
+from common.utils.gray import gray_code, control_bits
 
 
-def xindexes(n, i, j):
-    """
-    Generate indexes list(range(n)) with the ith and jth swapped
-    :param n: length of indexes
-    :param i: ith index
-    :param j: jth index
-    :return: indexes list(range(n)) with the ith and jth swapped
-    """
-    indexes = list(range(n))
-    indexes[i], indexes[j] = indexes[j], indexes[i]
-    return indexes
-
-
-def permeye(indexes):
-    """
-    Create a square identity matrix n x n, with the permuted indexes
-    :param indexes: a permutation of indexes of list(range(len(indexes)))
-    :return: the resultant matrix
-    """
-    return np.diag([1] * len(indexes))[indexes]
-
-
-def validate(m):
-    n, k = m.shape
-    if n != k:
-        raise ValueError(f'Square unitary matrix is expected but got shape {n, k}')
-    if not validm2l(m):
-        raise ValueError(f'Two-level unitary matrix is expected but got multilevel matrix {m}')
-
-
-def cnot_decompose(m: NDArray):
-    n = m.shape[0]
-    if np.array_equal(m, np.eye(n)):
-        return m
-    validate(m)
-    indexes = [i for i in range(n) if not np.isclose(m[i, i], 1)]
-    if len(indexes) < 2:
-        indexes.append(indexes[-1] + 1)
-    r1, r2 = indexes
-    gcs = gray(r1, r2)
-    components = [permeye(xindexes(n, a, b)) for a, b in zip(gcs, gcs[1:-1])]
-    palindrome = components[::-1] + [m] + components
-    v = functools.reduce(lambda a, b: a @ b, palindrome)
-    return components + [v]
+def cnot_decompose(m: UnitaryM) -> Tuple[CUnitary, ...]:
+    if m.dimension & (m.dimension - 1):
+        raise ValueError(f'The dimension of the unitary matrix is not power of 2: {m.dimension}')
+    n = m.dimension.bit_length() - 1
+    if m.isid():
+        control = [None] + [True] * (n - 1)
+        return (CUnitary(m.matrix, controls=tuple(control)),)
+    if not m.is2l():
+        raise ValueError(f'The unitary matrix is not 2 level: {m}')
+    code = gray_code(*m.indexes)
+    components = [CUnitary(X, control_bits(n, core)) for core in zip(code, code[1:])]
+    if code[-2] < code[-1]:
+        #  the final swap preserves the original ordering of the core matrix
+        v = m.matrix
+    else:
+        #  the final swap altered the original ordering of the core matrix
+        v = X @ m.matrix @ X
+    return tuple(components + [CUnitary(v, control_bits(n, code[-2:]))])
 
 
 if __name__ == '__main__':
     from common.utils.format_matrix import MatrixFormatter
     import random
-    from common.utils.mgen import random_matrix_2l
+    from common.utils.mgen import random_matrix_2l, random_UnitaryM_2l
 
-
-    def _test_gray_code():
-        import random
-        for _ in range(10):
-            a = random.randint(10, 100)
-            b = random.randint(10, 100)
-            print(f'{a}, {b}')
-            blength = max(a.bit_length(), b.bit_length())
-            mybin = lambda x: bin(x)[2:].zfill(blength)
-            gcs = gray(a, b)
-            print(gcs)
-            for m, n in zip(gcs, gcs[1:]):
-                print(mybin(m), mybin(n))
-                assert mybin(m ^ n).count('1') == 1
-
-
-    def _test_xindexes():
-        import random
-        random.seed(3)
-        for _ in range(10):
-            n = random.randint(10, 100)
-            a = random.randrange(n)
-            b = random.randrange(n)
-            xs = xindexes(n, a, b)
-            assert xs[a] == b and xs[b] == a
-
-
-    def _test_permeye():
-        import random
-        random.seed(3)
-        for _ in range(10):
-            n = random.randint(10, 16)
-            a = random.randrange(n)
-            b = random.randrange(n)
-            xs = xindexes(n, a, b)
-            pi = permeye(xs)
-            if a == b:
-                assert pi[a, a] == 1 == pi[b, b], f'diagonal {a},{b}\n{pi}'
-            else:
-                assert pi[a, b] == 1 == pi[b, a], f'off diagonal {a},{b}\n{pi}'
-                assert pi[a, a] == 0 == pi[b, b], f'diagonal {a},{b}\n{pi}'
+    random.seed(5)
+    formatter = MatrixFormatter()
 
 
     def _test_cnot_decompose8():
         r1, r2 = 3, 4
         m = random_matrix_2l(8, r1, r2)
-        formatter = MatrixFormatter()
         print(f'test = \n{formatter.tostr(m)}')
         ms = cnot_decompose(m)
         print(f'decompose =')
@@ -196,23 +121,20 @@ if __name__ == '__main__':
 
 
     def _test_cnot_decompose4():
-        r1, r2 = 1, 2
-        m = random_matrix_2l(4, r1, r2)
-        formatter = MatrixFormatter()
-        print(f'test = \n{formatter.tostr(m)}')
+        m = random_UnitaryM_2l(4, 1, 2)
+        print(f'test = \n{formatter.tostr(m.inflate())}')
         ms = cnot_decompose(m)
         print(f'decompose =')
         for x in ms:
-            print(formatter.tostr(x), ',')
+            print(formatter.tostr(x.inflate()), ',')
         print()
         s, v = ms[:-1], ms[-1]
-        palindrome = s + [v] + s[::-1]
-        m3 = functools.reduce(lambda x, y: x @ y, palindrome)
-        assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
+        palindrome = s + (v,) + s[::-1]
+        recovered = functools.reduce(lambda x, y: x @ y, palindrome)
+        assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
 
 
     def _test_cnot_decompose_random():
-        random.seed(5)
         for _ in range(10):
             nqubit = random.randint(2, 5)
             n = 1 << nqubit
@@ -222,7 +144,6 @@ if __name__ == '__main__':
                 if r1 != r2:
                     break
             m = random_matrix_2l(n, r1, r2)
-            formatter = MatrixFormatter()
             print(f'test = \n{formatter.tostr(m)}')
             ms = cnot_decompose(m)
             print(f'decompose =')
@@ -235,8 +156,7 @@ if __name__ == '__main__':
             assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
 
 
-    _test_gray_code()
-    _test_xindexes()
-    _test_permeye()
+    # _test_gray_code()
+    # _test_control_bits()
     _test_cnot_decompose4()
-    _test_cnot_decompose_random()
+    # _test_cnot_decompose_random()

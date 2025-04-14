@@ -3,13 +3,15 @@ This module contains sparse matrices, 'UnitaryM', as arbitrary unitary operator,
 It also contains the controlled mat (cmat) which is represented by a core unitary matrix and a list of control qubits.
 """
 
-import itertools
-from typing import Tuple, Optional
+from itertools import product
+from typing import Tuple, Optional, Union
 
 import numpy as np
 from attr import dataclass
 from numba.core.typing.npydecl import NdIndex
 from numpy.typing import NDArray
+
+from common.utils.gray import control_bits
 
 X = np.eye(2)[[1, 0]]
 
@@ -69,7 +71,7 @@ class UnitaryM:
         if self.dimension == s[0]:
             return self.matrix.copy()
         result = np.eye(self.dimension, dtype=np.complexfloating)
-        for i, j in itertools.product(range(s[0]), range(s[0])):
+        for i, j in product(range(s[0]), range(s[0])):
             i1, j1 = self.indexes[i], self.indexes[j]
             result[i1, j1] = self.matrix[i, j]
         return result
@@ -80,22 +82,21 @@ class UnitaryM:
     def __setitem__(self, index: NdIndex, value):
         self.matrix[index] = value
 
-    def __matmul__(self, other: 'UnitaryM') -> 'UnitaryM':
+    def __matmul__(self, other: Union['UnitaryM', np.ndarray]) -> Union['UnitaryM', np.ndarray]:
+        if isinstance(other, np.ndarray):
+            return self.inflate() @ other
         if self.dimension != other.dimension:
             raise ValueError('matmul: Input operands have dimension mismatch.')
         if self.indexes == other.indexes:
             return UnitaryM(self.dimension, self.matrix @ other.matrix, self.indexes)
-        return UnitaryM(self.dimension, self.inflate() @ other.inflate(), indexes=tuple(range(self.dimension)))
+        return UnitaryM.deflate(self.inflate() @ other.inflate())
 
     @classmethod
     def deflate(cls, m: NDArray) -> 'UnitaryM':
-        s = m.shape
-        assert len(s) == 2, f'Matrix must be 2D array but got {s}.'
-        assert s[0] == s[1], f'Matrix must be square but got {s}.'
-        dimension = s[0]
+        validm(m)
         indexes = coreindexes(m)
         core = m[np.ix_(indexes)]
-        return UnitaryM(dimension, core, tuple(indexes))
+        return UnitaryM(m.shape[0], core, tuple(indexes))
 
     def isid(self) -> bool:
         return np.allclose(self.matrix, np.eye(2))
@@ -112,19 +113,33 @@ class CUnitary(UnitaryM):
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
         """
-        super().__init__(1 << len(controls), m, CUnitary.core_indexes(controls))
+        super().__init__(1 << len(controls), m, CUnitary.control2core(controls))
         self.controls = controls
 
     @staticmethod
-    def core_indexes(controls: Tuple[Optional[bool], ...]) -> Tuple[int, int]:
-        t = controls.index(None)
-        bits = list(controls)
-        num = lambda: int(''.join('1' if b else '0' for b in bits), 2)
-        bits[t] = False
-        i = num()
-        bits[t] = True
-        j = num()
-        return i, j
+    def control2core(controls: Tuple[Optional[bool], ...]) -> Tuple[int, ...]:
+        t = [i for i, b in enumerate(controls) if b is None]
+        bits = ['1' if b else '0' for b in controls]
+        result = []
+        for keys in product(*[['0', '1']] * len(t)):
+            for i, k in enumerate(keys):
+                bits[t[i]] = k
+            result.append(int(''.join(bits), 2))
+        return tuple(result)
+
+    @classmethod
+    def deflate(cls, m: NDArray) -> 'CUnitary':
+        validm(m)
+        dimension = m.shape[0]
+        if dimension & (dimension - 1):
+            raise ValueError(f'The dimension of the unitary matrix is not power of 2: {dimension}')
+        indexes = coreindexes(m)
+        core = m[np.ix_(indexes)]
+        return CUnitary(core, control_bits(dimension, indexes))
+
+    def __repr__(self):
+        result = super().__repr__()
+        return result + f',controls={repr(self.controls)}'
 
 
 if __name__ == '__main__':
