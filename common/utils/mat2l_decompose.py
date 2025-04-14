@@ -44,6 +44,7 @@ if __name__ == '__main__':
 
     random.seed(3)
     np.random.seed(3)
+    formatter = MatrixFormatter(precision=5)
 
 
     def _test_mat2l_cyclic():
@@ -112,9 +113,6 @@ if __name__ == '__main__':
             recovered = functools.reduce(lambda a, b: a @ b, tlms)
             assert np.allclose(recovered.inflate(), m), f'original\n{formatter.tostr(m)}\n, recovered\n{formatter.tostr(recovered.inflate())}'
 
-
-    formatter = MatrixFormatter(precision=5)
-    random.seed(3)
 
     _test_mat2l_2x2_noop()
     _test_mat2l_3x3_2l()
