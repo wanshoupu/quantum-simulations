@@ -143,20 +143,18 @@ if __name__ == '__main__':
                 r1 = random.randrange(n)
                 if r1 != r2:
                     break
-            m = random_matrix_2l(n, r1, r2)
-            print(f'test = \n{formatter.tostr(m)}')
+            m = random_UnitaryM_2l(n, r1, r2)
+            print(f'test = \n{formatter.tostr(m.inflate())}')
             ms = cnot_decompose(m)
             print(f'decompose =')
             for x in ms:
-                print(formatter.tostr(x), ',')
+                print(formatter.tostr(x.inflate()), ',')
             print()
             s, v = ms[:-1], ms[-1]
-            palindrome = s + [v] + s[::-1]
-            m3 = functools.reduce(lambda x, y: x @ y, palindrome)
-            assert np.all(m3 == m), f'm != m3: \n{formatter.tostr(m)},\n\n{formatter.tostr(m3)}'
+            palindrome = s + (v,) + s[::-1]
+            recovered = functools.reduce(lambda x, y: x @ y, palindrome)
+            assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
 
 
-    # _test_gray_code()
-    # _test_control_bits()
     _test_cnot_decompose4()
-    # _test_cnot_decompose_random()
+    _test_cnot_decompose_random()
