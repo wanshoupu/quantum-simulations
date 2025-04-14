@@ -87,8 +87,8 @@ def cnot_decompose(m: UnitaryM) -> Tuple[CUnitary, ...]:
         return (CUnitary(m.matrix, controls=tuple(control)),)
     if not m.is2l():
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
-    code = gray_code(*m.indexes)
-    components = [CUnitary(X, control_bits(n, core)) for core in zip(code, code[1:])]
+    code = gray_code(*m.row_indexes)
+    components = [CUnitary(X, control_bits(n, core)) for core in zip(code, code[1:-1])]
     if code[-2] < code[-1]:
         #  the final swap preserves the original ordering of the core matrix
         v = m.matrix
