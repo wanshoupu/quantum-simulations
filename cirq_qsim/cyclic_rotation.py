@@ -1,7 +1,8 @@
 import cirq
 import numpy as np
 
-from common.utils.cnot_decompose import permeye, cnot_decompose
+from common.utils.cnot_decompose import cnot_decompose
+from common.utils.mgen import permeye
 from common.utils.format_matrix import MatrixFormatter
 from common.utils.mat2l_decompose import mat2l_decompose
 
@@ -22,11 +23,11 @@ if __name__ == '__main__':
     for x in m2ls:
         coms = cnot_decompose(x)
         cnots, u = coms[:-1], coms[-1]
-        print(f'single-qubit unitary matrix:\n{formatter.tostr(u)}\n')
+        print(f'single-qubit unitary matrix:\n{formatter.tostr(u.inflate())}\n')
         result.extend(coms)
 
     for x in result:
-        print(f'gate-level matrix:\n{formatter.tostr(x)}\n')
+        print(f'gate-level matrix:\n{formatter.tostr(x.inflate())}\n')
 
     # Define 3 qubits
     q0, q1, q2 = cirq.LineQubit.range(3)

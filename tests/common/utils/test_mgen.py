@@ -1,7 +1,7 @@
 from random import random
 
 from common.utils.format_matrix import MatrixFormatter
-from mgen import *
+from common.utils.mgen import *
 
 random.seed(3)
 formatter = MatrixFormatter()
