@@ -10,19 +10,26 @@ formatter = MatrixFormatter()
 @dataclass
 class Bytecode:
     data: UnitaryM
-    parent: Optional['Bytecode']=None
     children: List['Bytecode'] = field(default_factory=list)
 
     def append(self, child: 'Bytecode'):
         self.children.append(child)
 
+    def __iter__(self):
+        return BytecodeIter(self)
+
 
 class BytecodeIter:
-    def __init__(self, bytecode: Bytecode):
-        pass
+    def __init__(self, root: Bytecode):
+        self.stack = [root]  # use a stack for pre-order
 
     def __iter__(self):
-        pass
+        return self
 
-    def __next__(self):
-        pass
+    def __next__(self) -> Bytecode:
+        if not self.stack:
+            raise StopIteration
+        node = self.stack.pop()
+        # Push children in reverse so left-most is processed first
+        self.stack.extend(reversed(node.children))
+        return node
