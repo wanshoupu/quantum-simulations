@@ -1,5 +1,5 @@
 from common.construct.quompiler import quompile
-from tests.common.utils.mgen import cyclic_matrix
+from common.utils.mgen import cyclic_matrix
 
 
 def test_compile():
