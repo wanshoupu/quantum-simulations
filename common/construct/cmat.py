@@ -78,9 +78,14 @@ class UnitaryM:
         s = self.matrix.shape
         if self.dimension == s[0]:
             return self.matrix.copy()
-        result = np.eye(self.dimension, dtype=np.complexfloating)
+        result = np.zeros((self.dimension, self.dimension), dtype=np.complexfloating)
         for i, j in product(range(s[0]), range(s[1])):
             result[self.row_indexes[i], self.col_indexes[j]] = self.matrix[i, j]
+        indexes = set(range(self.dimension))
+        idrows = sorted(indexes - set(self.row_indexes))
+        idcols = sorted(indexes - set(self.col_indexes))
+        for i, j in zip(idrows, idcols):
+            result[i, j] = 1
         return result
 
     def __getitem__(self, index: NdIndex):

@@ -45,3 +45,12 @@ def test_xindexes():
         b = random.randrange(n)
         xs = xindexes(n, a, b)
         assert xs[a] == b and xs[b] == a
+
+
+def test_random_indexes():
+    for _ in range(10):
+        n = random.randint(10, 100)
+        size = random.randrange(n)
+        indxs = random_indexes(n, size)
+        assert len(indxs) == len(set(indxs)), "Indexes contain duplicates!"
+        assert 0 <= min(indxs) and max(indxs) < n, "Indexes are out of boundaries!"

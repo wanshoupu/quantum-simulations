@@ -2,14 +2,15 @@ import random
 
 import numpy as np
 import pytest
+from scipy.stats import unitary_group
 
 from common.construct.cmat import UnitaryM, CUnitary, X
 from common.utils.format_matrix import MatrixFormatter
-from common.utils.mgen import random_unitary
+from common.utils.mgen import random_unitary, random_indexes
 
 random.seed(42)
 np.random.seed(42)
-formatter = MatrixFormatter()
+formatter = MatrixFormatter(precision=2)
 
 
 def test_UnitaryM_init_invalid_dim_smaller_than_mat():
@@ -45,3 +46,39 @@ def test_CUnitary_init():
 
 def test_X():
     assert np.all(np.equal(X[::-1], np.eye(2)))
+
+
+def test_UnitaryM_create_asymmetric():
+    m = unitary_group.rvs(2)
+    assert np.allclose(np.conj(m).T @ m, np.eye(2))
+    # print(f'm = \n{formatter.tostr(m)}')
+    # print()
+    row_indxs = 0, 5
+    col_indxs = 5, 7
+    u = UnitaryM(8, m, row_indxs, col_indxs)
+    # print(f'test = \n{formatter.tostr(u.inflate())}')
+    inflate = u.inflate()
+    assert np.allclose(np.conj(inflate).T @ inflate, np.eye(8)), f'Not unitary'
+
+
+def test_UnitaryM_mult_asymmetric():
+    A = UnitaryM(8, unitary_group.rvs(2), (0, 5), (5, 7))
+    B = UnitaryM(8, unitary_group.rvs(2), (1, 0), (3, 4))
+    C = A @ B
+    print(f'A = \n{formatter.tostr(A.inflate())}')
+    print(f'B = \n{formatter.tostr(B.inflate())}')
+    print(f'C = \n{formatter.tostr(C.inflate())}')
+    print(f'C.core = \n{formatter.tostr(C.matrix)}')
+
+def test_UnitaryM_deflate_asymmetric_random():
+    for _ in range(20):
+        print(f'Test # {_}')
+        nqubit = random.randint(1, 5)
+        n = 1 << nqubit
+        k = random.randint(2, n)
+        row, col = random_indexes(n, k), random_indexes(n, k)
+        original = UnitaryM(n, unitary_group.rvs(k), row, col)
+        m = original.inflate()
+        print(f'original = \n{formatter.tostr(m)}')
+        u = UnitaryM.deflate(m)
+        assert np.allclose(u.inflate(), m), f'/Deflate/inflate has problem'

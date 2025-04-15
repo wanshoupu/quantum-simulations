@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 import random
 from scipy.stats import unitary_group
@@ -24,10 +26,16 @@ def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
     r1, r2 = min(r1, r2), max(r1, r2)
     return UnitaryM(n, u, (r1, r2))
 
+def random_UnitaryM_2l_asymmetric(n, row_indxs: Tuple[int, int], col_indxs: Tuple[int, int]) -> UnitaryM:
+    u = unitary_group.rvs(2)
+    return UnitaryM(n, u, row_indxs, col_indxs)
+
+def random_indexes(n, k):
+    indexes = list(range(n))
+    return random.sample(indexes, k=k)
 
 def random_matrix_2l(n, r1, r2):
     u = unitary_group.rvs(2)
-    rr = lambda: random.randint(0, 10)
     m = np.diag([1 + 0j] * n)
     r1, r2 = min(r1, r2), max(r1, r2)
     m[r1, r1] = u[0, 0]
