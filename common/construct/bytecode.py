@@ -1,26 +1,20 @@
+from dataclasses import dataclass, field
 from typing import List, Optional
-from numpy.typing import NDArray
+
+from common.construct.cmat import UnitaryM
 from common.utils.format_matrix import MatrixFormatter
 
 formatter = MatrixFormatter()
 
 
+@dataclass
 class Bytecode:
-    def __init__(self, data, parent=None, children=None):
-        self.parent: Optional[Bytecode] = parent
-        self.data: NDArray = data
-        self.children: List[Bytecode] = children or []
+    data: UnitaryM
+    parent: Optional['Bytecode']=None
+    children: List['Bytecode'] = field(default_factory=list)
 
     def append(self, child: 'Bytecode'):
         self.children.append(child)
-
-    def __repr__(self):
-        if self.children:
-            rows = ['Node data:', formatter.tostr(self.data), 'children:']
-            for c in self.children:
-                rows.append(repr(c))
-            return '\n'.join(rows)
-        return 'Leaf data:\n' + formatter.tostr(self.data)
 
 
 class BytecodeIter:
