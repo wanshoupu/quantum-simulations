@@ -16,7 +16,7 @@ from common.utils.gray import control_bits
 X = np.eye(2)[[1, 0]]
 
 
-def coreindexes(m) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+def coreindexes(m: NDArray) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
     validm(m)
     dimension = m.shape[0]
     identity = np.eye(dimension)
@@ -26,7 +26,7 @@ def coreindexes(m) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
     return tuple(rindx), tuple(cindx)
 
 
-def validm(m):
+def validm(m: NDArray):
     s = m.shape
     if len(s) != 2:
         raise ValueError(f'Matrix must be 2D array but got {s}.')
@@ -60,13 +60,13 @@ class UnitaryM:
     col_indexes: Tuple[int, ...] = field(default=None)
 
     def __post_init__(self):
-        if self.col_indexes is None:
-            self.col_indexes = self.row_indexes
         s = self.matrix.shape
         assert len(s) == 2, f'Matrix must be 2D array but got {s}.'
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
         assert np.allclose(self.matrix @ self.matrix.conj().T, np.eye(s[0])), f'Matrix is not unitary {self.matrix}'
-        assert self.dimension >= s[0], f'Dimension must be greater than or equal to the dimension of the core matrix.'
+        assert self.dimension >= max(s[0], s[1]), f'Dimension must be greater than or equal to the dimension of the core matrix.'
+        if self.col_indexes is None:
+            self.col_indexes = self.row_indexes
         assert len(self.row_indexes) == s[0], f'The number of row_indexes must match the row dimension of the core matrix.'
         assert len(self.col_indexes) == s[1], f'The number of col_indexes must match the col dimension of the core matrix.'
 
