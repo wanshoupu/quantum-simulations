@@ -72,24 +72,30 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 from typing import Tuple
 
 from common.construct.cmat import UnitaryM, CUnitary, X
-from common.utils.gray import gray_code, control_bits
+from common.utils.gray import gray_code, control_bits, cogray_code
 
 
 def cnot_decompose(m: UnitaryM) -> Tuple[CUnitary, ...]:
+    u = m.matrix.copy()
     if m.dimension & (m.dimension - 1):
         raise ValueError(f'The dimension of the unitary matrix is not power of 2: {m.dimension}')
     n = m.dimension.bit_length() - 1
     if m.isid():
         control = [None] + [True] * (n - 1)
-        return (CUnitary(m.matrix, controls=tuple(control)),)
+        return (CUnitary(u, controls=tuple(control)),)
     if not m.is2l():
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
-    code = gray_code(*m.row_indexes)
-    components = [CUnitary(X, control_bits(n, core)) for core in zip(code, code[1:-1])]
-    if code[-2] < code[-1]:
-        #  the final swap preserves the original ordering of the core matrix
-        v = m.matrix
-    else:
-        #  the final swap altered the original ordering of the core matrix
-        v = X @ m.matrix @ X
-    return tuple(components + [CUnitary(v, control_bits(n, code[-2:]))])
+    ri, rj = m.row_indexes
+    ci, cj = m.col_indexes
+    (lcode1, lcode2), (rcode1, rcode2) = cogray_code((ri, rj), (ci, cj))
+    left_coms = [CUnitary(X, control_bits(n, core)) for core in zip(lcode1, lcode1[1:-1])] + [
+        CUnitary(X, control_bits(n, core)) for core in zip(lcode2, lcode2[1:-1])
+    ]
+    if (ri - rj) * (lcode1[-1] - lcode2[-1]) < 0:
+        u = X @ u
+    right_coms = [CUnitary(X, control_bits(n, core)) for core in zip(rcode1, rcode1[1:-1])] + [
+        CUnitary(X, control_bits(n, core)) for core in zip(rcode2, rcode2[1:-1])
+    ]
+    if (ci - cj) * (rcode1[-1] - rcode2[-1]) < 0:
+        u = u @ X
+    return tuple(left_coms + [CUnitary(u, control_bits(n, (lcode1[-1], lcode2[-1])))] + right_coms[::-1])

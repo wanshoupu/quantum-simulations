@@ -47,14 +47,13 @@ def test_cogray_code():
         ns = random.sample(nums, k=2)
         ms = random.sample(nums, k=2)
         # print(f'ns={ns}, ms={ms}')
-        cgc = cogray_code(ns, ms)
-        # print(cgc)
-        for gc in cgc:
+        gc1, gc2 = cogray_code(ns, ms)
+        for gc in gc1 + gc2:
             assert_gray(gc)
 
         blength = max(ns + ms).bit_length()
         mybin = lambda x: bin(x)[2:].zfill(blength)
-        bits = np.array([list(mybin(c[-1])) for c in cgc])
+        bits = np.array([list(mybin(c[-1])) for c in gc1 + gc2])
         # print(bits)
         bitdiff = [len(set(np.squeeze(bits[:, i]))) > 1 for i in range(bits.shape[1])]
         assert 1 == sum(bitdiff)

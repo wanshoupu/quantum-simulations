@@ -19,7 +19,7 @@ def gray_code(n1, n2):
     return result
 
 
-def cogray_code(ns: Tuple[int, int], ms: Tuple[int, int]) -> tuple[list[int], list[int], list[int], list[int]]:
+def cogray_code(ns: Tuple[int, int], ms: Tuple[int, int]) -> tuple[tuple, tuple]:
     """
     Find the co-Gray code for ns and ms such that the total length of the gray code chain is minimal.
     Co-Gray code of a group of N numbers (i1,i2,...) consists of N tuples each begins with the corresponding number in the group and ends on a common number.
@@ -66,7 +66,7 @@ def cogray_code(ns: Tuple[int, int], ms: Tuple[int, int]) -> tuple[list[int], li
         for j in range(len(gs)):
             if (gs[j][-1] >> i) & 1 != bit:
                 gs[j].append(gs[j][-1] ^ mask)
-    return gs
+    return gs[:2], gs[2:]
 
 
 def diff_parity_bits(ns: Tuple[int, int], ms: Tuple[int, int]) -> Tuple[List[int], List[int]]:
