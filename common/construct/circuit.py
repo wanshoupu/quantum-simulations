@@ -1,16 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import List
 
-from numpy._typing import NDArray
-
-from common.construct.cmat import CUnitary, UnitaryM
-from sympy.physics.quantum.gate import CGate, XGate
-
+import cirq
+from sympy.physics.quantum.gate import CGate
 from typing_extensions import override
 
-
-class Circuit:
-    pass
+from common.construct.cmat import CUnitary, UnitaryM
 
 
 class CircuitBuilder(ABC):
@@ -25,38 +19,31 @@ class CircuitBuilder(ABC):
             meta = CGate()
 
     @abstractmethod
-    def circuit(self):
-        pass
-
-    @abstractmethod
-    def configure(self):
+    def finish(self):
         pass
 
 
-class CirqUnitaryInterpreter(CircuitBuilder):
+class CirqBuilder(CircuitBuilder):
+
+    def __init__(self):
+        self.qubits = []
+        self.circuit = cirq.Circuit()
+
     @override
     def gate(self, m: UnitaryM):
         meta = CGate
 
     @override
-    def circuit(self, n: int):
-        pass
-
-    @override
-    def configure(self):
+    def finish(self):
         pass
 
 
-class QiskitUnitaryInterpreter(CircuitBuilder):
+class QiskitBuilder(CircuitBuilder):
 
     @override
-    def gate(self, m: NDArray):
+    def gate(self, m: UnitaryM):
         pass
 
     @override
-    def circuit(self, n: int):
-        pass
-
-    @override
-    def configure(self):
+    def finish(self):
         pass
