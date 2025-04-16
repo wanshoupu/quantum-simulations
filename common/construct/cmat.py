@@ -16,14 +16,31 @@ from common.utils.gray import control_bits
 X = np.eye(2)[[1, 0]]
 
 
-def coreindexes(m: NDArray) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+def idindexes(m: NDArray) -> Tuple[int, ...]:
+    """
+    Identity indexes are defined as a list of indexes [i...]
+    where both the ith row and the ith column are identical to that of an identity matrix of same dimension.
+    :param m: an input square matrix.
+    :return: a tuple of identity indexes.
+    """
     validm(m)
     dimension = m.shape[0]
     identity = np.eye(dimension)
-    # indexes of rows / columns that's not that of an identity
-    rindx = [i for i in range(dimension) if not np.allclose(m[:, i], identity[i])]
-    cindx = [i for i in range(dimension) if not np.allclose(m[i, :], identity[i])]
-    return tuple(rindx), tuple(cindx)
+    idindx = [i for i in range(dimension) if np.allclose(m[:, i], identity[i]) and np.allclose(m[i, :], identity[i])]
+    return tuple(idindx)
+
+
+def coreindexes(m: NDArray) -> Tuple[int, ...]:
+    """
+    Core indexes are the complementary indexes to the identity indexes. See 'idindexes'.
+    :param m: an input square matrix.
+    :return: a tuple of core indexes.
+    """
+    validm(m)
+    dimension = m.shape[0]
+    identity = np.eye(dimension)
+    idindx = [i for i in range(dimension) if not np.allclose(m[:, i], identity[i]) or not np.allclose(m[i, :], identity[i])]
+    return tuple(idindx)
 
 
 def validm(m: NDArray):
@@ -51,13 +68,11 @@ class UnitaryM:
     Instantiate a unitary matrix.
     :param dimension: dimension of the matrix.
     :param matrix: the core matrix.
-    :param row_indexes: the row indexes occupied by the core submatrix.
-    :param col_indexes: the col indexes occupied by the core submatrix.
+    :param indexes: the row indexes occupied by the core submatrix.
     """
     dimension: int
     matrix: NDArray
-    row_indexes: Tuple[int, ...]
-    col_indexes: Tuple[int, ...] = field(default=None)
+    indexes: Tuple[int, ...]
 
     def __post_init__(self):
         s = self.matrix.shape
@@ -65,27 +80,19 @@ class UnitaryM:
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
         assert np.allclose(self.matrix @ self.matrix.conj().T, np.eye(s[0])), f'Matrix is not unitary {self.matrix}'
         assert self.dimension >= max(s[0], s[1]), f'Dimension must be greater than or equal to the dimension of the core matrix.'
-        if self.col_indexes is None:
-            self.col_indexes = self.row_indexes
-        assert len(self.row_indexes) == s[0], f'The number of row_indexes must match the row dimension of the core matrix.'
-        assert len(self.col_indexes) == s[1], f'The number of col_indexes must match the col dimension of the core matrix.'
+        assert len(self.indexes) == s[0], f'The number of row_indexes must match the row dimension of the core matrix.'
 
     def inflate(self) -> NDArray:
         """
         Create a full-blown NDArray represented by UnitaryM. It is a readonly method.
         :return: The full-blown NDArray represented by UnitaryM.
         """
-        s = self.matrix.shape
-        if self.dimension == s[0]:
+        matd = self.matrix.shape[0]
+        if self.dimension == matd:
             return self.matrix.copy()
-        result = np.zeros((self.dimension, self.dimension), dtype=np.complexfloating)
-        for i, j in product(range(s[0]), range(s[1])):
-            result[self.row_indexes[i], self.col_indexes[j]] = self.matrix[i, j]
-        indexes = set(range(self.dimension))
-        idrows = sorted(indexes - set(self.row_indexes))
-        idcols = sorted(indexes - set(self.col_indexes))
-        for i, j in zip(idrows, idcols):
-            result[i, j] = 1
+        result = np.eye(self.dimension, dtype=np.complexfloating)
+        for i, j in product(range(matd), range(matd)):
+            result[self.indexes[i], self.indexes[j]] = self.matrix[i, j]
         return result
 
     def __getitem__(self, index: NdIndex):
@@ -99,16 +106,17 @@ class UnitaryM:
             return self.inflate() @ other
         if self.dimension != other.dimension:
             raise ValueError('matmul: Input operands have dimension mismatch.')
-        if self.col_indexes == other.row_indexes:
-            return UnitaryM(self.dimension, self.matrix @ other.matrix, self.row_indexes, other.col_indexes)
+        if self.indexes == other.indexes:
+            return UnitaryM(self.dimension, self.matrix @ other.matrix, self.indexes)
+        # TODO this is a quick but slow implementation. May be improved by finding the union/intersection of indices
         return UnitaryM.deflate(self.inflate() @ other.inflate())
 
     @classmethod
     def deflate(cls, m: NDArray) -> 'UnitaryM':
         validm(m)
-        rindx, cindx = coreindexes(m)
-        core = m[np.ix_(rindx, cindx)]
-        return UnitaryM(m.shape[0], core, tuple(rindx), tuple(cindx))
+        indxs = coreindexes(m)
+        core = m[np.ix_(indxs, indxs)]
+        return UnitaryM(m.shape[0], core, indxs)
 
     def isid(self) -> bool:
         return np.allclose(self.matrix, np.eye(2))
@@ -125,7 +133,7 @@ class CUnitary(UnitaryM):
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
         """
-        super().__init__(1 << len(controls), m, CUnitary.control2core(controls), CUnitary.control2core(controls))
+        super().__init__(1 << len(controls), m, CUnitary.control2core(controls))
         self.controls = controls
 
     @staticmethod
