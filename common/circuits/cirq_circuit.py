@@ -1,37 +1,48 @@
+from typing import Union
+
 import cirq
-import numpy as np
+from cirq import EigenGate
 from typing_extensions import override
 
 from common.circuits.circuit_builder import CircuitBuilder
-from common.construct.cmat import UnitaryM, validm2l, immutable
+from common.construct.cmat import UnitaryM, CUnitary, UnivGate
 
 
 class CirqBuilder(CircuitBuilder):
     __UNIV_GATES = {
-        ((0j, 1), (1, 0j)): cirq.X,
-        ((0j, 1j), (-1j, 0j)): cirq.Y,
-        ((1, 0j), (0j, -1)): cirq.Z,
-        ((1, 0j), (0j, 1j)): cirq.S,
-        ((1, 0j), (0j, np.exp(1j * np.pi / 4))): cirq.T,
-        immutable(np.array([[1, 1], [1, -1]]) / np.sqrt(2)): cirq.H,
+        # necessary gates
+        UnivGate.H: cirq.H,
+        UnivGate.S: cirq.S,
+        UnivGate.T: cirq.T,
+        # additional auxiliary gates
+        UnivGate.X: cirq.X,
+        UnivGate.Y: cirq.Y,
+        UnivGate.Z: cirq.Z,
     }
 
     def __init__(self, dimension: int):
-        super().__init__(dimension)
         self.qubits = cirq.LineQubit.range(dimension)
         self.circuit = cirq.Circuit()
 
     @override
-    def get_unigate(self, m: UnitaryM) -> object:
-        pass
+    def get_univ_gate(self, m: UnitaryM) -> Union[EigenGate, None]:
+        univ_gate = UnivGate.get(m.matrix)
+        if univ_gate:
+            return CirqBuilder.__UNIV_GATES[univ_gate]
 
     @override
     def build_gate(self, m: UnitaryM):
-        if not validm2l(m.matrix):
-            custom_gate = cirq.MatrixGate(m.matrix)
-            self.circuit.append(custom_gate(self.qubits[0]))
-        # if isinstance(m, CUnitary):
+        if isinstance(m, CUnitary):
+            gate = self.get_univ_gate(m)
+            if gate:
+                control = [self.qubits[i] for i, c in enumerate(m.controls) if c is not None]
+                control_values = [int(c) for c in m.controls if c is not None]
+                self.circuit.append(gate(self.qubits[0]).controlled_by(*control, control_values=control_values))
+                return
+
+        custom_gate = cirq.MatrixGate(m.matrix)
+        self.circuit.append(custom_gate(self.qubits[0]))
 
     @override
     def finish(self) -> cirq.Circuit:
-        pass
+        return self.circuit

@@ -10,8 +10,28 @@ from typing import Tuple, Optional, Union
 import numpy as np
 from numba.core.typing.npydecl import NdIndex
 from numpy.typing import NDArray
+from enum import Enum
 
-X = np.eye(2)[[1, 0]]
+
+class UnivGate(Enum):
+    I = ('I', np.eye(2))
+    X = ('X', np.eye(2)[[1, 0]])
+    Y = ('Y', np.array([[0j, 1j], [-1j, 0j]]))
+    Z = ('Z', np.array([[1, 0j], [0j, -1]]))
+    H = ('H', np.array([[1, 1], [1, -1]]) / np.sqrt(2))
+    S = ('S', np.array([[1, 0j], [0j, 1j]]))
+    T = ('T', np.array([[1, 0j], [0j, np.exp(1j * np.pi / 4)]]))
+
+    def __init__(self, label, mat: NDArray):
+        self.label = label
+        self.mat = mat
+
+    @staticmethod
+    def get(m: NDArray) -> Union['UnivGate', None]:
+        for g in UnivGate:
+            if np.allclose(m, g.mat):
+                return g
+        return None
 
 
 def immutable(m: NDArray):

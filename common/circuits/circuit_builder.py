@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
 from typing_extensions import override
 
-from common.construct.cmat import UnitaryM, validm2l
+from common.construct.cmat import UnitaryM, validm2l, UnivGate
 
 
 class CircuitBuilder(ABC):
@@ -36,7 +37,7 @@ class CircuitBuilder(ABC):
         pass
 
     @abstractmethod
-    def get_unigate(self, m: UnitaryM) -> object:
+    def get_univ_gate(self, m: UnitaryM) -> Union[UnivGate, None]:
         """
         Subclass return a universal gate out of a set, which is to be used as the building blocks.
         :return: The universal gate, if any, for the input m. Return None if not found.

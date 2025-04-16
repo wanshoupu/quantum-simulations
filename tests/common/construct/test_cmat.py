@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pytest
 
-from common.construct.cmat import UnitaryM, CUnitary, X, coreindexes, idindexes
+from common.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate
 from common.utils.format_matrix import MatrixFormatter
 from common.utils.mgen import random_unitary, cyclic_matrix
 
@@ -75,5 +75,34 @@ def test_CUnitary_init():
     assert cu.indexes == (6, 7), f'Core indexes is unexpected {cu.indexes}'
 
 
-def test_X():
-    assert np.all(np.equal(X[::-1], np.eye(2)))
+def test_univ_gate_X():
+    assert np.all(np.equal(UnivGate.X.mat[::-1], np.eye(2)))
+
+
+def test_univ_gate_get_none():
+    m = random_unitary(2)
+    a = UnivGate.get(m)
+    assert a is None
+
+
+def test_univ_gate_get_T():
+    mat = np.sqrt(np.array([[1, 0], [0, 1j]]))
+    gate = UnivGate.get(mat)
+    assert gate == UnivGate.T
+
+
+def test_univ_gate_get_Z():
+    mat = UnivGate.H.mat @ UnivGate.X.mat @ UnivGate.H.mat
+    gate = UnivGate.get(mat)
+    assert gate == UnivGate.Z
+
+
+def test_univ_gate_get_H():
+    mat = (UnivGate.Z.mat + UnivGate.X.mat) / np.sqrt(2)
+    gate = UnivGate.get(mat)
+    assert gate == UnivGate.H
+
+
+def test_univ_gate_commutator():
+    mat = UnivGate.Z.mat @ UnivGate.Y.mat @ UnivGate.Z.mat
+    assert np.array_equal(mat, -UnivGate.Y.mat), f'mat unexpected {mat}'

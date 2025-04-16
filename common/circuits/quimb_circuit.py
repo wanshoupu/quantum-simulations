@@ -1,8 +1,10 @@
+from typing import Union
+
 import quimb.tensor as qtn
 from typing_extensions import override
 
 from common.circuits.circuit_builder import CircuitBuilder
-from common.construct.cmat import UnitaryM, validm2l
+from common.construct.cmat import UnitaryM, validm2l, UnivGate
 
 
 class QuimbBuilder(CircuitBuilder):
@@ -13,7 +15,7 @@ class QuimbBuilder(CircuitBuilder):
         self.counter = 1
 
     @override
-    def get_unigate(self, m: UnitaryM) -> object:
+    def get_univ_gate(self, m: UnitaryM) -> Union[UnivGate, None]:
         pass
 
     @override
