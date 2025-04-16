@@ -5,10 +5,11 @@ import numpy as np
 
 from common.utils.cnot_decompose import cnot_decompose
 from common.utils.format_matrix import MatrixFormatter
-from common.utils.mgen import random_UnitaryM_2l, random_UnitaryM_2l_asymmetric
+from common.utils.mgen import random_UnitaryM_2l
 
 random.seed(5)
-formatter = MatrixFormatter()
+np.random.seed(5)
+formatter = MatrixFormatter(precision=2)
 
 
 def test_cnot_decompose8():
@@ -53,15 +54,3 @@ def test_cnot_decompose_random():
         print()
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-
-
-def test_cnot_decompose_asymmetric():
-    m = random_UnitaryM_2l_asymmetric(4, (2, 3), (1, 0))
-    print(f'test = \n{formatter.tostr(m.inflate())}')
-    ms = cnot_decompose(m)
-    print(f'decompose =')
-    for x in ms:
-        print(formatter.tostr(x.inflate()), ',')
-    print()
-    recovered = reduce(lambda x, y: x @ y, ms)
-    assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'

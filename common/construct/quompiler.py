@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 
 def quompile(u: NDArray) -> Bytecode:
     s = u.shape
-    um = UnitaryM(s[0], u, row_indexes=tuple(range(s[0])))
+    um = UnitaryM(s[0], u, indexes=tuple(range(s[0])))
     return _quompile(um)
 
 

@@ -57,9 +57,8 @@ def validm2l(m: NDArray):
     :param m: input matrix.
     :return: bool True if m is a 2-level unitary matrix; otherwise False.
     """
-    rindx, cindx = coreindexes(m)
-    count = max(len(rindx), len(cindx))
-    return count <= 2
+    indxs = coreindexes(m)
+    return len(indxs) <= 2
 
 
 @dataclass
@@ -146,16 +145,6 @@ class CUnitary(UnitaryM):
                 bits[t[i]] = k
             result.append(int(''.join(bits), 2))
         return tuple(result)
-
-    @classmethod
-    def deflate(cls, m: NDArray) -> 'CUnitary':
-        validm(m)
-        dimension = m.shape[0]
-        if dimension & (dimension - 1):
-            raise ValueError(f'The dimension of the unitary matrix is not power of 2: {dimension}')
-        indexes = coreindexes(m)
-        core = m[np.ix_(indexes)]
-        return CUnitary(core, control_bits(dimension, indexes))
 
     def __repr__(self):
         result = super().__repr__()
