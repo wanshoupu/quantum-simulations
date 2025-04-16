@@ -4,7 +4,7 @@ from qiskit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate
 from qiskit.quantum_info import Operator
 
-from common.utils.cnot_decompose import permeye
+from common.utils.mgen import permeye
 from common.utils.format_matrix import MatrixFormatter
 
 

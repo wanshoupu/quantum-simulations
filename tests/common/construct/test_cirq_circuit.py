@@ -1,4 +1,4 @@
-from common.construct.cirq_circuit import CirqBuilder
+from common.circuits.cirq_circuit import CirqBuilder
 from common.utils.mgen import random_UnitaryM_2l
 
 

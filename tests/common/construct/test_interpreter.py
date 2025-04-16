@@ -1,5 +1,5 @@
-from common.construct.cirq_circuit import CirqBuilder
-from common.construct.interpreter import CircuitInterp
+from common.circuits.cirq_circuit import CirqBuilder
+from common.circuits.interpreter import CircuitInterp
 from common.construct.quompiler import quompile
 from common.utils.mgen import cyclic_matrix
 

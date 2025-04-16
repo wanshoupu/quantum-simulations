@@ -1,4 +1,4 @@
-from common.construct.quimb_circuit import QuimbBuilder
+from common.circuits.quimb_circuit import QuimbBuilder
 from common.utils.mgen import random_UnitaryM_2l
 
 

@@ -2,11 +2,10 @@ import random
 
 import numpy as np
 import pytest
-from scipy.stats import unitary_group
 
 from common.construct.cmat import UnitaryM, CUnitary, X, coreindexes, idindexes
 from common.utils.format_matrix import MatrixFormatter
-from common.utils.mgen import random_unitary, random_indexes, cyclic_matrix
+from common.utils.mgen import random_unitary, cyclic_matrix
 
 random.seed(42)
 np.random.seed(42)

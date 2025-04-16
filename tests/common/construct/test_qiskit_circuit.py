@@ -1,4 +1,4 @@
-from common.construct.qiskit_circuit import QiskitBuilder
+from common.circuits.qiskit_circuit import QiskitBuilder
 from common.utils.mgen import random_UnitaryM_2l
 
 

@@ -2,7 +2,7 @@ from typing_extensions import override
 
 from common.construct.cmat import UnitaryM, validm2l
 
-from common.construct.circuit import CircuitBuilder
+from common.circuits.circuit_builder import CircuitBuilder
 import qiskit
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate

@@ -2,7 +2,7 @@ import cirq
 import numpy as np
 from typing_extensions import override
 
-from common.construct.circuit import CircuitBuilder
+from common.circuits.circuit_builder import CircuitBuilder
 from common.construct.cmat import UnitaryM, validm2l, immutable
 
 

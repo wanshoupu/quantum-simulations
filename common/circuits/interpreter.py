@@ -1,5 +1,5 @@
 from common.construct.bytecode import Bytecode, BytecodeIter
-from common.construct.circuit import CircuitBuilder
+from common.circuits.circuit_builder import CircuitBuilder
 from common.construct.cmat import CUnitary, UnitaryM
 
 
