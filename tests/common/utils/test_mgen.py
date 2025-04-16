@@ -9,12 +9,12 @@ formatter = MatrixFormatter()
 
 def test_2l():
     m2l = random_matrix_2l(10, 1, 6)
-    print(formatter.tostr(m2l))
+    # print(formatter.tostr(m2l))
 
 
 def test_unitary():
     randu = random_unitary(2)
-    print(formatter.tostr(randu))
+    # print(formatter.tostr(randu))
     identity = randu.T @ np.conj(randu)
     assert np.all(np.isclose(identity, np.eye(*identity.shape))), print(formatter.tostr(identity))
 
@@ -35,7 +35,7 @@ def test_permeye():
 
 def test_cyclic():
     cm = cyclic_matrix(8, 2)
-    print(formatter.tostr(cm))
+    # print(formatter.tostr(cm))
 
 
 def test_xindexes():

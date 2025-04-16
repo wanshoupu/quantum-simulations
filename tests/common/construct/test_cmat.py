@@ -72,7 +72,7 @@ def test_inflate_deflate():
 def test_CUnitary_init():
     m = random_unitary(2)
     cu = CUnitary(m, (True, True, None))
-    print(formatter.tostr(cu.inflate()))
+    # print(formatter.tostr(cu.inflate()))
     assert cu.indexes == (6, 7), f'Core indexes is unexpected {cu.indexes}'
 
 

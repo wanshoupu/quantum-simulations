@@ -14,24 +14,24 @@ formatter = MatrixFormatter(precision=2)
 
 def test_cnot_decompose8():
     m = random_UnitaryM_2l(8, 3, 4)
-    print(f'test = \n{formatter.tostr(m.inflate())}')
+    # print(f'test = \n{formatter.tostr(m.inflate())}')
     ms = cnot_decompose(m)
-    print(f'decompose =')
-    for x in ms:
-        print(formatter.tostr(x.inflate()), ',')
-    print()
+    # print(f'decompose =')
+    # for x in ms:
+    #     print(formatter.tostr(x.inflate()), ',')
+    # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
 
 
 def test_cnot_decompose4():
     m = random_UnitaryM_2l(4, 1, 2)
-    print(f'test = \n{formatter.tostr(m.inflate())}')
+    # print(f'test = \n{formatter.tostr(m.inflate())}')
     ms = cnot_decompose(m)
-    print(f'decompose =')
-    for x in ms:
-        print(formatter.tostr(x.inflate()), ',')
-    print()
+    # print(f'decompose =')
+    # for x in ms:
+    #     print(formatter.tostr(x.inflate()), ',')
+    # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
 
@@ -46,11 +46,11 @@ def test_cnot_decompose_random():
             if r1 != r2:
                 break
         m = random_UnitaryM_2l(n, r1, r2)
-        print(f'test = \n{formatter.tostr(m.inflate())}')
+        # print(f'test = \n{formatter.tostr(m.inflate())}')
         ms = cnot_decompose(m)
-        print(f'decompose =')
-        for x in ms:
-            print(formatter.tostr(x.inflate()), ',')
-        print()
+        # print(f'decompose =')
+        # for x in ms:
+        #     print(formatter.tostr(x.inflate()), ',')
+        # print()
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
