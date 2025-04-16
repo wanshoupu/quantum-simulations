@@ -22,6 +22,9 @@ class CircuitBuilder(ABC):
     def finish(self):
         pass
 
+    def group(self, m: UnitaryM):
+        pass
+
 
 class CirqBuilder(CircuitBuilder):
 
