@@ -33,8 +33,10 @@ def mat2l_decompose(m: UnitaryM) -> List[UnitaryM]:
             m2l = UnitaryM(m.dimension, c, (m.indexes[n], m.indexes[i]))
             result.append(m2l)
             mcopy = np.conj(m2l.inflate()).T @ mcopy
-    idxs = coreindexes(mcopy)
-    m2l = mcopy[np.ix_(idxs, idxs)]
+    indxs = coreindexes(mcopy)
+    if not indxs:
+        indxs = (0, 1)
+    m2l = mcopy[np.ix_(indxs, indxs)]
     if not np.allclose(m2l, np.eye(2)):
-        result.append(UnitaryM(s[0], m2l, idxs))
+        result.append(UnitaryM(s[0], m2l, indxs))
     return result

@@ -101,7 +101,7 @@ class UnitaryM:
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
         assert np.allclose(self.matrix @ self.matrix.conj().T, np.eye(s[0])), f'Matrix is not unitary {self.matrix}'
         assert self.dimension >= max(s[0], s[1]), f'Dimension must be greater than or equal to the dimension of the core matrix.'
-        assert len(self.indexes) == s[0], f'The number of row_indexes must match the row dimension of the core matrix.'
+        assert len(self.indexes) == s[0], f'The number of indexes must match the size of the core matrix.'
 
     def inflate(self) -> NDArray:
         """
@@ -136,11 +136,13 @@ class UnitaryM:
     def deflate(cls, m: NDArray) -> 'UnitaryM':
         validm(m)
         indxs = coreindexes(m)
+        if not indxs:
+            indxs = (0, 1)
         core = m[np.ix_(indxs, indxs)]
         return UnitaryM(m.shape[0], core, indxs)
 
     def isid(self) -> bool:
-        return np.allclose(self.matrix, np.eye(2))
+        return np.allclose(self.matrix, np.eye(self.matrix.shape[0]))
 
     def is2l(self) -> bool:
         return self.matrix.shape[0] <= 2

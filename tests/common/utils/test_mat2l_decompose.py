@@ -11,6 +11,14 @@ np.random.seed(3)
 formatter = MatrixFormatter(precision=5)
 
 
+def test_decompose_identity_matrix():
+    n = 3
+    dim = 1 << n
+    id = UnitaryM(dim, np.eye(2), (0, 1))
+    bc = mat2l_decompose(id)
+    print(bc)
+
+
 def test_mat2l_cyclic():
     m = cyclic_matrix(8, 1)
     # print(formatter.tostr(m))

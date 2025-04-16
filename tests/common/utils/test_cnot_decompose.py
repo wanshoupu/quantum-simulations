@@ -3,6 +3,7 @@ from functools import reduce
 
 import numpy as np
 
+from common.construct.cmat import UnitaryM
 from common.utils.cnot_decompose import cnot_decompose
 from common.utils.format_matrix import MatrixFormatter
 from common.utils.mgen import random_UnitaryM_2l
@@ -10,6 +11,14 @@ from common.utils.mgen import random_UnitaryM_2l
 random.seed(5)
 np.random.seed(5)
 formatter = MatrixFormatter(precision=2)
+
+
+def test_decompose_identity_matrix():
+    n = 3
+    dim = 1 << n
+    id = UnitaryM(dim, np.eye(2), (0, 1))
+    bc = cnot_decompose(id)
+    assert bc == tuple()
 
 
 def test_cnot_decompose8():

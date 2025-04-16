@@ -72,7 +72,7 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 from typing import Tuple
 
 from common.construct.cmat import UnitaryM, CUnitary, UnivGate
-from common.utils.gray import gray_code, control_bits, cogray_code
+from common.utils.gray import gray_code, control_bits
 
 
 def cnot_decompose(m: UnitaryM) -> Tuple[CUnitary, ...]:
@@ -80,8 +80,7 @@ def cnot_decompose(m: UnitaryM) -> Tuple[CUnitary, ...]:
         raise ValueError(f'The dimension of the unitary matrix is not power of 2: {m.dimension}')
     n = m.dimension.bit_length() - 1
     if m.isid():
-        control = [None] + [True] * (n - 1)
-        return (CUnitary(m.matrix, controls=tuple(control)),)
+        return tuple()
     if not m.is2l():
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
     code = gray_code(*m.indexes)
