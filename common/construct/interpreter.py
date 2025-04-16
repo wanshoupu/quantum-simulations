@@ -12,8 +12,8 @@ class CircuitInterp:
         for c in BytecodeIter(component):
             m = c.data
             if isinstance(m, UnitaryM):
-                self.builder.group(m)
+                self.builder.build_group(m)
             elif isinstance(m, CUnitary):
                 # TODO for now draw single-qubit + controlled single-qubit as gate.
                 # TO BE breakdown further to elementary gates only
-                self.builder.gate(m)
+                self.builder.build_gate(m)

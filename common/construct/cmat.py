@@ -3,7 +3,7 @@ This module contains sparse matrices, 'UnitaryM', as arbitrary unitary operator,
 It also contains the controlled mat (cmat) which is represented by a core unitary matrix and a list of control qubits.
 This module differs from scipy.sparse in that we provide convenience specifically for quantum computer controlled unitary matrices.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from itertools import product
 from typing import Tuple, Optional, Union
 
@@ -11,9 +11,11 @@ import numpy as np
 from numba.core.typing.npydecl import NdIndex
 from numpy.typing import NDArray
 
-from common.utils.gray import control_bits
-
 X = np.eye(2)[[1, 0]]
+
+
+def immutable(m: NDArray):
+    return tuple(map(tuple, m))
 
 
 def idindexes(m: NDArray) -> Tuple[int, ...]:

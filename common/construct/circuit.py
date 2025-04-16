@@ -1,52 +1,52 @@
 from abc import ABC, abstractmethod
 
-import cirq
-from sympy.physics.quantum.gate import CGate
+import numpy as np
+from numpy.typing import NDArray
 from typing_extensions import override
 
-from common.construct.cmat import CUnitary, UnitaryM
+from common.construct.cmat import UnitaryM, validm2l
 
 
 class CircuitBuilder(ABC):
+
     @abstractmethod
-    def gate(self, m: UnitaryM):
+    def __init__(self, dimension: int):
         """
-        Interpret the matrix m as a controlled gate targeting a single qubit
-        :param m:
+        Create a circuit builder of a linear array of qubits.
+        :param dimension: the total number of qubits.
+        """
+        pass
+
+    @abstractmethod
+    def build_gate(self, m: UnitaryM):
+        """
+        Build a unitary gate out of the matrix m
+        :param m: UnitaryM possibly with control bits
+        """
+        pass
+
+    @abstractmethod
+    def finish(self) -> object:
+        """
+        Call this method after building process is done to retrieve what's built.
+        It's expected that the building process is incremental meaning that
+        this method may be called multiple times while building process is en route.
         :return:
         """
-        if isinstance(m, CUnitary):
-            meta = CGate()
+        pass
 
     @abstractmethod
-    def finish(self):
+    def get_unigate(self, m: UnitaryM) -> object:
+        """
+        Subclass return a universal gate out of a set, which is to be used as the building blocks.
+        :return: The universal gate, if any, for the input m. Return None if not found.
+        """
         pass
 
-    def group(self, m: UnitaryM):
-        pass
-
-
-class CirqBuilder(CircuitBuilder):
-
-    def __init__(self):
-        self.qubits = []
-        self.circuit = cirq.Circuit()
-
-    @override
-    def gate(self, m: UnitaryM):
-        meta = CGate
-
-    @override
-    def finish(self):
-        pass
-
-
-class QiskitBuilder(CircuitBuilder):
-
-    @override
-    def gate(self, m: UnitaryM):
-        pass
-
-    @override
-    def finish(self):
+    def build_group(self, m: UnitaryM):
+        """
+        This method allows builder to group multiple gates together to represent, e.g., a hierarchy.
+        Overriding this is optional for subclasses.
+        :param m: the root UnitaryM for this group.
+        """
         pass
