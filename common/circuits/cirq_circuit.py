@@ -35,9 +35,10 @@ class CirqBuilder(CircuitBuilder):
         if isinstance(m, CUnitary):
             gate = self.get_univ_gate(m)
             if gate:
+                target = self.qubits[m.controls.index(None)]
                 control = [self.qubits[i] for i, c in enumerate(m.controls) if c is not None]
                 control_values = [int(c) for c in m.controls if c is not None]
-                self.circuit.append(gate(self.qubits[0]).controlled_by(*control, control_values=control_values))
+                self.circuit.append(gate(target).controlled_by(*control, control_values=control_values))
                 return
 
         custom_gate = cirq.MatrixGate(m.matrix)
