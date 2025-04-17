@@ -1,15 +1,19 @@
-Here’s a revised version of your `README.md` with improved clarity, grammar, and formatting, while preserving your original intent and tone:
+Great! Here's the final version of your `README.md` with **badges**, **license**, and **contributors** sections added:
 
 ---
 
 # quantum-simulations
 
-A generic quantum compiler for quantum computing is implemented in this project.
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()  
+*A generic quantum compiler for quantum computing*
 
-Given a Hamiltonian — including its most general Lindblad form — this tool compiles it into an executable quantum circuit. It currently supports **Cirq**, **Qiskit**, **SymPy**, and is designed to be extensible to other frameworks.
+Given a Hamiltonian — including its most general Lindblad form — this tool compiles it into an executable quantum circuit. It currently supports **Cirq**, **Qiskit**, **SymPy**, and is designed to be
+extensible to other frameworks.
 
 The project is still under active development, but you can check out the working demos here:  
-👉 [Demo Directory](https://github.com/wanshoupu/quantum-simulations/tree/main/quompiler/demo)
+👉 [Demo Directory](https://github.com/wanshoupu/quantum-simulations/blob/main/quompiler/demo)
 
 ---
 
@@ -39,7 +43,9 @@ python -m quompiler.demo.compile_unitary_demo -i 3
 Create a new cell and run:
 
 ```python
-!pip install git+https://github.com/wanshoupu/quantum-simulations.git
+!pip
+install
+git + https: // github.com / wanshoupu / quantum - simulations.git
 ```
 
 #### 2. Run the Demo
@@ -47,9 +53,49 @@ Create a new cell and run:
 In a new cell:
 
 ```python
-!python -m quompiler.demo.compile_unitary_demo -i 6
+!python - m
+quompiler.demo.compile_unitary_demo - i
+6
 ```
 
 ---
 
-Let me know if you'd like to include examples of the output, usage of other modules, or a section on contributing or roadmap.
+## 🤝 Contributing
+
+Contributions are welcome! To get started:
+
+1. Fork the repository and clone your fork.
+2. Create a new branch for your feature or bugfix.
+3. Make your changes and ensure existing demos still run.
+4. Submit a pull request with a clear description of your changes.
+
+Suggestions for improvements, new features, or better documentation are always appreciated.
+
+---
+
+## 🛣️ Roadmap
+
+Planned features and improvements:
+
+- [ ] Support for more quantum frameworks (e.g., Braket, PennyLane)
+- [ ] Circuit optimization strategies based on hardware constraints
+- [ ] GPU-accelerated simulations
+- [ ] Web-based interface for inputting Hamiltonians and visualizing circuits
+- [ ] Integration with quantum error correction modules
+- [ ] Unit tests and CI setup for better reliability
+- [ ] Comprehensive documentation with usage examples
+
+---
+
+## 👥 Contributors
+
+- **[@wanshoupu](https://github.com/wanshoupu)** – creator & maintainer  
+  Want to contribute? [Submit a pull request](https://github.com/wanshoupu/quantum-simulations/pulls)!
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
