@@ -1,16 +1,12 @@
-import random
-
 from common.circuits.cirq_circuit import CirqBuilder
 from common.circuits.interpreter import CircuitInterp
 from common.construct.quompiler import quompile
-from common.utils.mgen import random_unitary
+from common.utils.mgen import cyclic_matrix
 
 if __name__ == '__main__':
-    random.seed(0)
-
-    n = random.randint(1, 4)
+    n = 3
     dim = 1 << n
-    u = random_unitary(dim)
+    u = cyclic_matrix(dim, 1)
     bc = quompile(u)
 
     builder = CirqBuilder(n)
@@ -18,5 +14,3 @@ if __name__ == '__main__':
     interpreter.interpret(bc)
     circuit = builder.finish()
     print(circuit)
-    for m in circuit.moments:
-        print(m)
