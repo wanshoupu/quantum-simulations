@@ -1,4 +1,6 @@
+import argparse
 import random
+from argparse import ArgumentParser
 
 import numpy as np
 from cirq import Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
@@ -18,11 +20,14 @@ def optimize(circuit: Circuit):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Process some input arguments.")
+    parser.add_argument("-i", "--input", type=str, help="Number of qubits. CAUTION: do not set n to big numbers as it scales exponentially.", required=False, default=2)
+    args = parser.parse_args()
+
     random.seed(0)
     np.random.seed(0)
 
-    # CAUTION: do not set n to big numbers as it scales exponentially.
-    n = 4
+    n = args.input
     dim = 1 << n
     u = random_unitary(dim)
     bc = quompile(u)
