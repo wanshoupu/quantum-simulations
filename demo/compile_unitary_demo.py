@@ -21,7 +21,7 @@ if __name__ == '__main__':
     random.seed(0)
     np.random.seed(0)
 
-    n = random.randint(1, 4)
+    n = random.randint(1, 10)
     dim = 1 << n
     u = random_unitary(dim)
     bc = quompile(u)
@@ -33,6 +33,6 @@ if __name__ == '__main__':
     circuit = optimize(circuit)
     print(circuit)
     moments = circuit.moments
-    for m in moments:
-        print(m)
+    # for m in moments:
+    #     print(m)
     print(f'Total {len(moments)} moments in the circuit.')
