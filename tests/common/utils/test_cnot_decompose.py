@@ -3,10 +3,10 @@ from functools import reduce
 
 import numpy as np
 
-from common.construct.cmat import UnitaryM
+from common.construct.cmat import UnitaryM, CUnitary
 from common.utils.cnot_decompose import cnot_decompose
 from common.utils.format_matrix import MatrixFormatter
-from common.utils.mgen import random_UnitaryM_2l
+from common.utils.mgen import random_UnitaryM_2l, random_unitary
 
 random.seed(5)
 np.random.seed(5)
@@ -21,6 +21,16 @@ def test_decompose_identity_matrix():
     assert bc == tuple()
 
 
+def test_decompose_sing_qubit_circuit():
+    n = 1
+    dim = 1 << n
+    u = UnitaryM(dim, random_unitary(dim), (0, 1))
+    bc = cnot_decompose(u)
+    # print(bc)
+    assert len(bc) == 1
+    assert all(isinstance(v, CUnitary) for v in bc)
+
+
 def test_cnot_decompose8():
     m = random_UnitaryM_2l(8, 3, 4)
     # print(f'test = \n{formatter.tostr(m.inflate())}')
@@ -31,6 +41,7 @@ def test_cnot_decompose8():
     # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
+    assert all(isinstance(v, CUnitary) for v in ms)
 
 
 def test_cnot_decompose4():
@@ -43,6 +54,7 @@ def test_cnot_decompose4():
     # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
+    assert all(isinstance(v, CUnitary) for v in ms)
 
 
 def test_cnot_decompose_random():
@@ -63,3 +75,4 @@ def test_cnot_decompose_random():
         # print()
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
+        assert all(isinstance(v, CUnitary) for v in ms)

@@ -19,6 +19,9 @@ def _quompile(u: UnitaryM) -> Bytecode:
         for c in coms:
             child = _quompile(c)
             root.append(child)
+    else:
+        # the tree rooted at root has a single leaf. So make the root itself a leaf
+        root.data = coms[0]
     return root
 
 

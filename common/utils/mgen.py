@@ -1,13 +1,13 @@
-from typing import Tuple
+import random
 
 import numpy as np
-import random
+from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
 from common.construct.cmat import UnitaryM
 
 
-def random_unitary(n):
+def random_unitary(n) -> NDArray:
     """Generate a random n x n unitary matrix."""
     # Step 1: Generate a random complex matrix
     A = np.random.randn(n, n) + 1j * np.random.randn(n, n)
@@ -26,9 +26,11 @@ def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
     r1, r2 = min(r1, r2), max(r1, r2)
     return UnitaryM(n, u, (r1, r2))
 
+
 def random_indexes(n, k):
     indexes = list(range(n))
     return random.sample(indexes, k=k)
+
 
 def random_matrix_2l(n, r1, r2):
     u = unitary_group.rvs(2)

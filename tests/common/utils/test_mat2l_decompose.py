@@ -19,6 +19,15 @@ def test_decompose_identity_matrix():
     print(bc)
 
 
+def test_decompose_sing_qubit_circuit():
+    n = 1
+    dim = 1 << n
+    u = UnitaryM(dim, random_unitary(dim), (0, 1))
+    coms = mat2l_decompose(u)
+    # print(coms)
+    assert len(coms) == 1
+
+
 def test_mat2l_cyclic():
     m = cyclic_matrix(8, 1)
     # print(formatter.tostr(m))

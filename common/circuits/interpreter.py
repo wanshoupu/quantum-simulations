@@ -17,4 +17,3 @@ class CircuitInterp:
                 self.builder.build_gate(m)
             elif isinstance(m, UnitaryM):
                 self.builder.build_group(m)
-
