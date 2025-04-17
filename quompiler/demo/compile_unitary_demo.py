@@ -21,7 +21,8 @@ if __name__ == '__main__':
     random.seed(0)
     np.random.seed(0)
 
-    n = random.randint(1, 10)
+    # CAUTION: do not set n to big numbers as it scales exponentially.
+    n = 4
     dim = 1 << n
     u = random_unitary(dim)
     bc = quompile(u)
