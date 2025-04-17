@@ -4,7 +4,7 @@ from qiskit.quantum_info import Operator
 import sys
 import platform
 import qiskit
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.utils.format_matrix import MatrixFormatter
 
 if __name__ == '__main__':
     # Create a new circuit with two qubits

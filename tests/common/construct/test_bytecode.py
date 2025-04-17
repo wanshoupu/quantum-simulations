@@ -1,5 +1,5 @@
-from common.construct.bytecode import Bytecode
-from common.utils.mgen import random_UnitaryM_2l
+from quompiler.construct.bytecode import Bytecode
+from quompiler.utils.mgen import random_UnitaryM_2l
 
 
 def test_init():

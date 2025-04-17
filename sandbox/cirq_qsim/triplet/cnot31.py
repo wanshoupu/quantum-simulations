@@ -1,7 +1,7 @@
 import cirq
 from cirq import CNotPowGate, CXPowGate
 
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.utils.format_matrix import MatrixFormatter
 
 
 def cirq_mat():

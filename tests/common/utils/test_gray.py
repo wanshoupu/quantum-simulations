@@ -1,10 +1,10 @@
 from typing import Iterable
 
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.utils.format_matrix import MatrixFormatter
 import random
 import numpy as np
 
-from common.utils.gray import gray_code, control_bits, cogray_code
+from quompiler.utils.gray import gray_code, control_bits, cogray_code
 
 random.seed(5)
 formatter = MatrixFormatter()

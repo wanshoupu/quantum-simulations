@@ -4,8 +4,8 @@ from qiskit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate
 from qiskit.quantum_info import Operator
 
-from common.utils.mgen import permeye
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mgen import permeye
+from quompiler.utils.format_matrix import MatrixFormatter
 
 
 def cyclic_matrix(n, i):

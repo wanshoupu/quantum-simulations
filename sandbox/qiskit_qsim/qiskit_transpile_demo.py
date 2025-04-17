@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 from qiskit import QuantumCircuit, transpile
 
-from common.utils.mgen import random_unitary
+from quompiler.utils.mgen import random_unitary
 
 if __name__ == '__main__':
     # Create a circuit with a complex gate

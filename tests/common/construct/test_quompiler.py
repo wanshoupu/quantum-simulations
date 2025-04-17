@@ -1,6 +1,6 @@
-from common.construct.cmat import CUnitary
-from common.construct.quompiler import quompile
-from common.utils.mgen import cyclic_matrix, random_unitary
+from quompiler.construct.cmat import CUnitary
+from quompiler.construct.quompiler import quompile
+from quompiler.utils.mgen import cyclic_matrix, random_unitary
 import numpy as np
 
 

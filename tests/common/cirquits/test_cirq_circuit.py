@@ -1,6 +1,6 @@
-from common.circuits.cirq_circuit import CirqBuilder
-from common.construct.cmat import UnitaryM, UnivGate, CUnitary
-from common.utils.mgen import random_UnitaryM_2l
+from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.construct.cmat import UnitaryM, UnivGate, CUnitary
+from quompiler.utils.mgen import random_UnitaryM_2l
 
 
 def test_create_builder():

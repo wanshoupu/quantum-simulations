@@ -1,6 +1,6 @@
-from common.construct.bytecode import Bytecode, BytecodeIter
-from common.circuits.circuit_builder import CircuitBuilder
-from common.construct.cmat import CUnitary, UnitaryM
+from quompiler.construct.bytecode import Bytecode, BytecodeIter
+from quompiler.circuits.circuit_builder import CircuitBuilder
+from quompiler.construct.cmat import CUnitary, UnitaryM
 
 
 class CircuitInterp:

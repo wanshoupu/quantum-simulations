@@ -3,9 +3,9 @@ import random
 import numpy as np
 import pytest
 
-from common.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate
-from common.utils.format_matrix import MatrixFormatter
-from common.utils.mgen import random_unitary, cyclic_matrix
+from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate
+from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mgen import random_unitary, cyclic_matrix
 
 random.seed(42)
 np.random.seed(42)

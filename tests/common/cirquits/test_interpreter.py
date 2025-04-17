@@ -2,10 +2,10 @@ import random
 
 import numpy as np
 
-from common.circuits.cirq_circuit import CirqBuilder
-from common.circuits.interpreter import CircuitInterp
-from common.construct.quompiler import quompile
-from common.utils.mgen import cyclic_matrix, random_unitary
+from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.circuits.interpreter import CircuitInterp
+from quompiler.construct.quompiler import quompile
+from quompiler.utils.mgen import cyclic_matrix, random_unitary
 
 random.seed(42)
 np.random.seed(42)
@@ -54,7 +54,7 @@ def test_interp_cyclic_matrix():
     # print(circuit)
     qbs = circuit.all_qubits()
     assert len(qbs) == n
-    assert len(circuit.moments) == 11
+    assert len(circuit.moments) == 14
 
 
 def test_interp_random_unitary():

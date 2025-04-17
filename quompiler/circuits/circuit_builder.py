@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 from typing_extensions import override
 
-from common.construct.cmat import UnitaryM, validm2l, UnivGate
+from quompiler.construct.cmat import UnitaryM, validm2l, UnivGate
 
 
 class CircuitBuilder(ABC):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.utils.format_matrix import MatrixFormatter
 
 
 def test_precision():

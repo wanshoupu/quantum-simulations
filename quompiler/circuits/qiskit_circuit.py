@@ -2,9 +2,9 @@ from typing import Union
 
 from typing_extensions import override
 
-from common.construct.cmat import UnitaryM, validm2l, UnivGate
+from quompiler.construct.cmat import UnitaryM, validm2l, UnivGate
 
-from common.circuits.circuit_builder import CircuitBuilder
+from quompiler.circuits.circuit_builder import CircuitBuilder
 import qiskit
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate

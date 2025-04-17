@@ -1,5 +1,5 @@
-from common.circuits.quimb_circuit import QuimbBuilder
-from common.utils.mgen import random_UnitaryM_2l
+from quompiler.circuits.quimb_circuit import QuimbBuilder
+from quompiler.utils.mgen import random_UnitaryM_2l
 
 
 def test_create_builder():

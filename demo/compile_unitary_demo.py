@@ -3,10 +3,10 @@ import random
 import numpy as np
 from cirq import Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
 
-from common.circuits.cirq_circuit import CirqBuilder
-from common.circuits.interpreter import CircuitInterp
-from common.construct.quompiler import quompile
-from common.utils.mgen import random_unitary
+from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.circuits.interpreter import CircuitInterp
+from quompiler.construct.quompiler import quompile
+from quompiler.utils.mgen import random_unitary
 
 
 def optimize(circuit: Circuit):

@@ -1,6 +1,6 @@
 import cirq
 
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.utils.format_matrix import MatrixFormatter
 
 if __name__ == '__main__':
     q0 = cirq.NamedQubit('q')

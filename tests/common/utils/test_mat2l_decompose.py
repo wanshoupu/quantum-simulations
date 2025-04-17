@@ -1,9 +1,9 @@
 from functools import reduce
 import numpy as np
-from common.construct.cmat import UnitaryM
-from common.utils.mat2l_decompose import mat2l_decompose
-from common.utils.mgen import cyclic_matrix, random_matrix_2l, random_unitary
-from common.utils.format_matrix import MatrixFormatter
+from quompiler.construct.cmat import UnitaryM
+from quompiler.utils.mat2l_decompose import mat2l_decompose
+from quompiler.utils.mgen import cyclic_matrix, random_matrix_2l, random_unitary
+from quompiler.utils.format_matrix import MatrixFormatter
 import random
 
 random.seed(3)

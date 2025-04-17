@@ -1,5 +1,5 @@
-from common.circuits.qiskit_circuit import QiskitBuilder
-from common.utils.mgen import random_UnitaryM_2l
+from quompiler.circuits.qiskit_circuit import QiskitBuilder
+from quompiler.utils.mgen import random_UnitaryM_2l
 
 
 def test_create_builder():

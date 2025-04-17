@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
-from common.construct.cmat import UnitaryM
+from quompiler.construct.cmat import UnitaryM
 
 
 def random_unitary(n) -> NDArray:

@@ -4,8 +4,8 @@ import cirq
 from cirq import EigenGate
 from typing_extensions import override
 
-from common.circuits.circuit_builder import CircuitBuilder
-from common.construct.cmat import UnitaryM, CUnitary, UnivGate
+from quompiler.circuits.circuit_builder import CircuitBuilder
+from quompiler.construct.cmat import UnitaryM, CUnitary, UnivGate
 
 
 class CirqBuilder(CircuitBuilder):

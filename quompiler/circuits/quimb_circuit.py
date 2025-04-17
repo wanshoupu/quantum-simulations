@@ -3,8 +3,8 @@ from typing import Union
 import quimb.tensor as qtn
 from typing_extensions import override
 
-from common.circuits.circuit_builder import CircuitBuilder
-from common.construct.cmat import UnitaryM, validm2l, UnivGate
+from quompiler.circuits.circuit_builder import CircuitBuilder
+from quompiler.construct.cmat import UnitaryM, validm2l, UnivGate
 
 
 class QuimbBuilder(CircuitBuilder):
