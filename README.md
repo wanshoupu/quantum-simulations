@@ -9,7 +9,7 @@ A generic quantum compiler for quantum computing is implemented in this project.
 Given a Hamiltonian — including its most general Lindblad form — this tool compiles it into an executable quantum circuit. It currently supports **Cirq**, **Qiskit**, **SymPy**, and is designed to be extensible to other frameworks.
 
 The project is still under active development, but you can check out the working demos here:  
-👉 [Demo Directory](https://github.com/wanshoupu/quantum-simulations/blob/main/demo)
+👉 [Demo Directory](https://github.com/wanshoupu/quantum-simulations/tree/main/quompiler/demo)
 
 ---
 
