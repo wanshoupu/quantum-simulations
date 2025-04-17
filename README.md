@@ -1,20 +1,55 @@
+Here’s a revised version of your `README.md` with improved clarity, grammar, and formatting, while preserving your original intent and tone:
+
+---
+
 # quantum-simulations
 
-A generic quantum computing compiler is implemented.
+A generic quantum compiler for quantum computing is implemented in this project.
 
-Given a Hamiltonian (even in its most general Lindblad form), my tool compiles it into a suitable quantum circuit with support of cirq, kiskit, sympy, and extensible to any other framework. There
-are still a lot of work to do. But you are welcome to check out the demos here: https://github.com/wanshoupu/quantum-simulations/blob/main/demo
+Given a Hamiltonian — including its most general Lindblad form — this tool compiles it into an executable quantum circuit. It currently supports **Cirq**, **Qiskit**, **SymPy**, and is designed to be extensible to other frameworks.
 
-## Installation
+The project is still under active development, but you can check out the working demos here:  
+👉 [Demo Directory](https://github.com/wanshoupu/quantum-simulations/blob/main/demo)
 
-### Clone this repo on your local computer
+---
+
+## 🚀 How to Use the Package
+
+### 🖥️ Running Locally
+
+#### 1. Clone the Repository
 
 ```bash
-git clone git+https://github.com/wanshoupu/quantum-simulations.git
+git clone https://github.com/wanshoupu/quantum-simulations.git
+cd quantum-simulations
 ```
 
-### Install this package in Colab
+#### 2. Run the Demo from Terminal
 
 ```bash
+python -m quompiler.demo.compile_unitary_demo -i 3
+```
+
+---
+
+### 📓 Running on Google Colab
+
+#### 1. Install the Package
+
+Create a new cell and run:
+
+```python
 !pip install git+https://github.com/wanshoupu/quantum-simulations.git
 ```
+
+#### 2. Run the Demo
+
+In a new cell:
+
+```python
+!python -m quompiler.demo.compile_unitary_demo -i 6
+```
+
+---
+
+Let me know if you'd like to include examples of the output, usage of other modules, or a section on contributing or roadmap.
