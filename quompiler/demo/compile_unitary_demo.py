@@ -27,7 +27,7 @@ if __name__ == '__main__':
     random.seed(0)
     np.random.seed(0)
 
-    n = args.input
+    n = int(args.input)
     dim = 1 << n
     u = random_unitary(dim)
     bc = quompile(u)
