@@ -1,10 +1,11 @@
 import random
+from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
-from quompiler.construct.cmat import UnitaryM
+from quompiler.construct.cmat import UnitaryM, CUnitary
 
 
 def random_unitary(n) -> NDArray:
@@ -21,15 +22,40 @@ def random_unitary(n) -> NDArray:
 
 
 def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
-    rr = lambda: random.randint(0, 10)
     u = unitary_group.rvs(2)
     r1, r2 = min(r1, r2), max(r1, r2)
     return UnitaryM(n, u, (r1, r2))
 
 
+def random_UnitaryM(dim, indexes) -> UnitaryM:
+    cdim = len(indexes)
+    u = unitary_group.rvs(cdim)
+    return UnitaryM(dim, u, indexes)
+
+
+def random_CUnitary(controls: tuple[Optional[bool]]) -> UnitaryM:
+    core = controls.count(None)
+    u = unitary_group.rvs(core)
+    return CUnitary(u, controls)
+
+
 def random_indexes(n, k):
     indexes = list(range(n))
-    return random.sample(indexes, k=k)
+    return tuple(random.sample(indexes, k=k))
+
+
+def random_control(n, k) -> tuple[Optional[bool], ...]:
+    """
+    Generate a random control sequence with total n qubits, k target qubits, (n-k) control qubits
+    :param n: positive integer
+    :param k: 0< k <= n
+    :return: Control sequence
+    """
+    assert 0 < k <= n
+    result = [bool(random.randrange(2)) for _ in range(n)]
+    for i in random.sample(range(n), k):
+        result[i] = None
+    return tuple(result)
 
 
 def random_matrix_2l(n, r1, r2):

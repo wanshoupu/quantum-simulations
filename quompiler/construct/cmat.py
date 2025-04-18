@@ -4,19 +4,19 @@ It also contains the controlled mat (cmat) which is represented by a core unitar
 This module differs from scipy.sparse in that we provide convenience specifically for quantum computer controlled unitary matrices.
 """
 from dataclasses import dataclass
+from enum import Enum
 from itertools import product
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional, Union, Iterable
 
 import numpy as np
 from numba.core.typing.npydecl import NdIndex
 from numpy.typing import NDArray
-from enum import Enum
 
 
 class UnivGate(Enum):
     I = ('I', np.eye(2))
     X = ('X', np.eye(2)[[1, 0]])
-    Y = ('Y', np.array([[0j, 1j], [-1j, 0j]]))
+    Y = ('Y', np.array([[0j, -1j], [1j, 0j]]))
     Z = ('Z', np.array([[1, 0j], [0j, -1]]))
     H = ('H', np.array([[1, 1], [1, -1]]) / np.sqrt(2))
     S = ('S', np.array([[1, 0j], [0j, 1j]]))
@@ -27,11 +27,10 @@ class UnivGate(Enum):
         self.mat = mat
 
     @staticmethod
-    def get(m: NDArray) -> Union['UnivGate', None]:
+    def get(m: NDArray) -> Optional['UnivGate']:
         for g in UnivGate:
-            if np.allclose(m, g.mat):
+            if m.shape == g.mat.shape and np.allclose(m, g.mat):
                 return g
-        return None
 
 
 def immutable(m: NDArray):
@@ -63,6 +62,48 @@ def coreindexes(m: NDArray) -> Tuple[int, ...]:
     identity = np.eye(dimension)
     idindx = [i for i in range(dimension) if not np.allclose(m[:, i], identity[i]) or not np.allclose(m[i, :], identity[i])]
     return tuple(idindx)
+
+
+def target2core(n: int, target: Tuple[int, ...]) -> Tuple[int, ...]:
+    pass
+
+
+def control2core(controls: Tuple[Optional[bool], ...]) -> Tuple[int, ...]:
+    """
+    Calculate the core indexes based on controls. Core indexes = the indexes spanned by the target bits encoded in controls.
+    Target bits are encoded in controls as those positions with value None.
+    :param controls: A tuple of bool or None on position of target bit
+    :return: a tuple of indexes spanned by the target bits in the matrix of dimension len(control)
+    """
+    t = [i for i, b in enumerate(controls) if b is None]
+    bits = ['1' if b else '0' for b in controls]
+    result = []
+    for keys in product(*[['0', '1']] * len(t)):
+        for i, k in enumerate(keys):
+            bits[t[i]] = k
+        result.append(int(''.join(bits), 2))
+    return tuple(result)
+
+
+def core2control(bitlength: int, core: Iterable) -> Tuple[Optional[bool], ...]:
+    """
+    Generate the control bits of a bundle of indexes given by core.
+    The control bits are those bits shared by all the indexes in the core. The rest are target bits.
+    The control bits are set to the corresponding common bits in the core (0->False, 1->True) whereas the target bit set to None.
+    Big endian is used, namely, most significant bits on the left most end of the array.
+    :param bitlength: total length of the control bits
+    :param core: the core indexes, i.e., the indexes of the target bits
+    :return: Tuple[bool] corresponding to the control bits
+    """
+    idiff = []
+    for i in range(bitlength):
+        mask = 1 << i
+        if len({(a & mask) for a in core}) == 2:
+            idiff.append(i)
+    bits = [bool(core[0] & (1 << j)) for j in range(bitlength)]
+    for i in idiff:
+        bits[i] = None
+    return tuple(bits[::-1])
 
 
 def validm(m: NDArray):
@@ -103,19 +144,6 @@ class UnitaryM:
         assert self.dimension >= max(s[0], s[1]), f'Dimension must be greater than or equal to the dimension of the core matrix.'
         assert len(self.indexes) == s[0], f'The number of indexes must match the size of the core matrix.'
 
-    def inflate(self) -> NDArray:
-        """
-        Create a full-blown NDArray represented by UnitaryM. It is a readonly method.
-        :return: The full-blown NDArray represented by UnitaryM.
-        """
-        matd = self.matrix.shape[0]
-        if self.dimension == matd:
-            return self.matrix.copy()
-        result = np.eye(self.dimension, dtype=np.complexfloating)
-        for i, j in product(range(matd), range(matd)):
-            result[self.indexes[i], self.indexes[j]] = self.matrix[i, j]
-        return result
-
     def __getitem__(self, index: NdIndex):
         return self.matrix[index]
 
@@ -131,6 +159,19 @@ class UnitaryM:
             return UnitaryM(self.dimension, self.matrix @ other.matrix, self.indexes)
         # TODO this is a quick but slow implementation. May be improved by finding the union/intersection of indices
         return UnitaryM.deflate(self.inflate() @ other.inflate())
+
+    def inflate(self) -> NDArray:
+        """
+        Create a full-blown NDArray represented by UnitaryM. It is a readonly method.
+        :return: The full-blown NDArray represented by UnitaryM.
+        """
+        matd = self.matrix.shape[0]
+        if self.dimension == matd:
+            return self.matrix.copy()
+        result = np.eye(self.dimension, dtype=np.complexfloating)
+        for i, j in product(range(matd), range(matd)):
+            result[self.indexes[i], self.indexes[j]] = self.matrix[i, j]
+        return result
 
     @classmethod
     def deflate(cls, m: NDArray) -> 'UnitaryM':
@@ -156,20 +197,40 @@ class CUnitary(UnitaryM):
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
         """
-        super().__init__(1 << len(controls), m, CUnitary.control2core(controls))
+        super().__init__(1 << len(controls), m, control2core(controls))
         self.controls = controls
-
-    @staticmethod
-    def control2core(controls: Tuple[Optional[bool], ...]) -> Tuple[int, ...]:
-        t = [i for i, b in enumerate(controls) if b is None]
-        bits = ['1' if b else '0' for b in controls]
-        result = []
-        for keys in product(*[['0', '1']] * len(t)):
-            for i, k in enumerate(keys):
-                bits[t[i]] = k
-            result.append(int(''.join(bits), 2))
-        return tuple(result)
 
     def __repr__(self):
         result = super().__repr__()
         return result + f',controls={repr(self.controls)}'
+
+    @classmethod
+    def convert(cls, u: UnitaryM) -> 'CUnitary':
+        assert u.dimension & (u.dimension - 1) == 0
+        n = u.dimension.bit_length()
+        controls = core2control(n, u.indexes)
+        core = control2core(controls)
+        lookup = {idx: i for i, idx in enumerate(u.indexes)}
+
+        dim = len(core)
+        m = np.eye(dim, dtype=np.complexfloating)
+        for i, j in product(range(dim), range(dim)):
+            if core[i] not in lookup or core[j] not in lookup:
+                continue
+            idx = lookup[core[i]], lookup[core[j]]
+            m[i, j] = u.matrix[idx]
+        return CUnitary(m, controls)
+
+
+class KronUnitaryM(UnitaryM):
+
+    def __init__(self, register_size: int, m: NDArray, target: Tuple[int, ...]):
+        """
+        Instantiate a Kronecker unitary matrix.
+        This matrix represents an uncontrolled unitary transformation on the sub-Hilbert space of the target qubits.
+        :param qubits: the total number of qubits where this matrix possibly acts on
+        :param target: the target qubits to apply the core submatrix on.
+        """
+        super().__init__(1 << register_size, m, target2core(register_size, target))
+        self.register_size: int = register_size
+        self.target: Tuple[int, ...] = target

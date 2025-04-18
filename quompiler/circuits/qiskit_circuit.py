@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 from typing_extensions import override
 
@@ -16,7 +16,7 @@ class QiskitBuilder(CircuitBuilder):
         self.circuit = qiskit.QuantumCircuit()
 
     @override
-    def get_univ_gate(self, m: UnitaryM) -> Union[UnivGate, None]:
+    def get_univ_gate(self, m: UnitaryM) -> Optional[UnivGate]:
         pass
 
     @override

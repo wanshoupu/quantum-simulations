@@ -1,11 +1,12 @@
 import random
+from functools import reduce
 
 import numpy as np
 import pytest
 
-from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate
+from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate, control2core, core2control
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_unitary, cyclic_matrix
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM
 
 random.seed(42)
 np.random.seed(42)
@@ -16,6 +17,63 @@ def test_coreindexes():
     m = cyclic_matrix(8, 2)
     indxs = coreindexes(m)
     assert indxs == tuple(range(2, 8))
+
+
+def test_core2control():
+    for _ in range(10):
+        core = [random.randint(10, 100) for _ in range(random.randint(2, 3))]
+        # print(core)
+        blength = max(i.bit_length() for i in core)
+        gcb = core2control(blength, core)
+        bitmatrix = np.array([list(bin(i)[2:].zfill(blength)) for i in core])
+        # print(bitmatrix)
+        expected = [bool(int(bitmatrix[0, i])) if len(set(bitmatrix[:, i])) == 1 else None for i in range(blength)]
+        assert gcb == tuple(expected), f'gcb {gcb} != expected {expected}'
+
+
+def test_control2core():
+    for _ in range(10):
+        n = random.randint(1, 5)
+        k = random.randint(1, n)
+        control = random_control(n, k)
+        core = control2core(control)
+        assert len(core) == 1 << k
+        recovered_control = core2control(n, core)
+        assert control == recovered_control
+
+
+def test_CUnitary_convert_invalid_dimension():
+    cu = UnitaryM(3, random_unitary(2), (1, 2))
+    with pytest.raises(AssertionError) as exc:
+        CUnitary.convert(cu)
+
+
+def test_CUnitary_convert_no_inflation():
+    for _ in range(10):
+        n = random.randint(1, 5)
+        dim = 1 << n
+        k = random.randint(1, n)
+        control = random_control(n, k)
+        core = control2core(control)
+        m = random_unitary(1 << k)
+        assert m.shape[0] == 1 << k
+        assert len(core) == 1 << k
+        u = UnitaryM(dim, m, core)
+        c = CUnitary.convert(u)
+        assert np.array_equal(c.matrix, u.matrix)
+
+
+def test_CUnitary_convert():
+    for _ in range(20):
+        n = random.randint(1, 5)
+        dim = 1 << n
+        core = random.randint(2, dim)
+        indexes = random.sample(range(dim), core)
+        u = random_UnitaryM(dim, indexes)
+        c = CUnitary.convert(u)
+        assert c
+        print()
+        print(formatter.tostr(c.matrix))
 
 
 def test_idindexes():
@@ -75,8 +133,37 @@ def test_CUnitary_init():
     assert cu.indexes == (6, 7), f'Core indexes is unexpected {cu.indexes}'
 
 
+def test_univ_Y():
+    gate = UnivGate.Y
+    control = (False, False, None)
+    cu = CUnitary(gate.mat, control)
+    expected = np.eye(8, dtype=np.complexfloating)
+    expected[:2, :2] = gate.mat
+    print()
+    print(formatter.tostr(expected))
+    u = cu.inflate()
+    assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
+
+
+def test_standard_cunitary():
+    gate = UnivGate.Z
+    control = (True, False, False, None)
+    cu = CUnitary(gate.mat, control)
+    expected = np.eye(16, dtype=np.complexfloating)
+    expected[8:10, 8:10] = gate.mat
+    print()
+    print(formatter.tostr(expected))
+    u = cu.inflate()
+    assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
+
+
 def test_univ_gate_X():
     assert np.all(np.equal(UnivGate.X.mat[::-1], np.eye(2)))
+
+
+def test_univ_gate_Y():
+    mat = UnivGate.Y.mat
+    assert np.array_equal(mat, UnivGate.Z.mat[[1, 0]] * 1j)
 
 
 def test_univ_gate_get_none():

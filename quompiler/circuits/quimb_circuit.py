@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 import quimb.tensor as qtn
 from typing_extensions import override
@@ -15,7 +15,7 @@ class QuimbBuilder(CircuitBuilder):
         self.counter = 1
 
     @override
-    def get_univ_gate(self, m: UnitaryM) -> Union[UnivGate, None]:
+    def get_univ_gate(self, m: UnitaryM) -> Optional[UnivGate]:
         pass
 
     @override

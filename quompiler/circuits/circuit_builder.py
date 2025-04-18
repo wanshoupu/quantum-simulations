@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -37,7 +37,7 @@ class CircuitBuilder(ABC):
         pass
 
     @abstractmethod
-    def get_univ_gate(self, m: UnitaryM) -> Union[UnivGate, None]:
+    def get_univ_gate(self, m: UnitaryM) -> Optional[UnivGate]:
         """
         Subclass return a universal gate out of a set, which is to be used as the building blocks.
         :return: The universal gate, if any, for the input m. Return None if not found.
