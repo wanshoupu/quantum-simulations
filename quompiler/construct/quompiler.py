@@ -1,7 +1,7 @@
 from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.cmat import validm2l, UnitaryM
+from quompiler.construct.cmat import validm2l, UnitaryM, CUnitary
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
 
@@ -13,15 +13,13 @@ def quompile(u: NDArray) -> Bytecode:
 
 
 def _quompile(u: UnitaryM) -> Bytecode:
+    if u.issinglet():
+        return Bytecode(CUnitary.convert(u))
     root = Bytecode(u)
     coms = _decompose(u)
-    if len(coms) > 1:
-        for c in coms:
-            child = _quompile(c)
-            root.append(child)
-    elif coms:
-        # the tree rooted at root has a single leaf. So make the root itself a leaf
-        root.data = coms[0]
+    for c in coms:
+        child = _quompile(c)
+        root.append(child)
     return root
 
 

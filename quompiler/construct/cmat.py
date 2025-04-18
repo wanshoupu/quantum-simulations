@@ -194,7 +194,7 @@ class UnitaryM:
     def issinglet(self) -> bool:
         if self.dimension & (self.dimension - 1) != 0:
             return False
-        n = self.dimension.bit_length()
+        n = self.dimension.bit_length() - 1
         control = core2control(n, self.indexes)
         return control.count(None) == 1
 
@@ -217,7 +217,7 @@ class CUnitary(UnitaryM):
     @classmethod
     def convert(cls, u: UnitaryM) -> 'CUnitary':
         assert u.dimension & (u.dimension - 1) == 0
-        n = u.dimension.bit_length()
+        n = u.dimension.bit_length() - 1
         controls = core2control(n, u.indexes)
         core = control2core(controls)
         lookup = {idx: i for i, idx in enumerate(u.indexes)}

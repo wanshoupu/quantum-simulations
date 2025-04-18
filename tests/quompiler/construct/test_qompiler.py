@@ -33,12 +33,23 @@ def test_compile_sing_qubit_circuit():
     assert isinstance(bc.data, CUnitary)
 
 
-def test_compile_cyclic():
+def test_compile_cyclic_8():
     u = cyclic_matrix(8, 1)
     bc = quompile(u)
     # print(bc)
     assert bc is not None
     assert 18 == len([a for a in bc])
+    leaves = [a.data.inflate() for a in bc if isinstance(a.data, CUnitary)]
+    v = reduce(lambda a, b: a @ b, leaves)
+    assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
+
+
+def test_compile_cyclic_4():
+    u = cyclic_matrix(4, 1)
+    bc = quompile(u)
+    # print(bc)
+    assert bc is not None
+    assert 6 == len([a for a in bc])
     leaves = [a.data.inflate() for a in bc if isinstance(a.data, CUnitary)]
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'

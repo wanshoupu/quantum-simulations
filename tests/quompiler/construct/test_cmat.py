@@ -1,5 +1,4 @@
 import random
-from functools import reduce
 
 import numpy as np
 import pytest
@@ -88,6 +87,14 @@ def test_CUnitary_convert_no_inflation():
         u = UnitaryM(dim, m, core)
         c = CUnitary.convert(u)
         assert np.array_equal(c.matrix, u.matrix)
+
+
+def test_CUnitary_convert_verify_dimension():
+    dimension = 4
+    m = np.array([[0, 1], [1, 0]])
+    u = UnitaryM(dimension, m, (0, 1))
+    c = CUnitary.convert(u)
+    assert c.dimension == 4
 
 
 def test_CUnitary_convert():
