@@ -10,10 +10,7 @@ if __name__ == '__main__':
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
     print(formatter.tostr(u))
-    bc = quompile(u)
-
     builder = CirqBuilder(n)
-    interpreter = CircuitInterp(builder)
-    interpreter.interpret(bc)
+    CircuitInterp(builder).interpret(u)
     circuit = builder.finish()
     print(circuit)

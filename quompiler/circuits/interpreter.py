@@ -1,6 +1,9 @@
-from quompiler.construct.bytecode import Bytecode, BytecodeIter
+from numpy.typing import NDArray
+
 from quompiler.circuits.circuit_builder import CircuitBuilder
+from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cmat import CUnitary, UnitaryM
+from quompiler.construct.quompiler import quompile
 
 
 class CircuitInterp:
@@ -8,7 +11,8 @@ class CircuitInterp:
     def __init__(self, builder: CircuitBuilder):
         self.builder = builder
 
-    def interpret(self, component: Bytecode):
+    def interpret(self, u: NDArray):
+        component = quompile(u)
         for c in BytecodeIter(component):
             m = c.data
             if isinstance(m, CUnitary):

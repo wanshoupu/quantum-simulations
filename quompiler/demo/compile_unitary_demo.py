@@ -33,8 +33,7 @@ if __name__ == '__main__':
     bc = quompile(u)
 
     builder = CirqBuilder(n)
-    interpreter = CircuitInterp(builder)
-    interpreter.interpret(bc)
+    CircuitInterp(builder).interpret(u)
     circuit = builder.finish()
     circuit = optimize(circuit)
     print(circuit)
