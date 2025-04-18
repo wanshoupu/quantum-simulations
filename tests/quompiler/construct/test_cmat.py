@@ -6,7 +6,7 @@ import pytest
 
 from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate, control2core, core2control
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM, random_indexes
 
 random.seed(42)
 np.random.seed(42)
@@ -29,6 +29,33 @@ def test_core2control():
         # print(bitmatrix)
         expected = [bool(int(bitmatrix[0, i])) if len(set(bitmatrix[:, i])) == 1 else None for i in range(blength)]
         assert gcb == tuple(expected), f'gcb {gcb} != expected {expected}'
+
+
+def test_control2core_empty_core():
+    with pytest.raises(AssertionError):
+        # core cannot be empty
+        core2control(5, [])
+
+
+def test_control2core_big_endian():
+    n = 3
+    core = [2, 3]
+    control = core2control(n, core)
+    assert control == (False, True, None)
+
+
+def test_control2core_single_index():
+    for _ in range(10):
+        print(f'Test round {_}...')
+        n = random.randint(1, 5)
+        dim = 1 << n
+        core = random_indexes(dim, 1)
+        assert len(core) == 1
+        index = core[0]
+        control = core2control(n, core)
+        print(control)
+        expected = tuple(bool(index & 1 << i) for i in range(n))[::-1]
+        assert control == expected
 
 
 def test_control2core():

@@ -6,7 +6,7 @@ This module differs from scipy.sparse in that we provide convenience specificall
 from dataclasses import dataclass
 from enum import Enum
 from itertools import product
-from typing import Tuple, Optional, Union, Iterable
+from typing import Tuple, Optional, Union, Sequence
 
 import numpy as np
 from numba.core.typing.npydecl import NdIndex
@@ -85,7 +85,7 @@ def control2core(controls: Tuple[Optional[bool], ...]) -> Tuple[int, ...]:
     return tuple(result)
 
 
-def core2control(bitlength: int, core: Iterable) -> Tuple[Optional[bool], ...]:
+def core2control(bitlength: int, core: Sequence) -> Tuple[Optional[bool], ...]:
     """
     Generate the control bits of a bundle of indexes given by core.
     The control bits are those bits shared by all the indexes in the core. The rest are target bits.
@@ -95,6 +95,9 @@ def core2control(bitlength: int, core: Iterable) -> Tuple[Optional[bool], ...]:
     :param core: the core indexes, i.e., the indexes of the target bits
     :return: Tuple[bool] corresponding to the control bits
     """
+    assert core, f'Core cannot be empty'
+    dim = 1 << bitlength
+    assert max(core) < dim, f'Invalid core: some index in core are bigger than numbers representable by {dim} bits.'
     idiff = []
     for i in range(bitlength):
         mask = 1 << i
@@ -187,6 +190,13 @@ class UnitaryM:
 
     def is2l(self) -> bool:
         return self.matrix.shape[0] <= 2
+
+    def issinglet(self) -> bool:
+        if self.dimension & (self.dimension - 1) != 0:
+            return False
+        n = self.dimension.bit_length()
+        control = core2control(n, self.indexes)
+        return control.count(None) == 1
 
 
 class CUnitary(UnitaryM):
