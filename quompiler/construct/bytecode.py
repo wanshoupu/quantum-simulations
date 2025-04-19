@@ -15,9 +15,6 @@ class Bytecode:
     def append(self, child: 'Bytecode'):
         self.children.append(child)
 
-    def __iter__(self):
-        return BytecodeIter(self)
-
 
 class BytecodeIter:
     """
@@ -40,12 +37,14 @@ class BytecodeIter:
         self.stack.extend(reversed(node.children))
         return node
 
+
 class ReverseBytecodeIter:
     """
     This iterator is a visitor design for class Bytecode.
 
     It visits the root node first and then each of the child nodes in order as they appear in field 'children'.
     """
+
     def __init__(self, root: Bytecode):
         self.stack = [root]  # use a stack for pre-order
 
