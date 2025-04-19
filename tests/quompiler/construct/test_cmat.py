@@ -106,8 +106,8 @@ def test_CUnitary_convert():
         u = random_UnitaryM(dim, indexes)
         c = CUnitary.convert(u)
         assert c
-        print()
-        print(formatter.tostr(c.matrix))
+        # print()
+        # print(formatter.tostr(c.matrix))
 
 
 def test_idindexes():
@@ -135,7 +135,7 @@ def test_UnitaryM_init_invalid_higher_dimensional_mat():
 def test_UnitaryM_init():
     cu = UnitaryM(3, random_unitary(2), (1, 2))
     inflate = cu.inflate()
-    print(formatter.tostr(inflate))
+    # print(formatter.tostr(inflate))
     assert inflate[0, :].tolist() == inflate[:, 0].tolist() == [1, 0, 0]
 
 
@@ -173,8 +173,8 @@ def test_univ_Y():
     cu = CUnitary(gate.mat, control)
     expected = np.eye(8, dtype=np.complexfloating)
     expected[:2, :2] = gate.mat
-    print()
-    print(formatter.tostr(expected))
+    # print()
+    # print(formatter.tostr(expected))
     u = cu.inflate()
     assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
@@ -185,8 +185,8 @@ def test_standard_cunitary():
     cu = CUnitary(gate.mat, control)
     expected = np.eye(16, dtype=np.complexfloating)
     expected[8:10, 8:10] = gate.mat
-    print()
-    print(formatter.tostr(expected))
+    # print()
+    # print(formatter.tostr(expected))
     u = cu.inflate()
     assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 

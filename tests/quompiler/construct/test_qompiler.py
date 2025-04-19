@@ -51,6 +51,7 @@ def test_compile_cyclic_4():
     assert bc is not None
     assert 6 == len([a for a in bc])
     leaves = [a.data.inflate() for a in bc if isinstance(a.data, CUnitary)]
+    assert len(leaves) == 4
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 

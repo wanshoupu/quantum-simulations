@@ -4,8 +4,9 @@ import numpy as np
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.cmat import UnivGate, CUnitary
+from quompiler.construct.quompiler import quompile
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_UnitaryM_2l, random_CUnitary, random_indexes, random_control, random_unitary
+from quompiler.utils.mgen import random_UnitaryM_2l, random_CUnitary, random_indexes, random_control, random_unitary, cyclic_matrix
 
 random.seed(3)
 np.random.seed(3)
@@ -19,14 +20,14 @@ def test_create_builder():
     cirqC = CirqBuilder(n)
     cirqC.build_gate(array)
     phase = CUnitary(UnivGate.S.mat, (None, False, True))
-    print()
-    print(formatter.tostr(phase.inflate()))
+    # print()
+    # print(formatter.tostr(phase.inflate()))
     cirqC.build_gate(phase)
     circuit = cirqC.finish()
-    print(circuit.all_qubits())
-    print(circuit)
+    # print(circuit.all_qubits())
+    # print(circuit)
     u = circuit.unitary(circuit.all_qubits())
-    print(formatter.tostr(u))
+    # print(formatter.tostr(u))
 
 
 def test_builder_standard_cunitary():
@@ -65,3 +66,24 @@ def test_builder_random_cunitary():
         u = circuit.unitary(sorted(circuit.all_qubits()))
         expected = cu.inflate()
         assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
+
+
+def test_compile_cyclic_4_everything():
+    n = 2
+    u = cyclic_matrix(1 << 2, 1)
+    bc = quompile(u)
+    # print(bc)
+    assert 6 == len([a for a in bc])
+    # we need to revert the order bc the last element appears first in the circuit
+    leaves = [a.data for a in bc if isinstance(a.data, CUnitary)][::-1]
+    assert len(leaves) == 4
+
+    cirqC = CirqBuilder(n)
+
+    # execution
+    for cu in leaves:
+        cirqC.build_gate(cu)
+    circuit = cirqC.finish()
+    print(circuit)
+    v = circuit.unitary(cirqC.qubits)
+    assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'

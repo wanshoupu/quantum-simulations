@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+import pytest
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.circuits.interpreter import CircuitInterp
@@ -43,20 +44,25 @@ def test_interp_sing_qubit_circuit():
     assert len(circuit.moments) == 1
 
 
-def test_interp_cyclic_matrix():
-    n = 2
+@pytest.mark.parametrize("n,k,expected_moments", [
+    (2, 1, 4),
+    (3, 1, 14),
+    (3, 2, 11),
+])
+def test_interp_cyclic_matrix(n, k, expected_moments):
     dim = 1 << n
-    u = cyclic_matrix(dim, 1)
+    u = cyclic_matrix(dim, k)
 
     builder = CirqBuilder(n)
     CircuitInterp(builder).interpret(u)
     circuit = builder.finish()
-    # print(circuit)
-    c = circuit.unitary()
-    assert np.allclose(u, c), f'circuit != input:\ncircuit=\n{formatter.tostr(c)},\ninput=\n{formatter.tostr(u)}'
-    qbs = circuit.all_qubits()
+
+    qbs = sorted(circuit.all_qubits())
     assert len(qbs) == n
-    assert len(circuit.moments) == 14
+
+    c = circuit.unitary(qbs)
+    assert np.allclose(u, c), f'circuit != input:\ncircuit=\n{formatter.tostr(c)},\ninput=\n{formatter.tostr(u)}'
+    assert len(circuit.moments) == expected_moments
 
 
 def test_interp_random_unitary():
