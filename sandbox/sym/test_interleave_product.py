@@ -84,7 +84,7 @@ def test_kron_4qubit_sandwich():
     A = square_m(2)
     print('A')
     pprint(A)
-    B = sympy.eye(5)
+    B = sympy.eye(8)
     swap = Matrix([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
 
     K = kron(A, B)
@@ -133,7 +133,7 @@ def test_interleave_product():
 
     expected = kron(square_m(5, 'a'), B, square_m(3, 'c'))
     # pprint(expected, num_columns=10000)
-    assert interleave_product(A, B, 5, 3) == expected
+    assert mesh_product(A, B, 5) == expected
 
 
 def test_sandwich_product_arbitray_matrix():
@@ -152,9 +152,10 @@ def test_sandwich_product_arbitray_matrix():
     print('B')
     pprint(B)
 
-    C = interleave_product(A, B, 5, 3)
+    C = mesh_product(A, B, 5)
     print('C')
     pprint(C, num_columns=10000)
+
 
 def test_sandwich_product_8_2_4():
     """
@@ -172,31 +173,44 @@ def test_sandwich_product_8_2_4():
     print('B')
     pprint(B)
 
-    C = interleave_product(A, B, 2, 4)
+    C = mesh_product(A, B, 2)
     print('C')
     pprint(C, num_columns=10000)
 
 
-def interleave_product(A, B, m, n):
+def mesh_product(A, B, m):
     """
-    A matrix product similar to Kronecker product. But matrix A is first divided up into m x m n-sized blocks, then B is Kronecker multiplied between the m x m n-sized blocks.
+    A matrix multiplication operation of special Tracy–Singh product type.
+    Matrix A is first divided up into m x m equal-sized blocks;
+    Then B is mesh multiplied between the m x m n-sized blocks.
     For example,
     A = [[
-    :param A: square matrix of shape (m*n,m*n).
+    :param A: square matrix of shape (N,N).
     :param B: square matrix of shape (k, k), with k > 0.
-    :param m: int, denotes the number of blocks to divide the matrix A into.
-    :param n: int, denotes the block size to be divided up out of A.
-    :return: The interleaved product with A(m) ⨁ B ⨁ A(n)
+    :param m: an integer factor of N, denotes the number of blocks to divide the matrix A into.
+    :return: The interleaved product with A(m) ⨁ B ⨁ A(n) with N = m*n
     """
     sa = A.shape
     assert sa[0] == sa[1]
     sb = B.shape
     assert sb[0] == sb[1]
-    assert sa[0] == m * n
+
+    # no change to A
+    if sb[0] == 1:
+        return A * B[0, 0]
+
+    assert sa[0] % m == 0
+    if m == 1:
+        return kron(B, A)
+
+    n = sa[0] // m
+    if n == 1:
+        return kron(A, B)
+
     C = sympy.zeros(sa[0] * sb[0])
     for i, j in product(range(0, sa[0], n), range(0, sa[0], n)):
         for k, l in product(range(sb[0]), range(sb[0])):
-            C[sb[0] * i+k*n:sb[0] * i + (k+1)*n, sb[0] * j+l*n:sb[0] * j + (l+1)*n] = A[i:i + n, j:j + n] * B[k, l]
+            C[sb[0] * i + k * n:sb[0] * i + (k + 1) * n, sb[0] * j + l * n:sb[0] * j + (l + 1) * n] = A[i:i + n, j:j + n] * B[k, l]
     return C
 
 
