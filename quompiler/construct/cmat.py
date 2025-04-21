@@ -33,6 +33,17 @@ class UnivGate(Enum):
                 return g
 
 
+class QubitClass(Enum):
+    NONE = (0, None)  # neither target nor control
+    TARGET = (1, None)  # target
+    CONTROL = (2, 1)  # control with value 1
+    ANTI_CONTROL = (3, 0)  # control with value 0
+
+    def __init__(self, id, control_value):
+        self.id = id
+        self.control_value = control_value
+
+
 def immutable(m: NDArray):
     return tuple(map(tuple, m))
 
@@ -133,11 +144,12 @@ class UnitaryM:
     Instantiate a unitary matrix.
     :param dimension: dimension of the matrix.
     :param matrix: the core matrix.
-    :param indexes: the row indexes occupied by the core submatrix.
+    :param core: the row indexes occupied by the core submatrix.
     """
     dimension: int
     matrix: NDArray
-    indexes: Tuple[int, ...]
+    core: Tuple[int, ...]
+    # TODO: add interleaving kronecker product representation. I need a language to describe it.
 
     def __post_init__(self):
         s = self.matrix.shape
@@ -145,7 +157,7 @@ class UnitaryM:
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
         assert np.allclose(self.matrix @ self.matrix.conj().T, np.eye(s[0])), f'Matrix is not unitary {self.matrix}'
         assert self.dimension >= max(s[0], s[1]), f'Dimension must be greater than or equal to the dimension of the core matrix.'
-        assert len(self.indexes) == s[0], f'The number of indexes must match the size of the core matrix.'
+        assert len(self.core) == s[0], f'The number of indexes must match the size of the core matrix.'
 
     def __getitem__(self, index: NdIndex):
         return self.matrix[index]
@@ -158,8 +170,8 @@ class UnitaryM:
             return self.inflate() @ other
         if self.dimension != other.dimension:
             raise ValueError('matmul: Input operands have dimension mismatch.')
-        if self.indexes == other.indexes:
-            return UnitaryM(self.dimension, self.matrix @ other.matrix, self.indexes)
+        if self.core == other.core:
+            return UnitaryM(self.dimension, self.matrix @ other.matrix, self.core)
         # TODO this is a quick but slow implementation. May be improved by finding the union/intersection of indices
         return UnitaryM.deflate(self.inflate() @ other.inflate())
 
@@ -173,7 +185,7 @@ class UnitaryM:
             return self.matrix.copy()
         result = np.eye(self.dimension, dtype=np.complexfloating)
         for i, j in product(range(matd), range(matd)):
-            result[self.indexes[i], self.indexes[j]] = self.matrix[i, j]
+            result[self.core[i], self.core[j]] = self.matrix[i, j]
         return result
 
     @classmethod
@@ -195,7 +207,7 @@ class UnitaryM:
         if self.dimension & (self.dimension - 1) != 0:
             return False
         n = self.dimension.bit_length() - 1
-        control = core2control(n, self.indexes)
+        control = core2control(n, self.core)
         return control.count(None) == 1
 
 
@@ -218,9 +230,9 @@ class CUnitary(UnitaryM):
     def convert(cls, u: UnitaryM) -> 'CUnitary':
         assert u.dimension & (u.dimension - 1) == 0
         n = u.dimension.bit_length() - 1
-        controls = core2control(n, u.indexes)
+        controls = core2control(n, u.core)
         core = control2core(controls)
-        lookup = {idx: i for i, idx in enumerate(u.indexes)}
+        lookup = {idx: i for i, idx in enumerate(u.core)}
 
         dim = len(core)
         m = np.eye(dim, dtype=np.complexfloating)

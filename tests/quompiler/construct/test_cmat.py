@@ -157,14 +157,14 @@ def test_inflate_deflate():
     cu = UnitaryM(3, random_unitary(2), (1, 2))
     m = cu.inflate()
     u = UnitaryM.deflate(m)
-    assert u.indexes == (1, 2), f'Core indexes is unexpected {u.indexes}'
+    assert u.core == (1, 2), f'Core indexes is unexpected {u.core}'
 
 
 def test_CUnitary_init():
     m = random_unitary(2)
     cu = CUnitary(m, (True, True, None))
     # print(formatter.tostr(cu.inflate()))
-    assert cu.indexes == (6, 7), f'Core indexes is unexpected {cu.indexes}'
+    assert cu.core == (6, 7), f'Core indexes is unexpected {cu.core}'
 
 
 def test_univ_Y():

@@ -3,6 +3,7 @@ import random
 import numpy as np
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cmat import UnivGate, CUnitary
 from quompiler.construct.quompiler import quompile
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -73,9 +74,9 @@ def test_compile_cyclic_4_everything():
     u = cyclic_matrix(1 << 2, 1)
     bc = quompile(u)
     # print(bc)
-    assert 6 == len([a for a in bc])
+    assert 6 == len([a for a in BytecodeIter(bc)])
     # we need to revert the order bc the last element appears first in the circuit
-    leaves = [a.data for a in bc if isinstance(a.data, CUnitary)][::-1]
+    leaves = [a.data for a in BytecodeIter(bc) if isinstance(a.data, CUnitary)][::-1]
     assert len(leaves) == 4
 
     cirqC = CirqBuilder(n)

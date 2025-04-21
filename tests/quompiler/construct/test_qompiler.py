@@ -1,6 +1,7 @@
 import random
 from functools import reduce
 
+from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cmat import CUnitary
 from quompiler.construct.quompiler import quompile
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -29,7 +30,7 @@ def test_compile_sing_qubit_circuit():
     bc = quompile(u)
     # print(bc)
     assert bc is not None
-    assert 1 == len([a for a in bc])
+    assert 1 == len([a for a in BytecodeIter(bc)])
     assert isinstance(bc.data, CUnitary)
 
 
@@ -38,8 +39,8 @@ def test_compile_cyclic_8():
     bc = quompile(u)
     # print(bc)
     assert bc is not None
-    assert 18 == len([a for a in bc])
-    leaves = [a.data.inflate() for a in bc if isinstance(a.data, CUnitary)]
+    assert 18 == len([a for a in BytecodeIter(bc)])
+    leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, CUnitary)]
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 
@@ -49,8 +50,8 @@ def test_compile_cyclic_4():
     bc = quompile(u)
     # print(bc)
     assert bc is not None
-    assert 6 == len([a for a in bc])
-    leaves = [a.data.inflate() for a in bc if isinstance(a.data, CUnitary)]
+    assert 6 == len([a for a in BytecodeIter(bc)])
+    leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, CUnitary)]
     assert len(leaves) == 4
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
@@ -63,6 +64,6 @@ def test_interp_random_unitary():
         dim = 1 << n
         m = random_unitary(dim)
         bc = quompile(m)
-        leaves = [a.data.inflate() for a in bc if isinstance(a.data, CUnitary)]
+        leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, CUnitary)]
         v = reduce(lambda a, b: a @ b, leaves)
         assert np.allclose(v, m), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(m)}'

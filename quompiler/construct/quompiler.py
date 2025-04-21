@@ -8,7 +8,7 @@ from quompiler.utils.mat2l_decompose import mat2l_decompose
 
 def quompile(u: NDArray) -> Bytecode:
     s = u.shape
-    um = UnitaryM(s[0], u, indexes=tuple(range(s[0])))
+    um = UnitaryM(s[0], u, core=tuple(range(s[0])))
     return _quompile(um)
 
 

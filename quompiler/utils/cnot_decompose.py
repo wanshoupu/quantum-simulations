@@ -83,7 +83,7 @@ def cnot_decompose(m: UnitaryM) -> Tuple[CUnitary, ...]:
         return tuple()
     if not m.is2l():
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
-    code = gray_code(*m.indexes)
+    code = gray_code(*m.core)
     xmat = UnivGate.X.mat
     components = [CUnitary(xmat, core2control(n, core)) for core in zip(code, code[1:-1])]
     if code[-2] < code[-1]:
