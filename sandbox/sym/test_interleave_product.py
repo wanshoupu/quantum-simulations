@@ -156,6 +156,26 @@ def test_sandwich_product_arbitray_matrix():
     print('C')
     pprint(C, num_columns=10000)
 
+def test_sandwich_product_8_2_4():
+    """
+        let m = len(A), n = len(I), l = len(C)
+        then the Kproduct, A ⨁ I ⨁ C, is formed by
+        1. get the Kproduct K = A ⨁ C
+        2. divide up K
+    """
+    # Define symbolic variables
+    A = square_m(8, 'a')
+    print('A')
+    pprint(A, num_columns=10000)
+
+    B = square_m(3, 'b')
+    print('B')
+    pprint(B)
+
+    C = interleave_product(A, B, 2, 4)
+    print('C')
+    pprint(C, num_columns=10000)
+
 
 def interleave_product(A, B, m, n):
     """
