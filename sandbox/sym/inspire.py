@@ -1,10 +1,12 @@
 import random
 import textwrap
 
+import pytest
 import sympy
-from sympy import Matrix, symbols, kronecker_product as kron, pretty
+from sympy import Matrix, symbols, kronecker_product as kron, pretty, pprint
 
 from quompiler.construct.cmat import QubitClass
+from sandbox.sym.sym_gen import square_m
 
 random.seed(3)
 
@@ -21,38 +23,16 @@ def random_control2(n) -> tuple[QubitClass, ...]:
     return tuple(result)
 
 
-
-
-def test_kron():
-    # Define symbolic variables
-    a, b, c, d = symbols('a b c d')
-    e, f, g, h = symbols('e f g h')
-
-    # Define two symbolic matrices
-    A = Matrix([[a, b], [c, d]])
-    B = sympy.eye(2)
-    C = Matrix([[e, f], [g, h]])
-
-    # Compute the Kronecker product
-    K = kron(A, B, C)
-
-    # print()
-    # pprint(K)
-    expected = """
-        ⎡a⋅e  a⋅f   0    0   b⋅e  b⋅f   0    0 ⎤
-        ⎢                                      ⎥
-        ⎢a⋅g  a⋅h   0    0   b⋅g  b⋅h   0    0 ⎥
-        ⎢                                      ⎥
-        ⎢ 0    0   a⋅e  a⋅f   0    0   b⋅e  b⋅f⎥
-        ⎢                                      ⎥
-        ⎢ 0    0   a⋅g  a⋅h   0    0   b⋅g  b⋅h⎥
-        ⎢                                      ⎥
-        ⎢c⋅e  c⋅f   0    0   d⋅e  d⋅f   0    0 ⎥
-        ⎢                                      ⎥
-        ⎢c⋅g  c⋅h   0    0   d⋅g  d⋅h   0    0 ⎥
-        ⎢                                      ⎥
-        ⎢ 0    0   c⋅e  c⋅f   0    0   d⋅e  d⋅f⎥
-        ⎢                                      ⎥
-        ⎣ 0    0   c⋅g  c⋅h   0    0   d⋅g  d⋅h⎦
-    """
-    assert pretty(K) == textwrap.dedent(expected).strip()
+@pytest.mark.parametrize("control", [
+    [QubitClass.TARGET, QubitClass.NONE, QubitClass.CONTROL],
+    [QubitClass.TARGET, QubitClass.CONTROL, QubitClass.NONE],
+    [QubitClass.NONE, QubitClass.TARGET, QubitClass.CONTROL],
+    [QubitClass.CONTROL, QubitClass.TARGET, QubitClass.NONE],
+    [QubitClass.CONTROL, QubitClass.NONE, QubitClass.TARGET],
+    [QubitClass.NONE, QubitClass.CONTROL, QubitClass.TARGET],
+])
+def test_control2mat_single_target(control):
+    print(control)
+    A = square_m(8)
+    print()
+    pprint(A, num_columns=10000)
