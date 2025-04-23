@@ -34,14 +34,24 @@ class UnivGate(Enum):
 
 
 class QubitClass(Enum):
-    NONE = (0, None)  # neither target nor control
-    TARGET = (1, None)  # target
-    CONTROL = (2, 1)  # control with value 1
-    ANTI_CONTROL = (3, 0)  # control with value 0
+    TARGET = (0, (0, 1))  # target
+    IDLER = (1, (0, 1))  # neither target nor control, non-interactive
+    CONTROL0 = (2, (0,))  # control with value 0
+    CONTROL1 = (3, (1,))  # control with value 1
 
-    def __init__(self, id, control_value):
+    def __init__(self, id, base: tuple[int, ...]):
         self.id = id
-        self.control_value = control_value
+        self.base = base
+
+    def __repr__(self):
+        return self.name
+
+    @staticmethod
+    def get(id, default=IDLER) -> 'QubitClass':
+        for q in QubitClass:
+            if q.id == id:
+                return q
+        return default
 
 
 def immutable(m: NDArray):
@@ -149,6 +159,7 @@ class UnitaryM:
     dimension: int
     matrix: NDArray
     core: Tuple[int, ...]
+
     # TODO: add interleaving kronecker product representation. I need a language to describe it.
 
     def __post_init__(self):
@@ -211,8 +222,8 @@ class UnitaryM:
         return control.count(None) == 1
 
 
-class CUnitary(UnitaryM):
-    def __init__(self, m: NDArray, controls: Tuple[Optional[bool], ...]):
+class CUnitary:
+    def __init__(self, m: NDArray, controls: Tuple[QubitClass, ...]):
         """
         Instantiate a controlled single-qubit unitary matrix.
         :param m: the core matrix.
