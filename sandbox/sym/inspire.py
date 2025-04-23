@@ -1,38 +1,99 @@
 import random
-import textwrap
+from itertools import product
+from typing import Sequence
 
+import numpy as np
 import pytest
 import sympy
-from sympy import Matrix, symbols, kronecker_product as kron, pretty, pprint
+from sympy import pprint
 
 from quompiler.construct.cmat import QubitClass
-from sandbox.sym.sym_gen import square_m
+from quompiler.construct.controller import Controller
+from quompiler.utils.cgen import random_control2
+from sandbox.sym.contmat import CUnitary
+from sandbox.sym.inter_product import mesh_product
+from sandbox.sym.sym_gen import symmat
+from sandbox.sym.symmat_format import mat_print
 
 random.seed(3)
 
 
-def random_control2(n) -> tuple[QubitClass, ...]:
-    """
-    Generate a random control sequence with total n qubits, k target qubits, (n-k) control qubits
-    :param n: positive integer
-    :param k: 0< k <= n
-    :return: Control sequence
-    """
-    mid = [q.id for q in QubitClass]
-    result = [QubitClass.get(random.choice(mid)) for _ in range(n)]
-    return tuple(result)
-
-
-@pytest.mark.parametrize("control", [
-    [QubitClass.TARGET, QubitClass.NONE, QubitClass.CONTROL],
-    [QubitClass.TARGET, QubitClass.CONTROL, QubitClass.NONE],
-    [QubitClass.NONE, QubitClass.TARGET, QubitClass.CONTROL],
-    [QubitClass.CONTROL, QubitClass.TARGET, QubitClass.NONE],
-    [QubitClass.CONTROL, QubitClass.NONE, QubitClass.TARGET],
-    [QubitClass.NONE, QubitClass.CONTROL, QubitClass.TARGET],
+@pytest.mark.parametrize("controls", [
+    [QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL0],
+    [QubitClass.TARGET, QubitClass.CONTROL0, QubitClass.IDLER],
+    [QubitClass.IDLER, QubitClass.TARGET, QubitClass.CONTROL0],
+    [QubitClass.CONTROL0, QubitClass.TARGET, QubitClass.IDLER],
+    [QubitClass.CONTROL0, QubitClass.IDLER, QubitClass.TARGET],
+    [QubitClass.IDLER, QubitClass.CONTROL0, QubitClass.TARGET],
+    [QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL1],
+    [QubitClass.TARGET, QubitClass.CONTROL1, QubitClass.IDLER],
+    [QubitClass.IDLER, QubitClass.TARGET, QubitClass.CONTROL1],
+    [QubitClass.CONTROL1, QubitClass.TARGET, QubitClass.IDLER],
+    [QubitClass.CONTROL1, QubitClass.IDLER, QubitClass.TARGET],
+    [QubitClass.IDLER, QubitClass.CONTROL1, QubitClass.TARGET],
 ])
-def test_control2mat_single_target(control):
-    print(control)
-    A = square_m(8)
+def test_control2mat_single_target(controls):
     print()
-    pprint(A, num_columns=10000)
+    print(controls)
+
+    A = symmat(2)
+    mat_print(A)
+
+    cu = CUnitary(A, controls)
+    result = cu.inflate()
+    # mat_print(result)
+
+
+def test_control2mat_zero_target():
+    controls = [QubitClass.CONTROL1, QubitClass.CONTROL1]
+    print()
+    print(controls)
+
+    A = symmat(1)
+    # mat_print(A)
+    cu = CUnitary(A, controls)
+    result = cu.inflate()
+
+    expected = sympy.eye(1 << len(controls))
+    expected[-1, -1] = A[0, 0]
+    assert result == expected
+
+
+def test_control2mat_two_targets():
+    controls = [QubitClass.TARGET, QubitClass.IDLER, QubitClass.TARGET, QubitClass.CONTROL1]
+    A = symmat(1 << controls.count(QubitClass.TARGET))
+    mat_print(A)
+    for _ in range(10):
+        random.shuffle(controls)
+        print()
+        print(controls)
+        cu = CUnitary(A, controls)
+        result = cu.inflate()
+
+        mat_print(result)
+
+        # hack
+        mask = Controller(controls)
+        uncontrolled_indexes = sorted(set(mask.mask(i) for i in range(result.shape[0])))
+        actual = result.extract(uncontrolled_indexes, uncontrolled_indexes)
+        control_index = len(controls) - 1 - controls.index(QubitClass.CONTROL1)
+        none_index = len(controls) - 1 - controls.index(QubitClass.IDLER)
+        if control_index < none_index:
+            none_index -= 1
+        factors = [1 << none_index]
+        expected = mesh_product(A, [sympy.eye(2)], factors)
+        assert actual == expected
+
+
+def test_control2mat_random():
+    for _ in range(10):
+        n = random.randint(1, 5)
+        controls = random_control2(n)
+        print()
+        print(controls)
+
+        A = symmat(1 << controls.count(QubitClass.TARGET))
+        # mat_print(A)
+        cu = CUnitary(A, controls)
+        result = cu.inflate()
+        mat_print(result)
