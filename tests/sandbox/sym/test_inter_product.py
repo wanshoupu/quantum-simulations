@@ -6,7 +6,7 @@ from sympy import Matrix, symbols, kronecker_product as kron, pprint
 from sympy.printing.pretty import pretty
 
 from sandbox.sym.inter_product import inter_product, mesh_product
-from sandbox.sym.sym_gen import square_m
+from sandbox.sym.sym_gen import symmat
 
 
 def test_kron():
@@ -49,7 +49,7 @@ def test_kron_4qubit_sandwich():
     test the configuration of unitary matrix acting on first and third qubit with the second qubit unchanged.
     """
     # Define symbolic variables
-    A = square_m(2)
+    A = symmat(2)
     # print('A')
     # pprint(A)
     B = sympy.eye(8)
@@ -71,7 +71,7 @@ def test_inter_product():
     """
     test the configuration of Kronecker product A ⨁ I ⨁ C
     """
-    coms = square_m(5, 'a'), square_m(3, 'c')
+    coms = symmat(5, 'a'), symmat(3, 'c')
     A = kron(*coms)
     B = sympy.eye(2)
 
@@ -88,11 +88,11 @@ def test_sandwich_product_arbitray_matrix():
         2. divide up K
     """
     # Define symbolic variables
-    A = square_m(15, 'a')
+    A = symmat(15, 'a')
     # print('A')
     # pprint(A, num_columns=10000)
 
-    B = square_m(2, 'b')
+    B = symmat(2, 'b')
     # print('B')
     # pprint(B)
 
@@ -172,11 +172,11 @@ def test_inter_product_8_2_4():
         2. divide up K
     """
     # Define symbolic variables
-    A = square_m(8, 'a')
+    A = symmat(8, 'a')
     # print('A')
     # pprint(A, num_columns=10000)
 
-    B = square_m(3, 'b')
+    B = symmat(3, 'b')
     # print('B')
     # pprint(B)
 
@@ -237,12 +237,12 @@ def test_inter_product_8_2_4():
 
 def test_inter_product_left_kron():
     # Define symbolic variables
-    coms = square_m(5, 'a'), square_m(2, 'b')
+    coms = symmat(5, 'a'), symmat(2, 'b')
     C = kron(*coms)
     # print('C')
     # pprint(C, num_columns=10000)
 
-    E = square_m(3, 'e')
+    E = symmat(3, 'e')
     # print('E')
     # pprint(E)
 
@@ -256,12 +256,12 @@ def test_inter_product_left_kron():
 
 def test_inter_product_right_kron():
     # Define symbolic variables
-    coms = square_m(5, 'a'), square_m(2, 'b')
+    coms = symmat(5, 'a'), symmat(2, 'b')
     C = kron(*coms)
     # print('C')
     # pprint(C, num_columns=10000)
 
-    E = square_m(3, 'e')
+    E = symmat(3, 'e')
     # print('E')
     # pprint(E)
 
@@ -275,12 +275,12 @@ def test_inter_product_right_kron():
 
 
 def test_inter_product_5_3_2():
-    coms = square_m(5, 'a'), square_m(2, 'b')
+    coms = symmat(5, 'a'), symmat(2, 'b')
     C = kron(*coms)
     # print('C')
     # pprint(C, num_columns=10000)
 
-    E = square_m(3, 'e')
+    E = symmat(3, 'e')
     # print('E')
     # pprint(E)
 
@@ -294,12 +294,12 @@ def test_inter_product_5_3_2():
 
 
 def test_inter_product_2_3_4():
-    coms = square_m(2, 'a'), square_m(2, 'b'), square_m(2, 'c')
+    coms = symmat(2, 'a'), symmat(2, 'b'), symmat(2, 'c')
     A = kron(*coms)
     # print('A')
     # pprint(A, num_columns=10000)
 
-    E = square_m(3, 'e')
+    E = symmat(3, 'e')
     # print('E')
     # pprint(E)
 
@@ -316,12 +316,12 @@ def test_inter_product_2_3_4():
 
 
 def test_inter_product_4_3_2():
-    coms = square_m(2, 'a'), square_m(2, 'b'), square_m(2, 'c')
+    coms = symmat(2, 'a'), symmat(2, 'b'), symmat(2, 'c')
     A = kron(*coms)
     # print('A')
     # pprint(A, num_columns=10000)
 
-    E = square_m(3, 'e')
+    E = symmat(3, 'e')
     # print('E')
     # pprint(E)
 
@@ -338,16 +338,16 @@ def test_inter_product_4_3_2():
 
 
 def test_mesh_product_16_3_2_3_2():
-    coms = square_m(2, 'a'), square_m(2, 'b'), square_m(2, 'c')
+    coms = symmat(2, 'a'), symmat(2, 'b'), symmat(2, 'c')
     A = kron(*coms)
     # print('\nA')
     # pprint(A, num_columns=10000)
 
-    E = square_m(2, 'e')
+    E = symmat(2, 'e')
     # print('\nE')
     # pprint(E)
 
-    F = square_m(2, 'f')
+    F = symmat(2, 'f')
     # print('\nF')
     # pprint(F, num_columns=10000)
 
