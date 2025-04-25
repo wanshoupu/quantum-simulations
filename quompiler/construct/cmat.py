@@ -222,8 +222,8 @@ class UnitaryM:
         return control.count(None) == 1
 
 
-class CUnitary:
-    def __init__(self, m: NDArray, controls: Tuple[QubitClass, ...]):
+class CUnitary(UnitaryM):
+    def __init__(self, m: NDArray, controls: Tuple[Optional[bool], ...]):
         """
         Instantiate a controlled single-qubit unitary matrix.
         :param m: the core matrix.
