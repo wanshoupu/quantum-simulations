@@ -1,12 +1,11 @@
-from itertools import product
 from typing import Sequence
 
 import numpy as np
 import sympy
 from sympy import Matrix as NDArray
 
-from quompiler.construct.types import QType
 from quompiler.construct.controller import Controller
+from quompiler.construct.types import QType
 
 
 class CUnitary:
@@ -20,8 +19,8 @@ class CUnitary:
         self.mat = m
         self.controls = controls
         self.controller = Controller(controls)
-        self.core = sorted(self.controller.subindexes(QType.TARGET))
-        self.multiplier = self.controller.subindexes(QType.IDLER)
+        self.core = sorted(self.controller.indexes(QType.TARGET))
+        self.multiplier = self.controller.indexes(QType.IDLER)
 
     def __repr__(self):
         result = super().__repr__()
@@ -32,5 +31,5 @@ class CUnitary:
         result = sympy.eye(1 << length)
         for i, j in np.ndindex(self.mat.shape):
             for m in self.multiplier:
-                result[self.controller.mask(m + self.core[i]), self.controller.mask(m + self.core[j])] = self.mat[i, j]
+                result[self.controller.map(m + self.core[i]), self.controller.map(m + self.core[j])] = self.mat[i, j]
         return result

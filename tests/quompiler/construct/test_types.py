@@ -3,7 +3,6 @@ from operator import or_
 
 import numpy as np
 import pytest
-from torch.utils.hipify.hipify_python import value
 
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.mgen import random_unitary
@@ -78,9 +77,18 @@ def test_qtype_combinations(tid, qtypes):
 
 
 def test_qtype_universe():
-    combo = QType(value=0b1111)
-    assert combo == reduce(or_, QType)
-    assert all(t in combo for t in QType)
+    universe = QType(value=0b1111)
+    assert universe == reduce(or_, QType)
+    assert all(t in universe for t in QType)
+
+
+@pytest.mark.parametrize("tid", [0b11, 0b101, 0b110, 0b111, 0b1100, 0b1111])
+def test_qtype_combo_in_combo(tid):
+    universe = QType(value=0b1111)
+    qtype = QType(tid)
+    assert qtype in universe
+    if qtype != universe:
+        assert universe not in qtype
 
 
 @pytest.mark.parametrize("name, qtype", [
@@ -92,3 +100,19 @@ def test_qtype_universe():
 ])
 def test_qtype_name(name, qtype):
     assert qtype.name == name
+
+
+def test_qtype_in_operator():
+    # Python's Flag and IntFlag enums override the __contains__ method
+    combo = QType.CONTROL0 | QType.CONTROL1
+    for qt in (QType.CONTROL0, QType.CONTROL1):
+        assert qt in combo
+    for qt in (QType.TARGET, QType.IDLER):
+        assert qt not in combo
+
+
+def test_qtype_equality():
+    combo = QType.CONTROL0 | QType.CONTROL1
+    for qt in (QType.CONTROL0, QType.CONTROL1):
+        assert combo != qt
+        assert (combo & qt) == qt

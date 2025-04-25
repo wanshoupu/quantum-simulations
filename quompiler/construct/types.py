@@ -28,6 +28,9 @@ class UnivGate(Enum):
 class QType(IntFlag):
     """
     This is a classification of the qubit type in quantum computing unitary transformations.
+    There are a few predefined combinations:
+    EXTENSION = IDLER | TARGET, is the extended matrix combining IDLER bits and TARGET bits
+    CONTROL = CONTROL0 | CONTROL1, is the control bits
     """
     IDLER = (1, (0, 1))  # the non-interactive bystander. they are neither target nor control.
     TARGET = (2, (0, 1))  # target qubit
