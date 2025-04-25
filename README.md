@@ -42,7 +42,7 @@ python -m quompiler.demo.compile_unitary_demo -i 3
 
 Create a new cell and run:
 
-```python
+```bash
 !pip
 install
 git + https: // github.com / wanshoupu / quantum - simulations.git
@@ -52,7 +52,7 @@ git + https: // github.com / wanshoupu / quantum - simulations.git
 
 In a new cell:
 
-```python
+```bash
 !python - m
 quompiler.demo.compile_unitary_demo - i
 6

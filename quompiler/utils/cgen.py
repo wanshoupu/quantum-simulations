@@ -8,7 +8,6 @@ def random_control2(n) -> Sequence[QType]:
     """
     Generate a random control sequence with total n qubits, k target qubits, (n-k) control qubits
     :param n: positive integer
-    :param k: 0< k <= n
     :return: Control sequence
     """
     result = [random.choice(list(QType)) for _ in range(n)]

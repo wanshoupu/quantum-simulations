@@ -12,7 +12,6 @@ def validate_factors(factors):
            b. f1 % f2 == 0, f2 % f3 == 0, ...
     If condition a. is violated, ValueError with message "Combine adjacent yeast (with same factor) together" will be raised;
     If condition b. is violated, ValueError with message "Invalid factors are detected and mesh_product cannot be carried out" will be raised.
-    :param m:
     :param factors: list of int, (f1,f2,...) denotes the sizes of blocks to divide, bread, the original matrix into.
            seeds matrices will be mesh multiplied in Kronecker fashion.
            The size of factors == size of seeds and also m must be divisible by product(f0, f1, ...).
