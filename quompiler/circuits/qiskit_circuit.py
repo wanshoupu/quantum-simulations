@@ -1,8 +1,9 @@
 from typing import Union, Optional
 
 from typing_extensions import override
+from quompiler.construct.types import UnivGate
 
-from quompiler.construct.cmat import UnitaryM, validm2l, UnivGate
+from quompiler.construct.cmat import UnitaryM, validm2l
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
 import qiskit

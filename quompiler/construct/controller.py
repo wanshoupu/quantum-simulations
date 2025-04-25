@@ -1,18 +1,18 @@
 from itertools import product
 from typing import Sequence
 
-from quompiler.construct.cmat import QubitClass
+from quompiler.construct.types import QType
 
 
 class Controller:
-    def __init__(self, controls: Sequence[QubitClass]):
+    def __init__(self, controls: Sequence[QType]):
         self.controls = controls
         self.length = len(controls)
         self.masks = dict()
         for i, c in enumerate(controls):
-            if c == QubitClass.CONTROL1:
+            if c == QType.CONTROL1:
                 self.masks[self.length - 1 - i] = 1
-            elif c == QubitClass.CONTROL0:
+            elif c == QType.CONTROL0:
                 self.masks[self.length - 1 - i] = 0
         self.core_indexes = None
 
@@ -26,7 +26,7 @@ class Controller:
     def indexes(self):
         """
         Create the core indexes in the controlled matrix.
-        Core indexes in the controlled matrix is defined to be the sparce indexes occupied by the matrix for targets + idlers.
+        It is defined as the sparce indexes occupied by the matrix for targets + idlers under the control (both type 0 and type 1) restrictions.
         :return: the core indexes in the controlled matrix.
         """
         if self.core_indexes is None:

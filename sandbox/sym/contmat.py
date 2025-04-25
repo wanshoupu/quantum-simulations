@@ -1,21 +1,16 @@
 from itertools import product
-from typing import Tuple, Sequence
+from typing import Sequence
 
 import numpy as np
 import sympy
-from sympy import symbols, Matrix as NDArray
+from sympy import Matrix as NDArray
 
-from quompiler.construct.cmat import QubitClass
+from quompiler.construct.types import QType
 from quompiler.construct.controller import Controller
 
 
-def control2core(controls, qubit_class):
-    length = len(controls)
-    return [sum(t) for t in product(*[(1 << (length - 1 - i), 0) for i, c in enumerate(controls) if c == qubit_class])]
-
-
 class CUnitary:
-    def __init__(self, m: NDArray, controls: Sequence[QubitClass]):
+    def __init__(self, m: NDArray, controls: Sequence[QType]):
         """
         Instantiate a controlled single-qubit unitary matrix.
         :param m: the core matrix.
@@ -25,8 +20,8 @@ class CUnitary:
         self.mat = m
         self.controls = controls
         self.controller = Controller(controls)
-        self.core = sorted(control2core(controls, QubitClass.TARGET))
-        self.multiplier = control2core(controls, QubitClass.IDLER)
+        self.core = sorted(self.controller.subindexes(QType.TARGET))
+        self.multiplier = self.controller.subindexes(QType.IDLER)
 
     def __repr__(self):
         result = super().__repr__()

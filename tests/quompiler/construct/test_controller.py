@@ -1,4 +1,6 @@
-from quompiler.construct.cmat import QubitClass
+import pytest
+
+from quompiler.construct.types import QType
 from quompiler.construct.controller import Controller
 from quompiler.utils.cgen import random_control2
 
@@ -15,7 +17,7 @@ def test_controller_init():
 
 
 def test_controller_mask_zero():
-    controls = [QubitClass.TARGET, QubitClass.CONTROL1, QubitClass.IDLER, QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL0]
+    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
     controller = Controller(controls)
     num = 0
     new = controller.mask(num)
@@ -23,7 +25,7 @@ def test_controller_mask_zero():
 
 
 def test_controller_mask_ones():
-    controls = [QubitClass.TARGET, QubitClass.CONTROL1, QubitClass.IDLER, QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL0]
+    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
     controller = Controller(controls)
     n = len(controls)
     num = (1 << n) - 1
@@ -33,7 +35,7 @@ def test_controller_mask_ones():
 
 
 def test_controller_indexes():
-    controls = [QubitClass.TARGET, QubitClass.CONTROL1, QubitClass.IDLER, QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL0]
+    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
     controller = Controller(controls)
     indexes = controller.indexes()
     n = len(controls)

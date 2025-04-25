@@ -4,7 +4,7 @@ from typing import Sequence
 import pytest
 import sympy
 
-from quompiler.construct.cmat import QubitClass
+from quompiler.construct.types import QType
 from quompiler.construct.controller import Controller
 from quompiler.utils.cgen import random_control2
 from sandbox.sym.contmat import CUnitary
@@ -16,18 +16,18 @@ random.seed(3)
 
 
 @pytest.mark.parametrize("controls", [
-    [QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL0],
-    [QubitClass.TARGET, QubitClass.CONTROL0, QubitClass.IDLER],
-    [QubitClass.IDLER, QubitClass.TARGET, QubitClass.CONTROL0],
-    [QubitClass.CONTROL0, QubitClass.TARGET, QubitClass.IDLER],
-    [QubitClass.CONTROL0, QubitClass.IDLER, QubitClass.TARGET],
-    [QubitClass.IDLER, QubitClass.CONTROL0, QubitClass.TARGET],
-    [QubitClass.TARGET, QubitClass.IDLER, QubitClass.CONTROL1],
-    [QubitClass.TARGET, QubitClass.CONTROL1, QubitClass.IDLER],
-    [QubitClass.IDLER, QubitClass.TARGET, QubitClass.CONTROL1],
-    [QubitClass.CONTROL1, QubitClass.TARGET, QubitClass.IDLER],
-    [QubitClass.CONTROL1, QubitClass.IDLER, QubitClass.TARGET],
-    [QubitClass.IDLER, QubitClass.CONTROL1, QubitClass.TARGET],
+    [QType.TARGET, QType.IDLER, QType.CONTROL0],
+    [QType.TARGET, QType.CONTROL0, QType.IDLER],
+    [QType.IDLER, QType.TARGET, QType.CONTROL0],
+    [QType.CONTROL0, QType.TARGET, QType.IDLER],
+    [QType.CONTROL0, QType.IDLER, QType.TARGET],
+    [QType.IDLER, QType.CONTROL0, QType.TARGET],
+    [QType.TARGET, QType.IDLER, QType.CONTROL1],
+    [QType.TARGET, QType.CONTROL1, QType.IDLER],
+    [QType.IDLER, QType.TARGET, QType.CONTROL1],
+    [QType.CONTROL1, QType.TARGET, QType.IDLER],
+    [QType.CONTROL1, QType.IDLER, QType.TARGET],
+    [QType.IDLER, QType.CONTROL1, QType.TARGET],
 ])
 def test_control2mat_single_target(controls):
     # print()
@@ -43,7 +43,7 @@ def test_control2mat_single_target(controls):
 
 
 def test_control2mat_zero_target():
-    controls = [QubitClass.CONTROL1, QubitClass.CONTROL1]
+    controls = [QType.CONTROL1, QType.CONTROL1]
     print()
     print(controls)
 
@@ -59,8 +59,8 @@ def test_control2mat_zero_target():
 
 
 def test_control2mat_two_targets():
-    controls = [QubitClass.TARGET, QubitClass.IDLER, QubitClass.TARGET, QubitClass.CONTROL1]
-    A = symmat(1 << controls.count(QubitClass.TARGET))
+    controls = [QType.TARGET, QType.IDLER, QType.TARGET, QType.CONTROL1]
+    A = symmat(1 << controls.count(QType.TARGET))
     mat_print(A)
     for _ in range(10):
         random.shuffle(controls)
@@ -74,7 +74,7 @@ def test_control2mat_two_targets():
         assert actual == expected
 
 
-def another_inflate(A: sympy.Matrix, controls: Sequence[QubitClass]) -> sympy.Matrix:
+def another_inflate(A: sympy.Matrix, controls: Sequence[QType]) -> sympy.Matrix:
     """
     This is another way to inflate matrix A with control sequences like TARGET, IDLER, CONTROL1, and CONTROL0.
     It calls mesh_product to inflate the IDLER bits. Then it calls Controller.indexes to inflate the control bits.
@@ -83,7 +83,7 @@ def another_inflate(A: sympy.Matrix, controls: Sequence[QubitClass]) -> sympy.Ma
     :return: the inflated matrix.
     """
     n = len(controls)
-    factors = [1 << controls[i + 1:].count(QubitClass.TARGET) for i, q in enumerate(controls) if q == QubitClass.IDLER]
+    factors = [1 << controls[i + 1:].count(QType.TARGET) for i, q in enumerate(controls) if q == QType.IDLER]
     yeast = [sympy.eye(2) for _ in range(len(factors))]
     core = mesh_product(A, yeast, factors)
 
@@ -102,7 +102,7 @@ def test_control2mat_random():
         print()
         print(controls)
 
-        A = symmat(1 << controls.count(QubitClass.TARGET))
+        A = symmat(1 << controls.count(QType.TARGET))
         # mat_print(A)
         cu = CUnitary(A, controls)
         actual = cu.inflate()

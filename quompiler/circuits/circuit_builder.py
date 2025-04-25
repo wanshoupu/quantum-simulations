@@ -4,8 +4,9 @@ from typing import Union, Optional
 import numpy as np
 from numpy.typing import NDArray
 from typing_extensions import override
+from quompiler.construct.types import  UnivGate
 
-from quompiler.construct.cmat import UnitaryM, validm2l, UnivGate
+from quompiler.construct.cmat import UnitaryM, validm2l
 
 
 class CircuitBuilder(ABC):

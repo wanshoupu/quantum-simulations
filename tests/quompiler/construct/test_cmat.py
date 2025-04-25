@@ -1,9 +1,12 @@
 import random
+from functools import reduce
+from operator import or_
 
 import numpy as np
 import pytest
 
-from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, UnivGate, control2core, core2control
+from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, control2core, core2control
+from quompiler.construct.types import QType, UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM, random_indexes
 
@@ -227,3 +230,32 @@ def test_univ_gate_get_H():
 def test_univ_gate_commutator():
     mat = UnivGate.Z.mat @ UnivGate.Y.mat @ UnivGate.Z.mat
     assert np.array_equal(mat, -UnivGate.Y.mat), f'mat unexpected {mat}'
+
+
+def test_qtype_empty_state():
+    # id zero is the empty enum, meaning no QType is present. It's the effective None QType
+    empty_type = QType(0)
+    assert all(t not in empty_type for t in QType)
+
+
+@pytest.mark.parametrize("eid, qtype", [
+    [1, QType.IDLER],
+    [2, QType.TARGET],
+    [4, QType.CONTROL0],
+    [8, QType.CONTROL1],
+])
+def test_qtype_id(eid, qtype):
+    singleton = QType(value=eid)
+    assert singleton == qtype and qtype in singleton
+
+
+@pytest.mark.parametrize("eid, qtypes", [
+    [0b11, [QType.IDLER, QType.TARGET]],
+    [0b101, [QType.IDLER, QType.CONTROL0]],
+    [0b110, [QType.TARGET, QType.CONTROL0]],
+    [0b111, [QType.CONTROL0, QType.IDLER, QType.TARGET]],
+    [0b1100, [QType.CONTROL1, QType.CONTROL0]],
+])
+def test_qtype_combinations(eid, qtypes):
+    q_type = QType(value=eid)
+    assert q_type == reduce(or_, qtypes, QType(0))
