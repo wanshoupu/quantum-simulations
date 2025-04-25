@@ -42,10 +42,3 @@ class QType(IntFlag):
 
     def __repr__(self):
         return self.name
-
-    @staticmethod
-    def get(eid, default=IDLER) -> 'QType':
-        for q in QType:
-            if q.eid == eid:
-                return q
-        return default
