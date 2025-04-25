@@ -7,7 +7,7 @@ import sympy
 from quompiler.construct.types import QType
 from quompiler.construct.controller import Controller
 from quompiler.utils.cgen import random_control2
-from sandbox.sym.contmat import CUnitary
+from sandbox.sym.ctrl_mat import CUnitary
 from sandbox.sym.inter_product import mesh_product
 from sandbox.sym.sym_gen import symmat
 from sandbox.sym.symmat_format import mat_print
