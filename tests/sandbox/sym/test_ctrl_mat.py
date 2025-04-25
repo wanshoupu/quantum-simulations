@@ -77,7 +77,7 @@ def test_control2mat_two_targets():
 def another_inflate(A: sympy.Matrix, controls: Sequence[QType]) -> sympy.Matrix:
     """
     This is another way to inflate matrix A with control sequences like TARGET, IDLER, CONTROL1, and CONTROL0.
-    It calls mesh_product to inflate the IDLER bits. Then it calls Controller.indexes to inflate the control bits.
+    It calls mesh_product to inflate the IDLER bits. Then it calls Controller.inflated_indexes to inflate the control bits.
     :param A: the core matrix to be converted to controlled matrix.
     :param controls: the control sequences.
     :return: the inflated matrix.
