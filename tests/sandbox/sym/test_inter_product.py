@@ -352,7 +352,7 @@ def test_mesh_product_16_3_2_3_2():
     # pprint(F, num_columns=10000)
 
     # execute
-    Z = mesh_product(A, (E, F), (4, 2))
+    Z = mesh_product(A, (E, F), (2, 2))
     # print('\nZ', flush=True)
     # pprint(Z, num_columns=10000)
 

@@ -4,23 +4,66 @@ import sympy
 from sympy import kronecker_product as kron
 
 
-def mesh_product(bread, yeast, factors):
+def validate_factors(factors):
     """
-    This method is a shorthand for inter_product(inter_product(... inter_product(A, seeds[0]), seeds[1]), ...)
-    and carries out inter_product recursively.
-    :param bread: square matrix of shape (m, m).
-    :param yeast: list of square matrices of shape S(k1, k1), S(k2, k2), etc.
-    :param factors: list of int, (f1,f2,...) denotes the sizes of blocks to divide the subsequent resultant matrix into.
-           bed will be divided recursively by the factors into blocks.
+    Validate the relationship between m and factors and among the factors.
+    Namely:
+           a. f1 > f2 > f3 > ...
+           b. f1 % f2 == 0, f2 % f3 == 0, ...
+    If condition a. is violated, ValueError with message "Combine adjacent yeast (with same factor) together" will be raised;
+    If condition b. is violated, ValueError with message "Invalid factors are detected and mesh_product cannot be carried out" will be raised.
+    :param m:
+    :param factors: list of int, (f1,f2,...) denotes the sizes of blocks to divide, bread, the original matrix into.
            seeds matrices will be mesh multiplied in Kronecker fashion.
            The size of factors == size of seeds and also m must be divisible by product(f0, f1, ...).
-    :return: The inter product with A(f0) ⨁ S1 ⨁ A(f1) ⨁ ... ⨁ Sn ⨁ A(fn).
     """
-    for s, f in zip(yeast, factors):
-        bread = inter_product(bread, s, f)
-        # print(f'\nbread {s[0, 0]}', flush=True)
-        # pprint(bread, num_columns=10000)
-    return bread
+    if any(f1 < f2 for f1, f2 in zip(factors, factors[1:])):
+        raise ValueError(f'Some factors are inverted. Ensure factors are in non-decreasing order.')
+    if any(f1 % f2 for f1, f2 in zip(factors, factors[1:])):
+        raise ValueError(f'Some factor cannot equally divides its predecessor.')
+
+
+def mesh_product(dough, yeast, factors):
+    """
+    This method is a shorthand for recursively applying `inter_product`:
+    inter_product(inter_product(... inter_product(A, B, m), C, n), ...)
+
+    It carries out the `inter_product` operation in a recursive, Big Endian fashion, where:
+    - `dough = A` (the initial matrix),
+    - `[B, C, ...]` are the `yeast` matrices to be applied,
+    - `[m, n, ...]` are the corresponding `factors`.
+
+    **Concept:**
+    Yeast is applied to the dough in Big Endian order—i.e., the last yeast in the list affects the finest subdivision of the matrix dough.
+    Visually:
+        - -yeast0-yeast1- ... -yeast2- -yeast3-
+    This requires that the factors shall be non-increasing order.
+    If we divide A into equal blocks by factors, the block sizes will be the factors, f0, f1, ...
+    We use notation A(f0), A(f1), ... to repr the factor matrices after this division.
+    For more detail, see
+    https://en.wikipedia.org/wiki/Kronecker_product#Tracy%E2%80%93Singh_product
+
+    **Parameters:**
+    :param dough: A square matrix of shape (m, m), where m > 0.
+    :param yeast: A list of square matrices [Y1, Y2, ...] with shapes (k1, k1), (k2, k2), ..., where each ki > 0.
+    :param factors: A list of integers [f1, f2, ...], where:
+        - f1 divides m, f2 divides f1, and so on,
+        - len(factors) == len(yeast),
+        - The product of all factors must divide m exactly.
+
+    Each factor determines how the matrix (bread) is recursively partitioned into smaller blocks. The corresponding yeast matrices are then applied using a Kronecker-style (mesh) multiplication to enrich the structure.
+
+    **Returns:**
+    The result of the recursive inter-product operation:
+        A(f0) ⨁ Y1 ⨁ A(f1) ⨁ ... ⨁ Yn ⨁ A(fn)
+    """
+
+    validate_factors(factors)
+    factor = 1
+    for s, f in zip(yeast[::-1], factors[::-1]):
+        dough = inter_product(dough, s, f * factor)
+        factor *= s.shape[0]
+    return dough
 
 
 def inter_product(A, B, m):
@@ -71,8 +114,8 @@ def inter_product(A, B, m):
     # no change to A
     if n == 1:
         return A * B[0, 0]
-
-    assert N % m == 0
+    if N % m:
+        raise ValueError(f'The dimension of A must be divisible by m but got dim={N} and m={m}')
     if m == 1:
         return kron(A, B)
 

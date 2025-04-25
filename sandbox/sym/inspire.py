@@ -1,11 +1,8 @@
 import random
-from itertools import product
 from typing import Sequence
 
-import numpy as np
 import pytest
 import sympy
-from sympy import pprint
 
 from quompiler.construct.cmat import QubitClass
 from quompiler.construct.controller import Controller
@@ -33,15 +30,16 @@ random.seed(3)
     [QubitClass.IDLER, QubitClass.CONTROL1, QubitClass.TARGET],
 ])
 def test_control2mat_single_target(controls):
-    print()
-    print(controls)
-
+    # print()
+    # print(controls)
     A = symmat(2)
     mat_print(A)
 
     cu = CUnitary(A, controls)
-    result = cu.inflate()
-    # mat_print(result)
+    actual = cu.inflate()
+
+    expected = another_inflate(A, controls)
+    assert actual == expected
 
 
 def test_control2mat_zero_target():
@@ -56,7 +54,8 @@ def test_control2mat_zero_target():
 
     expected = sympy.eye(1 << len(controls))
     expected[-1, -1] = A[0, 0]
-    assert result == expected
+    expected2 = another_inflate(A, controls)
+    assert result == expected == expected2
 
 
 def test_control2mat_two_targets():
@@ -68,21 +67,32 @@ def test_control2mat_two_targets():
         print()
         print(controls)
         cu = CUnitary(A, controls)
-        result = cu.inflate()
+        actual = cu.inflate()
+        mat_print(actual)
 
-        mat_print(result)
-
-        # hack
-        mask = Controller(controls)
-        uncontrolled_indexes = sorted(set(mask.mask(i) for i in range(result.shape[0])))
-        actual = result.extract(uncontrolled_indexes, uncontrolled_indexes)
-        control_index = len(controls) - 1 - controls.index(QubitClass.CONTROL1)
-        none_index = len(controls) - 1 - controls.index(QubitClass.IDLER)
-        if control_index < none_index:
-            none_index -= 1
-        factors = [1 << none_index]
-        expected = mesh_product(A, [sympy.eye(2)], factors)
+        expected = another_inflate(A, controls)
         assert actual == expected
+
+
+def another_inflate(A: sympy.Matrix, controls: Sequence[QubitClass]) -> sympy.Matrix:
+    """
+    This is another way to inflate matrix A with control sequences like TARGET, IDLER, CONTROL1, and CONTROL0.
+    It calls mesh_product to inflate the IDLER bits. Then it calls Controller.indexes to inflate the control bits.
+    :param A: the core matrix to be converted to controlled matrix.
+    :param controls: the control sequences.
+    :return: the inflated matrix.
+    """
+    n = len(controls)
+    factors = [1 << controls[i + 1:].count(QubitClass.TARGET) for i, q in enumerate(controls) if q == QubitClass.IDLER]
+    yeast = [sympy.eye(2) for _ in range(len(factors))]
+    core = mesh_product(A, yeast, factors)
+
+    result = sympy.eye(1 << n)
+    controller = Controller(controls)
+    for i, r in enumerate(controller.indexes()):
+        for j, c in enumerate(controller.indexes()):
+            result[r, c] = core[i, j]
+    return result
 
 
 def test_control2mat_random():
@@ -95,5 +105,7 @@ def test_control2mat_random():
         A = symmat(1 << controls.count(QubitClass.TARGET))
         # mat_print(A)
         cu = CUnitary(A, controls)
-        result = cu.inflate()
-        mat_print(result)
+        actual = cu.inflate()
+        mat_print(actual)
+        expected = another_inflate(A, controls)
+        assert actual == expected
