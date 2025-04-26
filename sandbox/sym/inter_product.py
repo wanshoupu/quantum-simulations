@@ -1,7 +1,7 @@
 from itertools import product
 
 import sympy
-from sympy import kronecker_product as kron
+from sympy import kronecker_product as kron, BlockMatrix
 
 
 def validate_factors(factors):
@@ -48,7 +48,6 @@ def mesh_product(dough, yeast, factors):
     :param factors: A list of integers [f1, f2, ...], where:
         - f1 divides m, f2 divides f1, and so on,
         - len(factors) == len(yeast),
-        - The product of all factors must divide m exactly.
 
     Each factor determines how the matrix (bread) is recursively partitioned into smaller blocks. The corresponding yeast matrices are then applied using a Kronecker-style (mesh) multiplication to enrich the structure.
 
@@ -121,8 +120,9 @@ def inter_product(A, B, m):
     if N == m:
         return kron(B, A)
 
-    C = sympy.zeros(N * n)
-    for i, j in product(range(0, N, m), range(0, N, m)):
-        for k, l in product(range(n), range(n)):
-            C[n * i + k * m:n * i + (k + 1) * m, n * j + l * m:n * j + (l + 1) * m] = A[i:i + m, j:j + m] * B[k, l]
-    return C
+    blocks = []
+    for i in range(0, N, m):
+        b = [kron(B, A[i:i + m, j:j + m]) for j in range(0, N, m)]
+        blocks.append(b)
+
+    return BlockMatrix(blocks).as_explicit()
