@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from sympy import pprint
 
@@ -10,6 +12,15 @@ def test_syms_le_26(n):
     # print(f'\n{n} x {n}')
     syms = m.free_symbols
     assert set(s.name for s in syms) <= set(alphabeta)
+
+
+@pytest.mark.parametrize("n", [2, 3, 5])
+def test_syms_le_26_prefix(n):
+    prefix = 'b'
+    m = symmat(n, prefix)
+    # print(f'\n{n} x {n}')
+    syms = m.free_symbols
+    assert all(re.fullmatch(f'{prefix}\d+', s.name) for s in syms)
 
 
 @pytest.mark.parametrize("n", [6, ])

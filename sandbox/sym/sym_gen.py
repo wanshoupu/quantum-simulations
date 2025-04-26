@@ -17,12 +17,14 @@ def symmat(n, prefix: str = None):
     :param prefix: optional prefix of the symbols used. When n*n <= 26, prefix is not used because single letter will be automatically used.
     :return: a matrix with symbols.
     """
-    prefix = prefix or 'a'
+    if prefix:
+        return symmat_sub(n, prefix)
 
     if n * n <= alphamax:
         return symmat_26(n)
     if n <= alphamax:
         return symmat_26_26(n)
+
     return symmat_sub(n, prefix)
 
 
