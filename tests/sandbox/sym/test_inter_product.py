@@ -12,43 +12,7 @@ from sandbox.sym.sym_gen import symmat
 
 def another_inter_product(A, B, m):
     """
-    A matrix multiplication operation of special Tracy–Singh product type.
-    https://en.wikipedia.org/wiki/Kronecker_product#Tracy%E2%80%93Singh_product
-    Matrix A is first divided up into n x n number of m x m sized blocks;
-    Then B is mesh multiplied between the n x n number of m x m sized blocks.
-    For example,
-        A =
-        ⎡a₀₀  a₀₁  a₀₂  a₀₃⎤
-        ⎢                  ⎥
-        ⎢a₁₀  a₁₁  a₁₂  a₁₃⎥
-        ⎢                  ⎥
-        ⎢a₂₀  a₂₁  a₂₂  a₂₃⎥
-        ⎢                  ⎥
-        ⎣a₃₀  a₃₁  a₃₂  a₃₃⎦
-        B =
-        ⎡b₀₀  b₀₁⎤
-        ⎢        ⎥
-        ⎣b₁₀  b₁₁⎦
-        inter_product(A, B) =
-        ⎡a₀₀⋅b₀₀  a₀₁⋅b₀₀  a₀₀⋅b₀₁  a₀₁⋅b₀₁  a₀₂⋅b₀₀  a₀₃⋅b₀₀  a₀₂⋅b₀₁  a₀₃⋅b₀₁⎤
-        ⎢                                                                      ⎥
-        ⎢a₁₀⋅b₀₀  a₁₁⋅b₀₀  a₁₀⋅b₀₁  a₁₁⋅b₀₁  a₁₂⋅b₀₀  a₁₃⋅b₀₀  a₁₂⋅b₀₁  a₁₃⋅b₀₁⎥
-        ⎢                                                                      ⎥
-        ⎢a₀₀⋅b₁₀  a₀₁⋅b₁₀  a₀₀⋅b₁₁  a₀₁⋅b₁₁  a₀₂⋅b₁₀  a₀₃⋅b₁₀  a₀₂⋅b₁₁  a₀₃⋅b₁₁⎥
-        ⎢                                                                      ⎥
-        ⎢a₁₀⋅b₁₀  a₁₁⋅b₁₀  a₁₀⋅b₁₁  a₁₁⋅b₁₁  a₁₂⋅b₁₀  a₁₃⋅b₁₀  a₁₂⋅b₁₁  a₁₃⋅b₁₁⎥
-        ⎢                                                                      ⎥
-        ⎢a₂₀⋅b₀₀  a₂₁⋅b₀₀  a₂₀⋅b₀₁  a₂₁⋅b₀₁  a₂₂⋅b₀₀  a₂₃⋅b₀₀  a₂₂⋅b₀₁  a₂₃⋅b₀₁⎥
-        ⎢                                                                      ⎥
-        ⎢a₃₀⋅b₀₀  a₃₁⋅b₀₀  a₃₀⋅b₀₁  a₃₁⋅b₀₁  a₃₂⋅b₀₀  a₃₃⋅b₀₀  a₃₂⋅b₀₁  a₃₃⋅b₀₁⎥
-        ⎢                                                                      ⎥
-        ⎢a₂₀⋅b₁₀  a₂₁⋅b₁₀  a₂₀⋅b₁₁  a₂₁⋅b₁₁  a₂₂⋅b₁₀  a₂₃⋅b₁₀  a₂₂⋅b₁₁  a₂₃⋅b₁₁⎥
-        ⎢                                                                      ⎥
-        ⎣a₃₀⋅b₁₀  a₃₁⋅b₁₀  a₃₀⋅b₁₁  a₃₁⋅b₁₁  a₃₂⋅b₁₀  a₃₃⋅b₁₀  a₃₂⋅b₁₁  a₃₃⋅b₁₁⎦
-    :param A: square matrix of shape (N, N).
-    :param B: square matrix of shape (k, k), with k > 0.
-    :param m: an integer factor of N, denotes the size of blocks to divide the matrix A into.
-    :return: The inter product with A(n) ⨁ B ⨁ A(m) with N = n*m
+    same as sandbox.sym.inter_product.inter_product but for verification purposes
     """
     assert len(A.shape) == 2 and A.shape[0] == A.shape[1]
     N = A.shape[0]
@@ -184,7 +148,6 @@ def test_inter_product_8_2_4():
     assert actual == expected
 
 
-
 def test_inter_product_left_kron():
     # Define symbolic variables
     coms = symmat(5, 'a'), symmat(2, 'b')
@@ -197,11 +160,11 @@ def test_inter_product_left_kron():
     # pprint(E)
 
     # execute
-    Z = inter_product(C, E, 10)
-    # print('Z', flush=True)
-    # pprint(Z, num_columns=10000)
+    actual = inter_product(C, E, 10)
+    # print('actual', flush=True)
+    # pprint(actual, num_columns=10000)
     expected = kron(E, coms[0], coms[1])
-    assert Z == expected
+    assert actual == expected
 
 
 def test_inter_product_right_kron():
@@ -216,12 +179,15 @@ def test_inter_product_right_kron():
     # pprint(E)
 
     # execute
-    Z = inter_product(C, E, 1)
-    # print('Z', flush=True)
-    # pprint(Z, num_columns=10000)
+    actual = inter_product(C, E, 1)
+    # print('actual', flush=True)
+    # pprint(actual, num_columns=10000)
 
     expected = kron(coms[0], coms[1], E)
-    assert Z == expected
+    assert actual == expected
+
+    expected2 = another_inter_product(C, E, 1)
+    assert actual == expected2
 
 
 def test_inter_product_5_3_2():
@@ -235,15 +201,18 @@ def test_inter_product_5_3_2():
     # pprint(E)
 
     # execute
-    Z = inter_product(C, E, 2)
+    actual = inter_product(C, E, 2)
+    # print('actual', flush=True)
+    # pprint(actual, num_columns=10000)
 
-    # print('Z', flush=True)
-    # pprint(Z, num_columns=10000)
     expected = kron(coms[0], E, coms[1])
-    assert Z == expected
+    assert actual == expected
+
+    expected2 = another_inter_product(C, E, 2)
+    assert actual == expected2
 
 
-def test_inter_product_2_3_4():
+def test_mesh_product_2_3_4():
     coms = symmat(2, 'a'), symmat(2, 'b'), symmat(2, 'c')
     A = kron(*coms)
     # print('A')
@@ -254,15 +223,15 @@ def test_inter_product_2_3_4():
     # pprint(E)
 
     # execute
-    Z = mesh_product(A, (E,), (4,))
-    # print('Z', flush=True)
-    # pprint(Z, num_columns=10000)
+    actual = mesh_product(A, (E,), (4,))
+    # print('actual', flush=True)
+    # pprint(actual, num_columns=10000)
 
     expected = kron(coms[0], E, coms[1], coms[2])
     # print('expected')
     # pprint(expected, num_columns=10000)
 
-    assert Z == expected
+    assert actual == expected
 
 
 def test_inter_product_4_3_2():
@@ -276,18 +245,18 @@ def test_inter_product_4_3_2():
     # pprint(E)
 
     # execute
-    Z = mesh_product(A, (E,), (2,))
-    # print('Z', flush=True)
-    # pprint(Z, num_columns=10000)
+    actual = mesh_product(A, (E,), (2,))
+    # print('actual', flush=True)
+    # pprint(actual, num_columns=10000)
 
     expected = kron(coms[0], coms[1], E, coms[2])
     # print('expected')
     # pprint(expected, num_columns=10000)
 
-    assert Z == expected
+    assert actual == expected
 
 
-def test_mesh_product_16_3_2_3_2():
+def test_mesh_product_82_2_2():
     coms = symmat(2, 'a'), symmat(2, 'b'), symmat(2, 'c')
     A = kron(*coms)
     # print('\nA')
@@ -302,12 +271,36 @@ def test_mesh_product_16_3_2_3_2():
     # pprint(F, num_columns=10000)
 
     # execute
-    Z = mesh_product(A, (E, F), (2, 2))
-    # print('\nZ', flush=True)
-    # pprint(Z, num_columns=10000)
+    actual = mesh_product(A, (E, F), (4, 2))
+    # print('\nactual', flush=True)
+    # pprint(actual, num_columns=10000)
 
     expected = kron(coms[0], E, coms[1], F, coms[2])
     # print('\nexpected')
     # pprint(expected, num_columns=10000)
+    assert actual == expected
 
-    assert Z == expected
+
+def test_mesh_product_84_2():
+    coms = symmat(2, 'a'), symmat(2, 'b'), symmat(2, 'c')
+    A = kron(*coms)
+    # print('\nA')
+    # pprint(A, num_columns=10000)
+
+    E = symmat(2, 'e')
+    # print('\nE')
+    # pprint(E)
+
+    F = symmat(2, 'f')
+    # print('\nF')
+    # pprint(F, num_columns=10000)
+
+    # execute
+    actual = mesh_product(A, (E, F), (2, 2))
+    # print('\nactual', flush=True)
+    # pprint(actual, num_columns=10000)
+
+    expected = kron(coms[0], coms[1], E, F, coms[2])
+    # print('\nexpected')
+    # pprint(expected, num_columns=10000)
+    assert actual == expected
