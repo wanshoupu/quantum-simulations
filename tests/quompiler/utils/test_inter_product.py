@@ -1,3 +1,4 @@
+import random
 from itertools import product
 from textwrap import dedent
 
@@ -10,6 +11,8 @@ from quompiler.utils.inter_product import block_factors, mykron
 from quompiler.utils.inter_product import inter_product, mesh_product
 from quompiler.utils.mgen import random_unitary
 
+random.seed(3)
+np.random.seed(3)
 formatter = MatrixFormatter(precision=2)
 
 
@@ -249,3 +252,14 @@ def test_block_factors_kron_recursive():
     assert len(bfactors) == 4
     assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
     assert np.allclose(mykron(*bfactors), m)
+
+
+def test_block_factors_kron_recursive_random():
+    dims = [2, 3, 5, 4]
+    for _ in range(10):
+        random.shuffle(dims)
+        m = mykron(*[random_unitary(d) for d in dims])
+        bfactors = block_factors(m)
+        assert len(bfactors) == len(dims)
+        assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
+        assert np.allclose(mykron(*bfactors), m)
