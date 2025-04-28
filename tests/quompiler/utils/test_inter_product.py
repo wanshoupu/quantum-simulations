@@ -7,7 +7,7 @@ import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import block_factors, mykron
+from quompiler.utils.inter_product import kron_factors, mykron, mesh_factors
 from quompiler.utils.inter_product import inter_product, mesh_product
 from quompiler.utils.mgen import random_unitary
 
@@ -224,10 +224,10 @@ def test_mesh_product_16_3_2_3_2():
     assert np.allclose(actual, expected)
 
 
-def test_block_factors_singleton():
+def test_kron_factors_singleton():
     n = 3 * 2
     m = random_unitary(n)
-    bfactors = block_factors(m)
+    bfactors = kron_factors(m)
     assert len(bfactors) == 1
     assert np.array_equal(bfactors[0], m)
 
@@ -237,29 +237,62 @@ def test_block_factors_singleton():
     (2, 3),
     (3, 5),
 ])
-def test_block_factors_kron_two(a, b):
+def test_kron_factors_kron_two(a, b):
     m = np.kron(random_unitary(a), random_unitary(b))
-    bfactors = block_factors(m)
+    bfactors = kron_factors(m)
     assert len(bfactors) == 2
     assert bfactors[0].shape == (a, a)
     assert bfactors[1].shape == (b, b)
 
 
-def test_block_factors_kron_recursive():
+@pytest.mark.parametrize("a,b", [
+    (2, 2),
+    (2, 3),
+    (3, 5),
+])
+def test_kron_factors_kron_two_with_right_identity(a, b):
+    m = np.kron(random_unitary(a), np.eye(b))
+    bfactors = kron_factors(m)
+    assert len(bfactors) == 2
+    assert bfactors[0].shape == (a, a)
+    assert bfactors[1].shape == (b, b)
+
+
+@pytest.mark.parametrize("a,b", [
+    (2, 2),
+    (2, 3),
+    (3, 5),
+])
+def test_kron_factors_kron_two_with_left_identity(a, b):
+    m = np.kron(np.eye(a), random_unitary(b))
+    bfactors = kron_factors(m)
+    assert len(bfactors) == 2
+    assert bfactors[0].shape == (a, a)
+    assert bfactors[1].shape == (b, b)
+
+
+def test_kron_factors_kron_recursive():
     dims = 2, 3, 5, 4
     m = mykron(*[random_unitary(d) for d in dims])
-    bfactors = block_factors(m)
+    bfactors = kron_factors(m)
     assert len(bfactors) == 4
     assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
     assert np.allclose(mykron(*bfactors), m)
 
 
-def test_block_factors_kron_recursive_random():
+def test_kron_factors_kron_recursive_random():
     dims = [2, 3, 5, 4]
     for _ in range(10):
         random.shuffle(dims)
         m = mykron(*[random_unitary(d) for d in dims])
-        bfactors = block_factors(m)
+        bfactors = kron_factors(m)
         assert len(bfactors) == len(dims)
         assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
         assert np.allclose(mykron(*bfactors), m)
+
+
+def test_mesh_factors():
+    a, b = random_unitary(6), random_unitary(2)
+    m = inter_product(a, b, 2)
+    dough, yeast, factors = mesh_factors(m)
+    assert len(factors) == 2
