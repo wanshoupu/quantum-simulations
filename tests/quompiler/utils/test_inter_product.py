@@ -1,0 +1,251 @@
+from itertools import product
+from textwrap import dedent
+
+import numpy as np
+import pytest
+from numpy import kron
+
+from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.inter_product import block_factors, mykron
+from quompiler.utils.inter_product import inter_product, mesh_product
+from quompiler.utils.mgen import random_unitary
+
+formatter = MatrixFormatter(precision=2)
+
+
+def manual_inter_product(A, B, m):
+    """
+    same as quompiler.utils.inter_product.inter_product but for verification purposes
+    """
+    assert len(A.shape) == 2 and A.shape[0] == A.shape[1]
+    N = A.shape[0]
+    assert len(B.shape) == 2 and B.shape[0] == B.shape[1]
+    n = B.shape[0]
+
+    # no change to A
+    if n == 1:
+        return A * B[0, 0]
+    if N % m:
+        raise ValueError(f'The dimension of A must be divisible by m but got dim={N} and m={m}')
+    if m == 1:
+        return kron(A, B)
+
+    if N == m:
+        return kron(B, A)
+
+    C = np.zeros((N * n, N * n), dtype=np.complexfloating)
+    for i, j in product(range(0, N, m), range(0, N, m)):
+        for k, l in product(range(n), range(n)):
+            C[n * i + k * m:n * i + (k + 1) * m, n * j + l * m:n * j + (l + 1) * m] = A[i:i + m, j:j + m] * B[k, l]
+    return C
+
+
+def test_mykron():
+    ms = random_unitary(3), random_unitary(2), random_unitary(5), random_unitary(3),
+    kk = mykron(*ms)
+    assert np.allclose(kk, kron(kron(kron(ms[0], ms[1]), ms[2]), ms[3]))
+
+
+def test_inter_product():
+    """
+    test the configuration of Kronecker product A ⨁ I ⨁ C
+    """
+    coms = random_unitary(5), random_unitary(3)
+    A = kron(*coms)
+    B = np.eye(2)
+
+    expected = kron(kron(coms[0], B), coms[1])
+    # pprint(expected, num_columns=10000)
+    actual = inter_product(A, B, 3)
+    assert np.allclose(actual, expected)
+
+
+def test_sandwich_product_arbitray_matrix():
+    """
+        let m = len(A), n = len(I), l = len(C)
+        then the Kproduct, A ⨁ I ⨁ C, is formed by
+        1. get the Kproduct K = A ⨁ C
+        2. divide up K
+    """
+    A = random_unitary(15)
+    B = random_unitary(2)
+
+    actual = inter_product(A, B, 5)
+    expected = manual_inter_product(A, B, 5)
+    assert np.allclose(actual, expected)
+
+
+def test_inter_product_8_2_4():
+    """
+        let m = len(A), n = len(I), l = len(C)
+        then the Kproduct, A ⨁ I ⨁ C, is formed by
+        1. get the Kproduct K = A ⨁ C
+        2. divide up K
+    """
+    A = random_unitary(8)
+    B = random_unitary(3)
+
+    m = 2
+    actual = inter_product(A, B, m)
+    expected = manual_inter_product(A, B, m)
+    assert np.allclose(actual, expected)
+
+
+def test_inter_product_left_kron():
+    coms = random_unitary(5), random_unitary(2)
+    C = mykron(*coms)
+
+    E = random_unitary(3)
+
+    # execute
+    actual = inter_product(C, E, 10)
+    expected = mykron(E, coms[0], coms[1])
+    assert np.allclose(actual, expected)
+
+
+def test_inter_product_right_kron():
+    coms = random_unitary(5), random_unitary(2)
+    C = mykron(*coms)
+    E = random_unitary(3)
+
+    # execute
+    actual = inter_product(C, E, 1)
+
+    expected = mykron(coms[0], coms[1], E)
+    assert np.allclose(actual, expected)
+
+
+def test_inter_product_5_3_2():
+    coms = random_unitary(5), random_unitary(2)
+    C = mykron(*coms)
+    E = random_unitary(3)
+
+    # execute
+    actual = inter_product(C, E, 2)
+
+    # print('Z', flush=True)
+    # pprint(Z, num_columns=10000)
+    expected = mykron(coms[0], E, coms[1])
+    assert np.allclose(actual, expected)
+
+
+def test_inter_product_2_3_4():
+    coms = random_unitary(2), random_unitary(2), random_unitary(2)
+    A = mykron(*coms)
+
+    E = random_unitary(3)
+
+    # execute
+    actual = mesh_product(A, (E,), (4,))
+
+    expected = mykron(coms[0], E, coms[1], coms[2])
+
+    assert np.allclose(actual, expected)
+
+
+def test_inter_product_4_3_2():
+    coms = random_unitary(2), random_unitary(2), random_unitary(2)
+    A = mykron(*coms)
+
+    E = random_unitary(3)
+
+    # execute
+    actual = mesh_product(A, (E,), (2,))
+
+    expected = mykron(coms[0], coms[1], E, coms[2])
+    assert np.allclose(actual, expected)
+
+
+def test_mesh_product_inter_product_1():
+    coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
+    A = mykron(*coms)
+    E = np.eye(2)
+
+    # execute
+    actual = inter_product(A, E, 2)
+    print('actual')
+    print(formatter.tostr(actual))
+
+    expected = mykron(coms[0], coms[1], E, coms[2])
+    print('expected')
+    print(formatter.tostr(expected))
+    assert np.allclose(actual, expected)
+
+
+def test_mesh_product_inter_product_2():
+    coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
+    A = inter_product(mykron(*coms), np.eye(2), 2)
+    E = np.eye(2)
+    # execute
+    actual = inter_product(A, E, 8)
+
+    expected = mykron(coms[0], E, mykron(coms[1], np.eye(2), coms[2]))
+    print('expected')
+    print(formatter.tostr(expected))
+    assert np.allclose(actual, expected)
+
+
+def test_mesh_product_eyes_16_3_2_3_2():
+    coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
+    A = mykron(*coms)
+    E = np.eye(2)
+    F = np.eye(2)
+
+    # execute
+    actual = mesh_product(A, (E, F), (4, 2))
+    print('actual')
+    print(formatter.tostr(actual))
+
+    expected = mykron(coms[0], E, coms[1], F, coms[2])
+    print('expected')
+    print(formatter.tostr(expected))
+    assert np.allclose(actual, expected)
+
+
+def test_mesh_product_16_3_2_3_2():
+    coms = random_unitary(2), random_unitary(2), random_unitary(2)
+    A = mykron(*coms)
+
+    E = random_unitary(2)
+
+    F = random_unitary(2)
+
+    # execute
+    actual = mesh_product(A, (E, F), (4, 2))
+    print('actual')
+    print(formatter.tostr(actual))
+
+    expected = mykron(coms[0], E, coms[1], F, coms[2])
+    print('expected')
+    print(formatter.tostr(expected))
+    assert np.allclose(actual, expected)
+
+
+def test_block_factors_singleton():
+    n = 3 * 2
+    m = random_unitary(n)
+    bfactors = block_factors(m)
+    assert len(bfactors) == 1
+    assert np.array_equal(bfactors[0], m)
+
+
+@pytest.mark.parametrize("a,b", [
+    (2, 2),
+    (2, 3),
+    (3, 5),
+])
+def test_block_factors_kron_two(a, b):
+    m = np.kron(random_unitary(a), random_unitary(b))
+    bfactors = block_factors(m)
+    assert len(bfactors) == 2
+    assert bfactors[0].shape == (a, a)
+    assert bfactors[1].shape == (b, b)
+
+
+def test_block_factors_kron_recursive():
+    dims = 2, 3, 5, 4
+    m = mykron(*[random_unitary(d) for d in dims])
+    bfactors = block_factors(m)
+    assert len(bfactors) == 4
+    assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
+    assert np.allclose(mykron(*bfactors), m)
