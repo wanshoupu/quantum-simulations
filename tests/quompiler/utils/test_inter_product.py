@@ -7,8 +7,9 @@ import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import kron_factors, mykron, mesh_factors
+from quompiler.utils.inter_product import kron_factors, mykron, mesh_factors, recursive_kron_factors, inter_factors
 from quompiler.utils.inter_product import inter_product, mesh_product
+from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import random_unitary
 
 random.seed(3)
@@ -274,7 +275,7 @@ def test_kron_factors_kron_two_with_left_identity(a, b):
 def test_kron_factors_kron_recursive():
     dims = 2, 3, 5, 4
     m = mykron(*[random_unitary(d) for d in dims])
-    bfactors = kron_factors(m)
+    bfactors = recursive_kron_factors(m)
     assert len(bfactors) == 4
     assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
     assert np.allclose(mykron(*bfactors), m)
@@ -285,14 +286,25 @@ def test_kron_factors_kron_recursive_random():
     for _ in range(10):
         random.shuffle(dims)
         m = mykron(*[random_unitary(d) for d in dims])
-        bfactors = kron_factors(m)
+        bfactors = recursive_kron_factors(m)
         assert len(bfactors) == len(dims)
         assert all(bfactors[i].shape == (d, d) for i, d in enumerate(dims))
         assert np.allclose(mykron(*bfactors), m)
 
 
-def test_mesh_factors():
+def test_inter_factors():
     a, b = random_unitary(6), random_unitary(2)
+    print(f'a=\n{formatter.tostr(a)}')
+    print(f'b=\n{formatter.tostr(b)}')
     m = inter_product(a, b, 2)
-    dough, yeast, factors = mesh_factors(m)
-    assert len(factors) == 2
+    ms, factors = inter_factors(m)
+    assert len(factors) == 1
+    dough, yeast = ms
+    print(f'dough=\n{formatter.tostr(dough)}')
+    print(f'yeast=\n{formatter.tostr(yeast)}')
+    p, _ = allprop(inter_product(dough, yeast, 2), m)
+    assert p
+    dp, _ = allprop(dough, a)
+    assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
+    yp, _ = allprop(yeast, b)
+    assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'

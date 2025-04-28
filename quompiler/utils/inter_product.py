@@ -1,8 +1,13 @@
+from itertools import chain
 from typing import Sequence
 
 import numpy as np
 from numpy import kron
 from numpy.typing import NDArray
+
+from quompiler.utils.mfun import allprop
+
+ONE = np.eye(1)
 
 
 def mykron(*matrices: NDArray) -> NDArray:
@@ -22,48 +27,36 @@ def validm(m: NDArray):
 
 def int_factors(n: int) -> Sequence[tuple[int, int]]:
     result = []
-
-    # Loop through possible factors up to the square root of the number
-    for i in range(1, int(n ** 0.5) + 1):
-        if n % i == 0 and i < n:  # Check if `i` divides the number
+    for i in range(2, n):
+        if n % i == 0:  # Check if `i` divides n
             j = n // i
-            # Find the corresponding factor
-            result.append((i, j))  # Add the pair to the list
-            if i != j:
-                result.append((j, i))  # Add the reverse pair
-
+            result.append((i, j))
     return result
 
 
-def id_prop(M: NDArray):
+def clean_id(A, B):
     """
-    check if M is proportional to an identity matrix, namely,
-    M = λ I
-    with λ proportionality ratio.
-    :param M: is a 2D matrix.
-    :return: proportionality ratio λ if M is proportional to an identity matrix; None otherwise.
+    If either A or B may be scaled to be identity matrix, do so by scaling while preserving the product unchanged.
+    :param A: matrix factor
+    :param B: same as A
+    :return: make one of the factors an identity if possible. Otherwise, return A, B unchanged
     """
-    s = M.shape
-    if s[0] != s[1]:
-        return None
-    # Step 1: Check off-diagonal elements are zero
-    if not np.allclose(M, np.diag(np.diagonal(M))):
-        return None
+    p, rp = allprop(A, np.eye(A.shape[0]))
+    q, rq = allprop(B, np.eye(B.shape[0]))
+    if q:
+        B /= rq
+        A *= rq
+    elif p:
+        A /= rp
+        B *= rp
 
-    # Step 2: Check all diagonal elements are equal
-    diag = np.diagonal(M)
-    if not np.allclose(diag, diag[0]):
-        return None
-
-    return M[0, 0]
+    return A, B
 
 
 def kron_factors(M: NDArray) -> list[NDArray]:
     validm(M)
     m = M.shape[0]
     for a, b in int_factors(m):
-        if a == 1 or b == 1:
-            continue
         M2 = block_flatten(M, a, b)
 
         # Step 4: SVD
@@ -78,86 +71,78 @@ def kron_factors(M: NDArray) -> list[NDArray]:
         B = np.sqrt(s) * v.reshape(b, b)
 
         if np.allclose(mykron(A, B), M):
-            return kron_factors(A) + kron_factors(B)
+            A, B = clean_id(A, B)
+            return [A, B]
     return [M]
 
 
-def mesh_factors(M: NDArray) -> tuple[NDArray, list[NDArray], list[int]]:
+def recursive_kron_factors(M: NDArray) -> list[NDArray]:
+    factors = kron_factors(M)
+    if len(factors) == 1:
+        return factors
+    return list(chain.from_iterable(recursive_kron_factors(m) for m in factors))  # flatten
+
+
+def inter_factors(M: NDArray) -> tuple[list[NDArray], list[int]]:
     validm(M)
     m = M.shape[0]
-    for m_dough, m_yeast in int_factors(m):
-        if m_dough == 1 or m_yeast == 1:
-            continue
-        M2 = block_flatten(M, m_dough, m_yeast)
+    for a, bc in int_factors(m):
+        for b, c in int_factors(bc):
+            # these manipulation of the matrix is to separate the block divisions during the inter_product
+            # Namely, M is block divided into a x a blocks of shape(c,c) and then multiplied by B of shape(b,b) in the inter_product style
+            M2 = (M.reshape(a, b, c, a, b, c)
+                  .transpose(0, 3, 1, 4, 2, 5)
+                  .reshape(a * a, b * b, c * c)
+                  .transpose(0, 2, 1)
+                  .reshape(a * a * c * c, b * b))
+            # SVD to attempt to factor the yeast matrix
+            U, S, Vh = np.linalg.svd(M2)
 
-        U, S, Vh = np.linalg.svd(M2)
+            # Take largest singular value/vector
+            u = U[:, 0]
+            v = Vh[0, :]
+            s = S[0]
 
-        # Step 5: Take first singular value/vector
-        u = U[:, 0]
-        v = Vh[0, :]
-        s = S[0]
+            A = np.sqrt(s) * block_square(u, a, c)
+            B = np.sqrt(s) * v.reshape(b, b)
 
-        for bm, bn in int_factors(m_dough):
-            A = np.sqrt(s) * block_square(u, bm, bn)
-            B = np.sqrt(s) * v.reshape(m_yeast, m_yeast)
-            p, q = id_prop(A), id_prop(B)
-            if p is not None:
-                A /= p
-                B *= p
-            elif q is not None:
-                B /= q
-                A *= q
+            if np.allclose(inter_product(A, B, c), M):
+                return [A, B], [c]
+    kf = kron_factors(M)
+    return kf, [1] * (len(kf) - 1)
 
-            if np.allclose(inter_product(A, B, bn), M):
-                dough, yeast, factors = mesh_factors(A)
-                return dough, yeast + [B], factors + [bn]
+
+def mesh_factors(M: NDArray) -> tuple[NDArray, list[NDArray], list[int]]:
     return M, [], []
 
 
 def block_flatten(M, m, n):
     """
-    Treating input matrix as a block matrix, with block size (n x n), reshape the elements into a matrix of shape (m ** 2, n ** 2).
-    That is, flatten out each block into a row with a total of m x m rows.
-    :param M: a matrix with a total of S ** 2 elements with S = m x n
+    Treating input matrix as a block matrix, with block size (n x n), flatten out each block into a row with a total of m x m rows
+    :param M: a square matrix of shape (m x n, m x n)
     :param m: int, a factor of S
     :param n: int, must be the quotient S / m
-    :return: a rectangular matrix of shape (m2, n2), where m2 = m x m, n2 = n x n.
+    :return: a rectangular matrix of shape (m ** 2, n ** 2).
     """
-    # Step 1: Reshape into 4D tensor (block matrices bmat)
+    # Reshape into 4D tensor (block matrices bmat)
     bmat = M.reshape((m, n, m, n))
-    # Step 2: flatten with dimension (m_dough ** 2, m_yeast ** 2)
-    M2 = mflatten(bmat, m ** 2, n ** 2)
+    # flatten with dimension (m ** 2, n ** 2)
+    M2 = bmat.transpose(0, 2, 1, 3).reshape(m ** 2, n ** 2)
     return M2
 
 
 def block_square(M, m, n):
     """
-    Treating input matrix as a block matrix, with block size (n x n), reshape the elements into a square matrix of shape (m x n, m x n).
-    That is, convert the block matrix to explicit square matrix.
-    :param M: a matrix with a total of S ** 2 elements with S = m x n
-    :param m: int, a factor of S
-    :param n: int, must be the quotient S / m
+    Treating input matrix as a flattened block matrix with shape (m ** 2, n ** 2), convert it to explicit square matrix of shape (m x n, m x n)
+    :param M: a rectangular matrix of shape (m ** 2, n ** 2)
+    :param m: int, representing the number of blocks, must be an integer factor of S
+    :param n: int, representing the block size, must be the quotient S / m
     :return: a square matrix of shape (m x n, m x n)
     """
-    # Step 1: Reshape into 4D tensor (block matrices bmat)
+    # Reshape into 4D tensor (block matrices bmat)
     bmat = M.reshape((m, m, n, n))
-    # Step 2: flatten with dimension (m_dough ** 2, m_yeast ** 2)
-    return mflatten(bmat, m * n, m * n)
-
-
-def mflatten(M, m, n):
-    """
-    Flatten a 4D tensor representing a block matrix into shape (m, n).
-    :param M: 4D tensor representing a block matrix with a total m * n elements.
-    :param m: int, a factor of S
-    :param n: int, must be the quotient S / m
-    :return: a matrix of shape (m, n)
-    """
-    # (0, 2) puts block rows and inside-block rows together,
-    # (1, 3) puts block columns and inside-block columns together.
-    m2 = np.transpose(M, (0, 2, 1, 3))
-    # Step 3: Reshape into 2D
-    return m2.reshape((m, n))
+    # flatten with shape (m * n, m * n)
+    return bmat.transpose(0, 2, 1, 3).reshape(m * n, m * n)
 
 
 def validate_factors(factors):
