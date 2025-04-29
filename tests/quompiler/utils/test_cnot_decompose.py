@@ -16,7 +16,7 @@ formatter = MatrixFormatter(precision=2)
 def test_decompose_identity_matrix():
     n = 3
     dim = 1 << n
-    id = UnitaryM(dim, np.eye(2), (0, 1))
+    id = UnitaryM(dim, (0, 1), np.eye(2))
     bc = cnot_decompose(id)
     assert bc == tuple()
 
@@ -24,7 +24,7 @@ def test_decompose_identity_matrix():
 def test_decompose_sing_qubit_circuit():
     n = 1
     dim = 1 << n
-    u = UnitaryM(dim, random_unitary(dim), (0, 1))
+    u = UnitaryM(dim, (0, 1), random_unitary(dim))
     bc = cnot_decompose(u)
     # print(bc)
     assert len(bc) == 1

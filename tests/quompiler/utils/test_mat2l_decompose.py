@@ -14,7 +14,7 @@ formatter = MatrixFormatter(precision=5)
 def test_decompose_identity_matrix():
     n = 3
     dim = 1 << n
-    id = UnitaryM(dim, np.eye(2), (0, 1))
+    id = UnitaryM(dim, (0, 1), np.eye(2))
     bc = mat2l_decompose(id)
     print(bc)
 
@@ -22,7 +22,7 @@ def test_decompose_identity_matrix():
 def test_decompose_sing_qubit_circuit():
     n = 1
     dim = 1 << n
-    u = UnitaryM(dim, random_unitary(dim), (0, 1))
+    u = UnitaryM(dim, (0, 1), random_unitary(dim))
     coms = mat2l_decompose(u)
     # print(coms)
     assert len(coms) == 1
@@ -31,7 +31,7 @@ def test_decompose_sing_qubit_circuit():
 def test_mat2l_cyclic():
     m = cyclic_matrix(8, 1)
     # print(formatter.tostr(m))
-    tlms = mat2l_decompose(UnitaryM(8, m, tuple(range(8))))
+    tlms = mat2l_decompose(UnitaryM(8, tuple(range(8)), m))
     recovered = reduce(lambda a, b: a @ b, tlms)
     assert np.allclose(recovered.inflate(), m), f'original\n{m}\n, recovered\n{recovered}'
 
@@ -39,7 +39,7 @@ def test_mat2l_cyclic():
 def test_mat2l_2x2_noop():
     m = random_matrix_2l(2, 0, 1)
     # print(formatter.tostr(m))
-    tlms = mat2l_decompose(UnitaryM(2, m, (0, 1)))
+    tlms = mat2l_decompose(UnitaryM(2, (0, 1), m))
     # print(f'decompose =')
     # for x in tlms:
     #     print(formatter.tostr(x.inflate()), ',')
@@ -48,9 +48,9 @@ def test_mat2l_2x2_noop():
 
 
 def test_mat2l_3x3_2l():
-    mp = UnitaryM(3, random_matrix_2l(2, 0, 1), (0, 1)).inflate()
+    mp = UnitaryM(3, (0, 1), random_matrix_2l(2, 0, 1)).inflate()
     # print(formatter.tostr(mp))
-    tlms = mat2l_decompose(UnitaryM(3, mp, tuple(range(3))))
+    tlms = mat2l_decompose(UnitaryM(3, tuple(range(3)), mp))
     # print(f'decompose =')
     # for x in tlms:
     #     print(formatter.tostr(x.inflate()), ',')
@@ -62,7 +62,7 @@ def test_mat2l_3x3_2l():
 def test_mat2l_noop():
     m = random_matrix_2l(3, 0, 1)
     # print(formatter.tostr(m))
-    tlms = mat2l_decompose(UnitaryM(3, m, tuple(range(3))))
+    tlms = mat2l_decompose(UnitaryM(3, tuple(range(3)), m))
     # print(f'decompose =')
     # for x in tlms:
     #     print(formatter.tostr(x.inflate()), ',')
@@ -74,7 +74,7 @@ def test_mat2l_3x3():
     m = random_unitary(3)
     # print(f'original =')
     # print(formatter.tostr(m))
-    tlms = mat2l_decompose(UnitaryM(3, m, tuple(range(3))))
+    tlms = mat2l_decompose(UnitaryM(3, tuple(range(3)), m))
     # print(f'decompose =')
     # for x in tlms:
     #     print(formatter.tostr(x.inflate()), ',')
@@ -88,7 +88,7 @@ def test_mat2l_random():
         m = random_unitary(n)
         # print(f'original =')
         # print(formatter.tostr(m))
-        tlms = mat2l_decompose(UnitaryM(n, m, tuple(range(n))))
+        tlms = mat2l_decompose(UnitaryM(n, tuple(range(n)), m))
         # print(f'decompose =')
         # for x in tlms:
         #     print(formatter.tostr(x.inflate()), ',\n')

@@ -1,8 +1,12 @@
+import random
+
 import numpy as np
 from numpy import kron
+from qiskit.circuit.classical.types import order
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import inter_product
+from quompiler.utils.inter_product import inter_product, mykron
+from quompiler.utils.mgen import random_unitary
 
 formatter = MatrixFormatter(precision=2)
 
@@ -46,3 +50,19 @@ def rearrange2(M, a, c):
     """
     m2 = np.reshape(M, (a, c, a, c)).transpose(0, 2, 1, 3).reshape(a * a, c * c)
     return m2
+
+
+def test_inter_product_singlet_qubit():
+    """
+    given a unitary matrix of singlet qubit, study the inter_product of it with a number of eyes.
+    """
+    matrix = random_unitary(2)
+    n = 2
+    mats = [np.eye(2) for _ in range(n)]
+    mats.insert(random.randrange(n), matrix)
+    for m in mats:
+        print()
+        print(formatter.tostr(m))
+    result = mykron(*mats)
+    print()
+    print(formatter.tostr(result))

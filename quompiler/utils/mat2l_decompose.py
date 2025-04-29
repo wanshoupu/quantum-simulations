@@ -30,7 +30,7 @@ def mat2l_decompose(m: UnitaryM) -> List[UnitaryM]:
             den = np.sqrt(np.conj(mcopy[n, n]) * mcopy[n, n] + np.conj(mcopy[i, n]) * mcopy[i, n])
             c = np.array([[mcopy[n, n] / den, np.conj(mcopy[i, n]) / den],
                           [mcopy[i, n] / den, -np.conj(mcopy[n, n]) / den]])
-            m2l = UnitaryM(m.dimension, c, (m.core[n], m.core[i]))
+            m2l = UnitaryM(m.dimension, (m.core[n], m.core[i]), c)
             result.append(m2l)
             mcopy = np.conj(m2l.inflate()).T @ mcopy
     indxs = coreindexes(mcopy)
@@ -38,5 +38,5 @@ def mat2l_decompose(m: UnitaryM) -> List[UnitaryM]:
         indxs = (0, 1)
     m2l = mcopy[np.ix_(indxs, indxs)]
     if not np.allclose(m2l, np.eye(2)):
-        result.append(UnitaryM(s[0], m2l, indxs))
+        result.append(UnitaryM(s[0], indxs, m2l))
     return result

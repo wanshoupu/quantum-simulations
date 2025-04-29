@@ -194,15 +194,8 @@ class UnitaryM:
     def is2l(self) -> bool:
         return len(self.core) <= 2
 
-    def issinglet(self) -> bool:
-        if self.dimension & (self.dimension - 1) != 0:
-            return False
-        n = self.dimension.bit_length() - 1
-        control = core2control(n, self.core)
-        return control.count(None) == 1
 
-
-class CUnitary:
+class CUnitary(UnitaryM):
     def __init__(self, m: NDArray, controls: Sequence[QType]):
         """
         Instantiate a controlled single-qubit unitary matrix.

@@ -24,13 +24,13 @@ def random_unitary(n) -> NDArray:
 def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
     u = unitary_group.rvs(2)
     r1, r2 = min(r1, r2), max(r1, r2)
-    return UnitaryM(n, u, (r1, r2))
+    return UnitaryM(n, (r1, r2), u)
 
 
 def random_UnitaryM(dim, indexes) -> UnitaryM:
     cdim = len(indexes)
     u = unitary_group.rvs(cdim)
-    return UnitaryM(dim, u, indexes)
+    return UnitaryM(dim, indexes, u)
 
 
 def random_CUnitary(controls: tuple[Optional[bool]]) -> UnitaryM:
