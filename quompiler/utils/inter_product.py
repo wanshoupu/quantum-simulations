@@ -181,9 +181,9 @@ def mesh_factor(M: NDArray) -> tuple[NDArray, list[NDArray], list[int]]:
     if not factors:
         return M, [], []
     dough, yeast = ms
-    f = factors[0]
-    dough2, ms2, factors2 = mesh_factor(dough)
-    return dough2, [yeast] + ms2, [f * dough2.shape[0] // dough.shape[0]] + factors2
+    dough2, ms2, factor2 = mesh_factor(dough)
+    adjusted_factor = factors[0] * dough2.shape[0] // dough.shape[0]
+    return dough2, [yeast] + ms2, [adjusted_factor] + factor2
 
 
 def inter_product(A, B, m):

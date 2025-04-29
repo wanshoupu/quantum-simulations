@@ -142,7 +142,7 @@ def test_inter_product_5_3_2():
     assert np.allclose(actual, expected)
 
 
-def test_inter_product_2_3_4():
+def test_mesh_product_2_3_4():
     coms = random_unitary(2), random_unitary(2), random_unitary(2)
     A = mykron(*coms)
 
@@ -156,7 +156,7 @@ def test_inter_product_2_3_4():
     assert np.allclose(actual, expected)
 
 
-def test_inter_product_4_3_2():
+def test_mesh_product_4_3_2():
     coms = random_unitary(2), random_unitary(2), random_unitary(2)
     A = mykron(*coms)
 
@@ -166,6 +166,17 @@ def test_inter_product_4_3_2():
     actual = mesh_product(A, [E], [2])
 
     expected = mykron(coms[0], coms[1], E, coms[2])
+    assert np.allclose(actual, expected)
+
+
+def test_mesh_product_equiv_kron_reverse_order():
+    n = 5
+    A = random_unitary(n)
+    E = random_unitary(3)
+    # execute
+    actual = mesh_product(A, [E], [n])
+
+    expected = kron(E, A)
     assert np.allclose(actual, expected)
 
 
@@ -235,7 +246,7 @@ def test_mesh_product_16_3_2_3_2():
     assert np.allclose(actual, expected)
 
 
-def test_kron_factors_singleton():
+def test_kron_factor_singleton():
     n = 3 * 2
     m = random_unitary(n)
     bfactors = kron_factor(m)
@@ -248,7 +259,7 @@ def test_kron_factors_singleton():
     (2, 3),
     (3, 5),
 ])
-def test_kron_factors_kron_two(a, b):
+def test_kron_factor_kron_two(a, b):
     m = np.kron(random_unitary(a), random_unitary(b))
     bfactors = kron_factor(m)
     assert len(bfactors) == 2
@@ -261,7 +272,7 @@ def test_kron_factors_kron_two(a, b):
     (2, 3),
     (3, 5),
 ])
-def test_kron_factors_kron_two_with_right_identity(a, b):
+def test_kron_factor_with_right_identity(a, b):
     m = np.kron(random_unitary(a), np.eye(b))
     bfactors = kron_factor(m)
     assert len(bfactors) == 2
@@ -274,7 +285,7 @@ def test_kron_factors_kron_two_with_right_identity(a, b):
     (2, 3),
     (3, 5),
 ])
-def test_kron_factors_kron_two_with_left_identity(a, b):
+def test_kron_factor_with_left_identity(a, b):
     m = np.kron(np.eye(a), random_unitary(b))
     bfactors = kron_factor(m)
     assert len(bfactors) == 2
@@ -282,7 +293,7 @@ def test_kron_factors_kron_two_with_left_identity(a, b):
     assert bfactors[1].shape == (b, b)
 
 
-def test_kron_factors_kron_recursive():
+def test_recursive_kron_factor():
     dims = 2, 3, 5, 4
     m = mykron(*[random_unitary(d) for d in dims])
     bfactors = recursive_kron_factor(m)
@@ -291,7 +302,7 @@ def test_kron_factors_kron_recursive():
     assert np.allclose(mykron(*bfactors), m)
 
 
-def test_kron_factors_kron_recursive_random():
+def test_recursive_kron_factor_random():
     dims = [2, 3, 5, 4]
     for _ in range(10):
         random.shuffle(dims)
@@ -302,7 +313,7 @@ def test_kron_factors_kron_recursive_random():
         assert np.allclose(mykron(*bfactors), m)
 
 
-def test_inter_factors_random():
+def test_inter_factor_random():
     a, b = random_unitary(6), random_unitary(2)
     # print(f'a=\n{formatter.tostr(a)}')
     # print(f'b=\n{formatter.tostr(b)}')
@@ -320,7 +331,7 @@ def test_inter_factors_random():
     assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
 
 
-def test_inter_factors_identity_factors():
+def test_inter_factor_identity_factors():
     a, b = random_unitary(6), np.eye(2)
     # print(f'a=\n{formatter.tostr(a)}')
     # print(f'b=\n{formatter.tostr(b)}')
@@ -338,7 +349,7 @@ def test_inter_factors_identity_factors():
     assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
 
 
-def test_inter_factors_all_identities():
+def test_inter_factor_all_identities():
     a, b = np.eye(6), np.eye(2)
     # print(f'a=\n{formatter.tostr(a)}')
     # print(f'b=\n{formatter.tostr(b)}')
@@ -356,83 +367,79 @@ def test_inter_factors_all_identities():
     assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
 
 
-def test_mesh_factors_inter_product_1():
+def test_mesh_factor_inter_product_1():
     coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
     A = mykron(*coms)
     E = np.eye(2)
+    test = inter_product(A, E, 2)
+    # print('test')
+    # print(formatter.tostr(test))
 
     # execute
-    test = inter_product(A, E, 2)
-    # print('actual')
-    # print(formatter.tostr(test))
     dough, yeast, factors = mesh_factor(test)
     assert len(factors) == 3
     u = mesh_product(dough, yeast, factors)
     assert np.allclose(u, test)
 
 
-def test_mesh_factors_inter_product_2():
+def test_mesh_factor_inter_product_2():
     coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
     A = inter_product(mykron(*coms), np.eye(2), 2)
     E = np.eye(2)
+    test = inter_product(A, E, 8)
+
     # execute
-    actual = inter_product(A, E, 8)
+    dough, yeast, factors = mesh_factor(test)
 
-    expected = mykron(coms[0], E, mykron(coms[1], np.eye(2), coms[2]))
-    # print('expected')
-    # print(formatter.tostr(expected))
-    assert np.allclose(actual, expected)
+    assert len(factors) == 4
+    u = mesh_product(dough, yeast, factors)
+    assert np.allclose(u, test)
 
 
-def test_mesh_factors_eyes_16_3_2_3_2():
+def test_mesh_factor_eyes_16_3_2_3_2():
     coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
     A = mykron(*coms)
     E = np.eye(2)
     F = np.eye(2)
+    test = mesh_product(A, (E, F), (4, 2))
+    # print('test')
+    # print(formatter.tostr(test))
 
     # execute
-    actual = mesh_product(A, (E, F), (4, 2))
-    # print('actual')
-    # print(formatter.tostr(actual))
 
-    expected = mykron(coms[0], E, coms[1], F, coms[2])
-    # print('expected')
-    # print(formatter.tostr(expected))
-    assert np.allclose(actual, expected)
+    dough, yeast, factors = mesh_factor(test)
+
+    assert len(factors) == 4
+    u = mesh_product(dough, yeast, factors)
+    assert np.allclose(u, test)
 
 
-def test_mesh_factors_16_3_2_3_2():
+def test_mesh_factor_16_3_2_3_2():
     coms = random_unitary(2), random_unitary(2), random_unitary(2)
     A = mykron(*coms)
 
     E = random_unitary(2)
 
     F = random_unitary(2)
+    test = mesh_product(A, (E, F), (4, 2))
+    # print('test')
+    # print(formatter.tostr(test))
 
     # execute
-    actual = mesh_product(A, (E, F), (4, 2))
-    # print('actual')
-    # print(formatter.tostr(actual))
+    dough, yeast, factors = mesh_factor(test)
 
-    expected = mykron(coms[0], E, coms[1], F, coms[2])
-    # print('expected')
-    # print(formatter.tostr(expected))
-    assert np.allclose(actual, expected)
+    assert len(factors) == 4
+    u = mesh_product(dough, yeast, factors)
+    assert np.allclose(u, test)
 
 
-def test_mesh_factors_random():
-    a, b = random_unitary(6), random_unitary(2)
-    # print(f'a=\n{formatter.tostr(a)}')
-    # print(f'b=\n{formatter.tostr(b)}')
-    m = inter_product(a, b, 2)
-    ms, factors = inter_factor(m)
-    assert len(factors) == 1
-    dough, yeast = ms
-    # print(f'dough=\n{formatter.tostr(dough)}')
-    # print(f'yeast=\n{formatter.tostr(yeast)}')
-    p, _ = allprop(inter_product(dough, yeast, 2), m)
-    assert p
-    dp, _ = allprop(dough, a)
-    assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(yeast, b)
-    assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
+def test_mesh_factor_3_yeast():
+    a, b, c, d = random_unitary(6), random_unitary(2), np.eye(3), random_unitary(3)
+    test = mesh_product(a, [b, c, d], [3, 3, 1])
+
+    # execute
+    dough, yeast, factors = mesh_factor(test)
+
+    assert len(factors) == 3
+    u = mesh_product(dough, yeast, factors)
+    assert np.allclose(u, test)
