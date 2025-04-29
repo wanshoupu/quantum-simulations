@@ -1,6 +1,5 @@
 import argparse
 import random
-from argparse import ArgumentParser
 
 import numpy as np
 from cirq import Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments

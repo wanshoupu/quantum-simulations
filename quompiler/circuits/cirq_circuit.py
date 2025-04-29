@@ -1,12 +1,12 @@
-from typing import Union, Optional
+from typing import Optional
 
 import cirq
 from cirq import EigenGate
 from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
-from quompiler.construct.types import UnivGate
 from quompiler.construct.cmat import UnitaryM, CUnitary
+from quompiler.construct.types import UnivGate
 
 
 class CirqBuilder(CircuitBuilder):

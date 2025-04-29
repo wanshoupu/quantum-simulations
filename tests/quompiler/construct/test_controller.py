@@ -1,10 +1,9 @@
 import random
 from functools import reduce
-from itertools import product
 
 import pytest
 
-from quompiler.construct.controller import Controller, binary
+from quompiler.construct.controller import Controller
 from quompiler.construct.types import QType
 from quompiler.utils.cgen import random_control2
 

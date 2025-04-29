@@ -16,8 +16,8 @@ formatter = MatrixFormatter(precision=2)
 def test_decompose_identity_matrix():
     n = 3
     dim = 1 << n
-    id = UnitaryM(dim, (0, 1), np.eye(2))
-    bc = cnot_decompose(id)
+    idmat = UnitaryM(dim, (0, 1), np.eye(2))
+    bc = cnot_decompose(idmat)
     assert bc == tuple()
 
 

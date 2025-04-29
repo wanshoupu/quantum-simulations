@@ -1,6 +1,3 @@
-from itertools import product
-
-import sympy
 from sympy import kronecker_product as kron, BlockMatrix
 
 

@@ -1,12 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Union, Optional
+from typing import Optional
 
-import numpy as np
-from numpy.typing import NDArray
-from typing_extensions import override
-from quompiler.construct.types import  UnivGate
-
-from quompiler.construct.cmat import UnitaryM, validm2l
+from quompiler.construct.cmat import UnitaryM
+from quompiler.construct.types import UnivGate
 
 
 class CircuitBuilder(ABC):

@@ -1,5 +1,5 @@
-from qiskit.circuit import QuantumCircuit, Gate
 from matplotlib import pyplot as plt
+from qiskit.circuit import QuantumCircuit
 
 if __name__ == '__main__':
     # Subcircuit

@@ -1,14 +1,13 @@
 import random
 from itertools import product
-from textwrap import dedent
 
 import numpy as np
 import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recursive_kron_factor, inter_factor, int_factors
 from quompiler.utils.inter_product import inter_product, mesh_product
+from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recursive_kron_factor, inter_factor, int_factors
 from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import random_unitary
 

@@ -14,8 +14,8 @@ formatter = MatrixFormatter(precision=5)
 def test_decompose_identity_matrix():
     n = 3
     dim = 1 << n
-    id = UnitaryM(dim, (0, 1), np.eye(2))
-    bc = mat2l_decompose(id)
+    idmat = UnitaryM(dim, (0, 1), np.eye(2))
+    bc = mat2l_decompose(idmat)
     print(bc)
 
 

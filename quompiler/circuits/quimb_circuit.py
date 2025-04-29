@@ -1,11 +1,11 @@
-from typing import Union, Optional
+from typing import Optional
 
 import quimb.tensor as qtn
 from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
-from quompiler.construct.types import UnivGate
 from quompiler.construct.cmat import UnitaryM, validm2l
+from quompiler.construct.types import UnivGate
 
 
 class QuimbBuilder(CircuitBuilder):

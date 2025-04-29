@@ -1,10 +1,7 @@
-import textwrap
 from itertools import product
-from textwrap import dedent
 
 import sympy
 from sympy import Matrix, symbols, kronecker_product as kron, pprint
-from sympy.printing.pretty import pretty
 
 from sandbox.sym.inter_product import inter_product, mesh_product
 from sandbox.sym.sym_gen import symmat

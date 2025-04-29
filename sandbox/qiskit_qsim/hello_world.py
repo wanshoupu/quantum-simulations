@@ -1,8 +1,5 @@
-from qiskit import QuantumCircuit
 from matplotlib import pyplot as plt
-from qiskit.quantum_info import SparsePauliOp
-from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import EstimatorV2 as Estimator
+from qiskit import QuantumCircuit
 
 if __name__ == '__main__':
     # Create a new circuit with two qubits

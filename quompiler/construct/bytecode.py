@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from quompiler.construct.cmat import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter

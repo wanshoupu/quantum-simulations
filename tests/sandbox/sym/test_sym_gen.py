@@ -1,7 +1,6 @@
 import re
 
 import pytest
-from sympy import pprint
 
 from sandbox.sym.sym_gen import symmat, alphabeta
 

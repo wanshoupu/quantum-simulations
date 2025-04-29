@@ -1,7 +1,7 @@
 from numpy.typing import NDArray
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
-from quompiler.construct.bytecode import BytecodeIter, ReverseBytecodeIter
+from quompiler.construct.bytecode import ReverseBytecodeIter
 from quompiler.construct.cmat import CUnitary, UnitaryM
 from quompiler.construct.quompiler import quompile
 

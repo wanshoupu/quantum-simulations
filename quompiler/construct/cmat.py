@@ -4,16 +4,16 @@ It also contains the controlled mat (cmat) which is represented by a core unitar
 This module differs from scipy.sparse in that we provide convenience specifically for quantum computer controlled unitary matrices.
 """
 from dataclasses import dataclass, field
+from functools import reduce
 from itertools import product
 from typing import Tuple, Optional, Union, Sequence
 
 import numpy as np
-from functools import reduce
 from numpy.typing import NDArray
 
 from quompiler.construct.controller import Controller
 from quompiler.construct.types import QType
-from quompiler.utils.inter_product import kron_factor, mesh_factor
+from quompiler.utils.inter_product import mesh_factor
 from sandbox.sym.inter_product import validate_factors, mesh_product
 
 

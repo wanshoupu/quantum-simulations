@@ -2,7 +2,6 @@ import random
 
 import numpy as np
 from numpy import kron
-from qiskit.circuit.classical.types import order
 
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import inter_product, mykron
