@@ -130,7 +130,7 @@ class UnitaryM:
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
         assert np.allclose(self.matrix @ self.matrix.conj().T, np.eye(s[0])), f'Matrix is not unitary {self.matrix}'
         assert self.dimension >= max(s[0], s[1]), f'Dimension must be greater than or equal to the dimension of the core matrix.'
-        expansion_ratio = reduce(lambda a, b: a * b, [y.shape[0] for y in self.yeast])
+        expansion_ratio = reduce(lambda a, b: a * b, [y.shape[0] for y in self.yeast], 1)
         assert len(self.core) == s[0] * expansion_ratio, f'The number of indexes must match the size of the expansion matrix.'
         if self.yeast or self.factors:
             assert len(self.yeast) == len(self.factors), f'Lengths of yeast and factors must be equal but got yeast={len(self.yeast)} and factors={len(self.factors)}'
@@ -166,8 +166,8 @@ class UnitaryM:
         if self.dimension == matd:
             return mat
         result = np.eye(self.dimension, dtype=np.complexfloating)
-        for i, j in product(range(matd), repeat=2):
-            result[self.core[i], self.core[j]] = self.matrix[i, j]
+        indxs = [self.core[i] for i in range(matd)]
+        result[np.ix_(indxs, indxs)] = self.matrix
         return result
 
     def expand(self) -> NDArray:
@@ -188,7 +188,7 @@ class UnitaryM:
 
     def isid(self) -> bool:
         pairs = [(self.matrix, np.eye(self.matrix.shape[0]))]
-        pairs += [(y, np.eye(y.shape[0]) for y in self.yeast)]
+        pairs += [(y, np.eye(y.shape[0])) for y in self.yeast]
         return all(np.allclose(m, e) for m, e in pairs)
 
     def is2l(self) -> bool:

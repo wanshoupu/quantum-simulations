@@ -70,7 +70,7 @@ def test_control2core():
 
 
 def test_CUnitary_convert_invalid_dimension():
-    cu = UnitaryM(3, random_unitary(2), (1, 2))
+    cu = UnitaryM(3, (1, 2), random_unitary(2))
     with pytest.raises(AssertionError) as exc:
         CUnitary.convert(cu)
 
@@ -85,7 +85,7 @@ def test_CUnitary_convert_no_inflation():
         m = random_unitary(1 << k)
         assert m.shape[0] == 1 << k
         assert len(core) == 1 << k
-        u = UnitaryM(dim, m, core)
+        u = UnitaryM(dim, core, m)
         c = CUnitary.convert(u)
         assert np.array_equal(c.matrix, u.matrix)
 
@@ -93,7 +93,7 @@ def test_CUnitary_convert_no_inflation():
 def test_CUnitary_convert_verify_dimension():
     dimension = 4
     m = np.array([[0, 1], [1, 0]])
-    u = UnitaryM(dimension, m, (0, 1))
+    u = UnitaryM(dimension, (0, 1), m)
     c = CUnitary.convert(u)
     assert c.dimension == 4
 
@@ -125,23 +125,23 @@ def test_complementary_indexes():
 
 def test_UnitaryM_init_invalid_dim_smaller_than_mat():
     with pytest.raises(AssertionError, match="Dimension must be greater than or equal to the dimension of the core matrix."):
-        UnitaryM(1, random_unitary(2), (1, 2))
+        UnitaryM(1, (1, 2), random_unitary(2))
 
 
 def test_UnitaryM_init_invalid_higher_dimensional_mat():
     with pytest.raises(AssertionError) as exc:
-        UnitaryM(3, np.array([[[1]]]), (1, 2))
+        UnitaryM(3, (1, 2), np.array([[[1]]]))
 
 
 def test_UnitaryM_init():
-    cu = UnitaryM(3, random_unitary(2), (1, 2))
+    cu = UnitaryM(3, (1, 2), random_unitary(2))
     inflate = cu.inflate()
     # print(formatter.tostr(inflate))
     assert inflate[0, :].tolist() == inflate[:, 0].tolist() == [1, 0, 0]
 
 
 def test_inflate():
-    cu = UnitaryM(3, random_unitary(2), (1, 2))
+    cu = UnitaryM(3, (1, 2), random_unitary(2))
     m = cu.inflate()
     indxs = coreindexes(m)
     assert indxs == (1, 2), f'Core indexes is unexpected {indxs}'
@@ -155,7 +155,7 @@ def test_deflate():
 
 
 def test_inflate_deflate():
-    cu = UnitaryM(3, random_unitary(2), (1, 2))
+    cu = UnitaryM(3, (1, 2), random_unitary(2))
     m = cu.inflate()
     u = UnitaryM.deflate(m)
     assert u.core == (1, 2), f'Core indexes is unexpected {u.core}'
