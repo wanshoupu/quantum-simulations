@@ -89,8 +89,8 @@ def another_inflate(A: sympy.Matrix, controls: Sequence[QType]) -> sympy.Matrix:
 
     result = sympy.eye(1 << n)
     controller = Controller(controls)
-    for i, row in enumerate(controller.inflated_indexes()):
-        for j, col in enumerate(controller.inflated_indexes()):
+    for i, row in enumerate(controller.core()):
+        for j, col in enumerate(controller.core()):
             result[row, col] = core[i, j]
     return result
 

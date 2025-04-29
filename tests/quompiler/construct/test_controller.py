@@ -51,7 +51,7 @@ def test_controller_mask_ones():
 def test_controller_core():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
     controller = Controller(controls)
-    indexes = controller.inflated_indexes()
+    indexes = controller.core()
     n = len(controls)
     num = 1 << n
     expected = sorted(set(controller.map(i) for i in range(num)))
@@ -78,7 +78,7 @@ def test_controller_inflated_indexes_equivalence():
         controller = Controller(controls)
         universe = reduce(lambda a, b: a | b, QType)
         indexes = controller.indexes(universe)
-        expected = controller.inflated_indexes()
+        expected = controller.core()
         assert indexes == expected
 
 
@@ -87,8 +87,8 @@ def test_controller_indexes_target_idler_combined():
     controller = Controller(controls)
     qtype = QType.IDLER | QType.TARGET
     indexes = controller.indexes(qtype)
-    assert len(indexes) == len(controller.inflated_indexes())
+    assert len(indexes) == len(controller.core())
     # assert indexes == controller.extended_indexes()
-    result = [a - b for a, b in zip(indexes, controller.inflated_indexes())]
+    result = [a - b for a, b in zip(indexes, controller.core())]
     print(result)
-    assert all(b - a == 16 for a, b in zip(indexes, controller.inflated_indexes()))
+    assert all(b - a == 16 for a, b in zip(indexes, controller.core()))
