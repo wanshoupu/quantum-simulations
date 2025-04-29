@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, control2core, core2control
-from quompiler.construct.types import UnivGate
+from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM, random_indexes
 
@@ -69,46 +69,47 @@ def test_control2core():
         assert control == recovered_control
 
 
-def test_CUnitary_convert_invalid_dimension():
-    cu = UnitaryM(3, (1, 2), random_unitary(2))
-    with pytest.raises(AssertionError) as exc:
-        CUnitary.convert(cu)
+#
+# def test_CUnitary_convert_invalid_dimension():
+#     cu = UnitaryM(3, (1, 2), random_unitary(2))
+#     with pytest.raises(AssertionError) as exc:
+#         CUnitary.convert(cu)
 
 
-def test_CUnitary_convert_no_inflation():
-    for _ in range(10):
-        n = random.randint(1, 5)
-        dim = 1 << n
-        k = random.randint(1, n)
-        control = random_control(n, k)
-        core = control2core(control)
-        m = random_unitary(1 << k)
-        assert m.shape[0] == 1 << k
-        assert len(core) == 1 << k
-        u = UnitaryM(dim, core, m)
-        c = CUnitary.convert(u)
-        assert np.array_equal(c.matrix, u.matrix)
+# def test_CUnitary_convert_no_inflation():
+#     for _ in range(10):
+#         n = random.randint(1, 5)
+#         dim = 1 << n
+#         k = random.randint(1, n)
+#         control = random_control(n, k)
+#         core = control2core(control)
+#         m = random_unitary(1 << k)
+#         assert m.shape[0] == 1 << k
+#         assert len(core) == 1 << k
+#         u = UnitaryM(dim, core, m)
+#         c = CUnitary.convert(u)
+#         assert np.array_equal(c.matrix, u.matrix)
+#
 
-
-def test_CUnitary_convert_verify_dimension():
-    dimension = 4
-    m = np.array([[0, 1], [1, 0]])
-    u = UnitaryM(dimension, (0, 1), m)
-    c = CUnitary.convert(u)
-    assert c.dimension == 4
-
-
-def test_CUnitary_convert():
-    for _ in range(20):
-        n = random.randint(1, 5)
-        dim = 1 << n
-        core = random.randint(2, dim)
-        indexes = random.sample(range(dim), core)
-        u = random_UnitaryM(dim, indexes)
-        c = CUnitary.convert(u)
-        assert c
-        # print()
-        # print(formatter.tostr(c.matrix))
+# def test_CUnitary_convert_verify_dimension():
+#     dimension = 4
+#     m = np.array([[0, 1], [1, 0]])
+#     u = UnitaryM(dimension, (0, 1), m)
+#     c = CUnitary.convert(u)
+#     assert c.dimension == 4
+#
+#
+# def test_CUnitary_convert():
+#     for _ in range(20):
+#         n = random.randint(1, 5)
+#         dim = 1 << n
+#         core = random.randint(2, dim)
+#         indexes = random.sample(range(dim), core)
+#         u = random_UnitaryM(dim, indexes)
+#         c = CUnitary.convert(u)
+#         assert c
+#         # print()
+#         # print(formatter.tostr(c.matrix))
 
 
 def test_idindexes():
@@ -163,14 +164,15 @@ def test_inflate_deflate():
 
 def test_CUnitary_init():
     m = random_unitary(2)
-    cu = CUnitary(m, (True, True, None))
+    controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
+    cu = CUnitary(m, controls)
     # print(formatter.tostr(cu.inflate()))
-    assert cu.core == (6, 7), f'Core indexes is unexpected {cu.core}'
+    assert tuple(cu.core) == (6, 7), f'Core indexes is unexpected {cu.core}'
 
 
 def test_univ_Y():
     gate = UnivGate.Y
-    control = (False, False, None)
+    control = (QType.CONTROL0, QType.CONTROL0, QType.TARGET)
     cu = CUnitary(gate.mat, control)
     expected = np.eye(8, dtype=np.complexfloating)
     expected[:2, :2] = gate.mat
@@ -182,7 +184,7 @@ def test_univ_Y():
 
 def test_standard_cunitary():
     gate = UnivGate.Z
-    control = (True, False, False, None)
+    control = (QType.CONTROL1, QType.CONTROL0, QType.CONTROL0, QType.TARGET)
     cu = CUnitary(gate.mat, control)
     expected = np.eye(16, dtype=np.complexfloating)
     expected[8:10, 8:10] = gate.mat

@@ -3,7 +3,6 @@ This module contains sparse matrices, 'UnitaryM', as arbitrary unitary operator,
 It also contains the controlled mat (cmat) which is represented by a core unitary matrix and a list of control qubits.
 This module differs from scipy.sparse in that we provide convenience specifically for quantum computer controlled unitary matrices.
 """
-from dataclasses import dataclass, field
 from functools import reduce
 from itertools import product
 from typing import Tuple, Optional, Union, Sequence
@@ -108,23 +107,23 @@ def validm2l(m: NDArray):
     return len(indxs) <= 2
 
 
-@dataclass
 class UnitaryM:
-    """
-    Instantiate a unitary matrix. The inflate method creates the extended matrix. See mesh_product for the requirements on the core, eyes, and factors.
-    :param dimension: dimension of the matrix.
-    :param core: the row indexes occupied by the core submatrix. The total length of core must correspond to the shape of extended matrix.
-    :param matrix: the core matrix.
-    :param yeast: A list of integers (k1,k2,...) representing the identity matrices of corresponding dimension k1,k2, ..., for mesh_product.
-    :param factors: A list of integers [f1, f2, ...] for mesh_product.
-    """
-    dimension: int
-    core: Sequence[int]
-    matrix: NDArray
-    yeast: Sequence[NDArray] = field(default_factory=tuple)
-    factors: Sequence[int] = field(default_factory=tuple)
 
-    def __post_init__(self):
+    def __init__(self, dimension: int, core: Sequence[int], matrix: NDArray, yeast: Sequence[NDArray] = tuple(), factors: Sequence[int] = tuple()):
+        """
+        Instantiate a unitary matrix. The inflate method creates the extended matrix. See mesh_product for the requirements on the core, eyes, and factors.
+        :param dimension: dimension of the matrix.
+        :param core: the row indexes occupied by the core submatrix. The total length of core must correspond to the shape of extended matrix.
+        :param matrix: the core matrix.
+        :param yeast: A list of integers (k1,k2,...) representing the identity matrices of corresponding dimension k1,k2, ..., for mesh_product.
+        :param factors: A list of integers [f1, f2, ...] for mesh_product.
+        """
+        self.dimension = dimension
+        self.core = core
+        self.matrix = matrix
+        self.yeast = yeast
+        self.factors = factors
+        # __post_init__ verify
         s = self.matrix.shape
         assert len(s) == 2, f'Matrix must be 2D array but got {s}.'
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
@@ -203,26 +202,19 @@ class CUnitary(UnitaryM):
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
         """
-        self.mat = m
-        self.controls = controls
         self.controller = Controller(controls)
-        self.core = sorted(self.controller.indexes(QType.TARGET))
-        self.multiplier = self.controller.indexes(QType.IDLER)
+        super().__init__(1 << len(controls), self.controller.core(), m, self.controller.yeast(), self.controller.factors())
 
     def __repr__(self):
         result = super().__repr__()
-        return result + f',controls={repr(self.controls)}'
-
-    def inflate(self) -> NDArray:
-        length = len(self.controls)
-        result = np.eye(1 << length, dtype=np.complexfloating)
-        for i, j in np.ndindex(self.mat.shape):
-            for m in self.multiplier:
-                result[self.controller.map(m + self.core[i]), self.controller.map(m + self.core[j])] = self.mat[i, j]
-        return result
+        return result + f',controls={repr(self.controller.controls)}'
 
     @classmethod
-    def convert(cls, u: UnitaryM) -> 'CUnitary':
+    def convert(cls, u: UnitaryM) -> list['CUnitary']:
+        # TODO 1. decide if u is a singleton or can be factored into singletons
+        # TODO 2. for singletons, generate the T, I, C sequences
+        # TODO 3. for multi-qubits, generate the T, I, C sequences
+
         assert u.dimension & (u.dimension - 1) == 0
         n = u.dimension.bit_length() - 1
         controls = core2control(n, u.core)

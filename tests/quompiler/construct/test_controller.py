@@ -1,6 +1,7 @@
 import random
 from functools import reduce
 
+import numpy as np
 import pytest
 
 from quompiler.construct.controller import Controller
@@ -87,7 +88,35 @@ def test_controller_indexes_target_idler_combined():
     qtype = QType.IDLER | QType.TARGET
     indexes = controller.indexes(qtype)
     assert len(indexes) == len(controller.core())
+    print()
+    print(controller.core())
     # assert indexes == controller.extended_indexes()
     result = [a - b for a, b in zip(indexes, controller.core())]
     print(result)
     assert all(b - a == 16 for a, b in zip(indexes, controller.core()))
+
+
+def test_controller_yeast_factor():
+    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
+    controller = Controller(controls)
+    yeast = controller.yeast()
+    factors = controller.factors()
+    assert len(yeast) == len(factors)
+    assert all(np.array_equal(y, np.eye(2)) for y in yeast)
+    filtered_controls = [q for q in controls if q == QType.TARGET or q == QType.IDLER]
+    expected = [1 << filtered_controls[i:].count(QType.TARGET) for i, q in enumerate(filtered_controls) if q == QType.IDLER]
+    assert factors == expected
+
+
+def test_controller_yeast_factor_random():
+    for _ in range(10):
+        n = random.randint(1, 15)
+        controls = random_control2(n)
+        controller = Controller(controls)
+        yeast = controller.yeast()
+        factors = controller.factors()
+        assert len(yeast) == len(factors)
+        assert all(np.array_equal(y, np.eye(2)) for y in yeast)
+        filtered_controls = [q for q in controls if q == QType.TARGET or q == QType.IDLER]
+        expected = [1 << filtered_controls[i:].count(QType.TARGET) for i, q in enumerate(filtered_controls) if q == QType.IDLER]
+        assert factors == expected
