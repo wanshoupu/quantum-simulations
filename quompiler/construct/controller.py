@@ -42,9 +42,9 @@ class Controller:
                 index |= 1 << i
         return index
 
-    def inflated_indexes(self):
+    def core(self):
         """
-        Create the extended indexes in the controlled matrix.
+        Create the core indexes in the controlled matrix.
         It is defined as the sparce indexes occupied by the matrix for targets + idlers under the controls (both type 0 and type 1) restrictions.
         :return: the core indexes in the controlled matrix.
         """
