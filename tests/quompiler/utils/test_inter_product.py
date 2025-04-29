@@ -443,3 +443,17 @@ def test_mesh_factor_3_yeast():
     assert len(factors) == 3
     u = mesh_product(dough, yeast, factors)
     assert np.allclose(u, test)
+
+
+def test_mesh_factor_eye_yeast():
+    a, b, c, d = random_unitary(6), np.eye(2), np.eye(4), np.eye(4)
+    test = mesh_product(a, [b, c, d], [3, 3, 1])
+
+    # execute
+    dough, yeast, factors = mesh_factor(test)
+
+    # The np.eye(4) are also factored into np.eye(2). Therefore we have 5 factors
+    assert len(factors) == 5
+    u = mesh_product(dough, yeast, factors)
+    assert np.allclose(u, test)
+    assert all(np.allclose(y, np.eye(y.shape[0])) for y in yeast)
