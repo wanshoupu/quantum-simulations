@@ -34,26 +34,25 @@ def int_factors(n: int) -> Sequence[tuple[int, int]]:
     return result
 
 
-def clean_id(A, B):
+def clean_id(*factors):
     """
-    If either A or B may be scaled to be identity matrix, do so by scaling while preserving the product unchanged.
-    :param A: matrix factor
-    :param B: same as A
-    :return: make one of the factors an identity if possible. Otherwise, return A, B unchanged
+    Detect matrices that's proportional to identities and scale them to make them identities while preserving the overall product unchanged.
+    :param factors: matrix factors.
+    :return: Make as many factors identity as possible and return the scaled factors. Otherwise, return factors as is.
     """
-    p, rp = allprop(A, np.eye(A.shape[0]))
-    q, rq = allprop(B, np.eye(B.shape[0]))
-    if q:
-        B /= rq
-        A *= rq
-    elif p:
-        A /= rp
-        B *= rp
+    assert len(factors) > 1
+    data = [allprop(m, np.eye(m.shape[0])) + (m,) for m in factors]
+    dump = next((i for i, t in enumerate(data) if not t[0]), 0)
+    factors = list(factors)
+    for i in range(len(data)):
+        y, r, m = data[i]
+        if y:
+            factors[i] /= r
+            factors[dump] *= r
+    return factors
 
-    return A, B
 
-
-def kron_factors(M: NDArray) -> list[NDArray]:
+def kron_factor(M: NDArray) -> list[NDArray]:
     validm(M)
     m = M.shape[0]
     for a, b in int_factors(m):
@@ -71,49 +70,15 @@ def kron_factors(M: NDArray) -> list[NDArray]:
         B = np.sqrt(s) * v.reshape(b, b)
 
         if np.allclose(mykron(A, B), M):
-            A, B = clean_id(A, B)
-            return [A, B]
+            return list(clean_id(A, B))
     return [M]
 
 
-def recursive_kron_factors(M: NDArray) -> list[NDArray]:
-    factors = kron_factors(M)
+def recursive_kron_factor(M: NDArray) -> list[NDArray]:
+    factors = kron_factor(M)
     if len(factors) == 1:
         return factors
-    return list(chain.from_iterable(recursive_kron_factors(m) for m in factors))  # flatten
-
-
-def inter_factors(M: NDArray) -> tuple[list[NDArray], list[int]]:
-    validm(M)
-    m = M.shape[0]
-    for a, bc in int_factors(m):
-        for b, c in int_factors(bc):
-            # these manipulation of the matrix is to separate the block divisions during the inter_product
-            # Namely, M is block divided into a x a blocks of shape(c,c) and then multiplied by B of shape(b,b) in the inter_product style
-            M2 = (M.reshape(a, b, c, a, b, c)
-                  .transpose(0, 3, 1, 4, 2, 5)
-                  .reshape(a * a, b * b, c * c)
-                  .transpose(0, 2, 1)
-                  .reshape(a * a * c * c, b * b))
-            # SVD to attempt to factor the yeast matrix
-            U, S, Vh = np.linalg.svd(M2)
-
-            # Take largest singular value/vector
-            u = U[:, 0]
-            v = Vh[0, :]
-            s = S[0]
-
-            A = np.sqrt(s) * block_square(u, a, c)
-            B = np.sqrt(s) * v.reshape(b, b)
-
-            if np.allclose(inter_product(A, B, c), M):
-                return [A, B], [c]
-    kf = kron_factors(M)
-    return kf, [1] * (len(kf) - 1)
-
-
-def mesh_factors(M: NDArray) -> tuple[NDArray, list[NDArray], list[int]]:
-    return M, [], []
+    return list(chain.from_iterable(recursive_kron_factor(m) for m in factors))  # flatten
 
 
 def block_flatten(M, m, n):
@@ -163,20 +128,20 @@ def validate_factors(factors):
         raise ValueError(f'Some factor cannot equally divides its predecessor.')
 
 
-def mesh_product(dough, yeast, factors):
+def mesh_product(dough, yeast: Sequence[NDArray], factors: Sequence[int]):
     """
-    This method is a shorthand for recursively applying `inter_product`:
-    inter_product(inter_product(... inter_product(A, B, m), C, n), ...)
+    This method is a shorthand for reverse sequentially applying `inter_product`:
+    inter_product(inter_product(inter_product(A, B, m), C, n), ...) where yeast = [..., C, B]
 
-    It carries out the `inter_product` operation in a recursive, Big Endian fashion, where:
+    It carries out the `inter_product` operation reverse sequentially:
     - `dough = A` (the initial matrix),
-    - `[B, C, ...]` are the `yeast` matrices to be applied,
-    - `[m, n, ...]` are the corresponding `factors`.
+    - `yeast = [..., C, B]` to be ⨂ onto dough in reverse sequential order,
+    - `factor = [..., n, m]` are the corresponding `rising factors`.
 
     **Concept:**
-    Yeast is applied to the dough in Big Endian order—i.e., the last yeast in the list affects the finest subdivision of the matrix dough.
+    Yeast is applied to the dough in the order—i.e., the first yeast in the list affects the finest subdivision of the matrix dough.
     Visually:
-        - -yeast0-yeast1- ... -yeast2- -yeast3-
+        -yeast0-yeast1-...-yeast2-yeast3-
     This requires that the factors shall be non-increasing order.
     If we divide A into equal blocks by factors, the block sizes will be the factors, f0, f1, ...
     We use notation A(f0), A(f1), ... to repr the factor matrices after this division.
@@ -185,8 +150,8 @@ def mesh_product(dough, yeast, factors):
 
     **Parameters:**
     :param dough: A square matrix of shape (m, m), where m > 0.
-    :param yeast: A list of square matrices [Y1, Y2, ...] with shapes (k1, k1), (k2, k2), ..., where each ki > 0.
-    :param factors: A list of integers [f1, f2, ...], where:
+    :param yeast: A list of square matrices with shapes (k1, k1), (k2, k2), ..., where each ki > 0.
+    :param factors: A list of integers [f0, f1, ...], where:
         - f1 divides m, f2 divides f1, and so on,
         - len(factors) == len(yeast),
 
@@ -194,15 +159,31 @@ def mesh_product(dough, yeast, factors):
 
     **Returns:**
     The result of the recursive inter-product operation:
-        A(f0) ⨁ Y1 ⨁ A(f1) ⨁ ... ⨁ Yn ⨁ A(fn)
+        A(f0) ⨂ Y1 ⨂ A(f1) ⨂ ... ⨂ Yn ⨂ A(fn)
     """
-
     validate_factors(factors)
     factor = 1
     for s, f in zip(yeast[::-1], factors[::-1]):
         dough = inter_product(dough, s, f * factor)
         factor *= s.shape[0]
     return dough
+
+
+def mesh_factor(M: NDArray) -> tuple[NDArray, list[NDArray], list[int]]:
+    """
+    This is a reverse function of mesh_product: it factors mesh_product into its factor matrices and rising factors.
+    :param M: a square matrix to be factored.
+    :return: a tuple(dough, yeast or list of factor matrices, and list of block sizes) according to the mesh_product rule.
+    The length of the factor matrices is either 1 and 2. The block size is either empty or contains one int.
+    When block size is empty, there should be exactly one factor which is M itself.
+    """
+    ms, factors = inter_factor(M)
+    if not factors:
+        return M, [], []
+    dough, yeast = ms
+    f = factors[0]
+    dough2, ms2, factors2 = mesh_factor(dough)
+    return dough2, [yeast] + ms2, [f * dough2.shape[0] // dough.shape[0]] + factors2
 
 
 def inter_product(A, B, m):
@@ -243,7 +224,7 @@ def inter_product(A, B, m):
     :param A: square matrix of shape (N, N).
     :param B: square matrix of shape (k, k), with k > 0.
     :param m: an integer factor of N, denotes the size of blocks to divide the matrix A into.
-    :return: The inter product with A(n) ⨁ B ⨁ A(m) with N = n*m
+    :return: The inter product with A(n) ⨂ B ⨂ A(m) with N = n*m
     """
     assert len(A.shape) == 2 and A.shape[0] == A.shape[1]
     N = A.shape[0]
@@ -254,7 +235,7 @@ def inter_product(A, B, m):
     if n == 1:
         return A * B[0, 0]
     if N % m:
-        raise ValueError(f'The dimension of A must be divisible by m but got dim={N} and m={m}')
+        raise ValueError(f'The dimension of A must be divisible by m but got N={N} and m={m}')
     if m == 1:
         return kron(A, B)
 
@@ -267,3 +248,39 @@ def inter_product(A, B, m):
         blocks.append(b)
 
     return np.block(blocks)
+
+
+def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
+    """
+    This is a reverse function of inter_product: it factors inter_product into its factor matrices, if any.
+    :param M: a square matrix to be factored.
+    :return: a tuple(list of factor matrices and list of block sizes) according to the inter_product rule.
+    The length of the factor matrices is either 1 and 2. The block size is either empty or contains one int.
+    When block size is empty, there should be exactly one factor which is M itself.
+    """
+    validm(M)
+    m = M.shape[0]
+    for a, bc in int_factors(m):
+        for b, c in int_factors(bc):
+            # these manipulation of the matrix is to separate the block divisions during the inter_product
+            # Namely, M is block divided into a x a blocks of shape(c,c) and then multiplied by B of shape(b,b) in the inter_product style
+            M2 = (M.reshape(a, b, c, a, b, c)
+                  .transpose(0, 3, 1, 4, 2, 5)
+                  .reshape(a * a, b * b, c * c)
+                  .transpose(0, 2, 1)
+                  .reshape(a * a * c * c, b * b))
+            # SVD to attempt to factor the yeast matrix
+            U, S, Vh = np.linalg.svd(M2)
+
+            # Take largest singular value/vector
+            u = U[:, 0]
+            v = Vh[0, :]
+            s = S[0]
+
+            A = np.sqrt(s) * block_square(u, a, c)
+            B = np.sqrt(s) * v.reshape(b, b)
+
+            if np.allclose(inter_product(A, B, c), M):
+                return list(clean_id(A, B)), [c]
+    kf = kron_factor(M)
+    return kf, [1] * (len(kf) - 1)
