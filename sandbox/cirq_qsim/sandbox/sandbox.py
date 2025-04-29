@@ -4,7 +4,6 @@ import cirq
 
 
 def simple_circuit():
-    global q0, q1, result
     q0, q1 = cirq.LineQubit.range(2)  # Create 2 qubits in a line
     circuit = cirq.Circuit(
         cirq.H(q0),  # Hadamard gate on q0
@@ -21,7 +20,6 @@ def simple_circuit():
 
 
 def plot_circuit_sim():
-    global q0, q1, result
     # Define qubits
     q0, q1 = cirq.LineQubit.range(2)
     # Create circuit with explicit measurement keys
