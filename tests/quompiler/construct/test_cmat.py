@@ -29,7 +29,7 @@ def test_core2control():
         gcb = core2control(blength, core)
         bitmatrix = np.array([list(bin(i)[2:].zfill(blength)) for i in core])
         # print(bitmatrix)
-        expected = [(QType.CONTROL1 if int(bitmatrix[0, i]) else QType.CONTROL0) if len(set(bitmatrix[:, i])) == 1 else QType(0) for i in range(blength)]
+        expected = [(QType.CONTROL1 if int(bitmatrix[0, i]) else QType.CONTROL0) if len(set(bitmatrix[:, i])) == 1 else QType.TARGET for i in range(blength)]
         assert gcb == tuple(expected), f'gcb {gcb} != expected {expected}'
 
 
@@ -43,7 +43,7 @@ def test_control2core_big_endian():
     n = 3
     core = [2, 3]
     control = core2control(n, core)
-    assert control == (QType.CONTROL0, QType.CONTROL1, QType(0))
+    assert control == (QType.CONTROL0, QType.CONTROL1, QType.TARGET)
 
 
 def test_control2core_single_index():
@@ -60,7 +60,22 @@ def test_control2core_single_index():
         assert control == expected
 
 
-def test_control2core():
+@pytest.mark.parametrize('n,core,expected', [
+    [3, list(range(3)), (QType.CONTROL0, QType.TARGET, QType.TARGET)],
+    [4, list(range(3)), (QType.CONTROL0, QType.CONTROL0, QType.TARGET, QType.TARGET)],
+    [4, list(range(3, 6)), (QType.CONTROL0, QType.TARGET, QType.TARGET, QType.TARGET)],
+    [4, [2, 4], (QType.CONTROL0, QType.TARGET, QType.TARGET, QType.CONTROL0)],
+    [4, [3, 5], (QType.CONTROL0, QType.TARGET, QType.TARGET, QType.CONTROL1)],
+])
+def test_control2core_unsaturated_core(n, core, expected):
+    """
+    this test is to verify that unsaturated core (m indexes where 2^(n-1) < m < 2^n for some n) creates the correct control sequence.
+    """
+    control = core2control(n, core)
+    assert control == expected
+
+
+def test_control2core_random():
     for _ in range(10):
         n = random.randint(1, 5)
         control = [random.choice(list(QType)) for _ in range(n)]
@@ -69,7 +84,7 @@ def test_control2core():
         assert len(core) == 1 << k
         for i in range(len(control)):
             if control[i] == QType.TARGET or control[i] == QType.IDLER:
-                control[i] = QType(0)
+                control[i] = QType.TARGET
         expected = core2control(n, core)
         assert tuple(control) == expected
 

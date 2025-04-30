@@ -85,7 +85,7 @@ def core2control(bitlength: int, core: Sequence) -> Tuple[QType, ...]:
             idiff.append(i)
     controls = [QType.CONTROL1 if core[0] & (1 << j) else QType.CONTROL0 for j in range(bitlength)]
     for i in idiff:
-        controls[i] = QType(0)
+        controls[i] = QType.TARGET
     return tuple(controls[::-1])
 
 
