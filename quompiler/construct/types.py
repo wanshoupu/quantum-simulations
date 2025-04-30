@@ -44,4 +44,6 @@ class QType(IntFlag):
         return obj
 
     def __repr__(self):
-        return self.name
+        if self.name:
+            return self.name
+        return repr(int(self))
