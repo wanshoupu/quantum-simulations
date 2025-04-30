@@ -10,7 +10,7 @@ from typing import Tuple, Optional, Union, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from quompiler.construct.controller import Controller
+from quompiler.construct.qontroller import Qontroller
 from quompiler.construct.types import QType
 from quompiler.utils.inter_product import mesh_factor
 from sandbox.sym.inter_product import validate_factors, mesh_product
@@ -65,13 +65,13 @@ def control2core(controls: Tuple[Optional[bool], ...]) -> Tuple[int, ...]:
     return tuple(result)
 
 
-def core2control(bitlength: int, core: Sequence) -> Tuple[Optional[bool], ...]:
+def core2control(bitlength: int, core: Sequence) -> Tuple[QType, ...]:
     """
-    Generate the control bits of a bundle of indexes given by core.
-    The control bits are those bits shared by all the indexes in the core. The rest are target bits.
-    The control bits are set to the corresponding common bits in the core (0->False, 1->True) whereas the target bit set to None.
+    Generate the control sequence of a bundle of indexes given by core.
+    The CONTROL0/CONTROL1 correspond to the shared bits by all the indexes in the core. The rest are QType(0).
+    The control sequence is formed by mapping the corresponding common bits in the core (0->CONTROL0, 1->CONTROL1).
     Big endian is used, namely, most significant bits on the left most end of the array.
-    :param bitlength: total length of the control bits
+    :param bitlength: total length of the control sequence
     :param core: the core indexes, i.e., the indexes of the target bits
     :return: Tuple[bool] corresponding to the control bits
     """
@@ -83,10 +83,10 @@ def core2control(bitlength: int, core: Sequence) -> Tuple[Optional[bool], ...]:
         mask = 1 << i
         if len({(a & mask) for a in core}) == 2:
             idiff.append(i)
-    bits = [bool(core[0] & (1 << j)) for j in range(bitlength)]
+    controls = [QType.CONTROL1 if core[0] & (1 << j) else QType.CONTROL0 for j in range(bitlength)]
     for i in idiff:
-        bits[i] = None
-    return tuple(bits[::-1])
+        controls[i] = QType(0)
+    return tuple(controls[::-1])
 
 
 def validm(m: NDArray):
@@ -193,6 +193,55 @@ class UnitaryM:
     def is2l(self) -> bool:
         return len(self.core) <= 2
 
+    def issinglet(self) -> bool:
+        if self.dimension & (self.dimension - 1) != 0:
+            return False
+        if self.matrix.shape[0] != 2:
+            return False
+        if any(not np.allclose(y, np.eye(y.shape[0])) for y in self.yeast):
+            return False
+
+        n = self.dimension.bit_length() - 1
+
+    def convert(self) -> 'CUnitary':
+        """
+        # TODO 1. decide if u is a singleton or can be factored into singletons
+        # TODO 2. for singletons, generate the T, I, C sequences
+        # TODO 3. for multi-qubits, generate the T, I, C sequences
+
+        To rebuild the control sequence, the information comes from
+        dough, yeast, factors
+        core
+        Rebuild will always succeed, the worst case is to treat the entire inflated matrix as the target.
+        Therefore set the goal to restoring as many insights as possible.
+        First round recover the C0/C1 bits. should be pretty easy
+        Second round, identify the IDLER bits.
+        The remaining just assign TARGET
+        Example:
+            C0 T I C0 I T C1
+        Identifying IDLER bits need a good algorithm. The brute force way is try / fail. For each bit, try to set it as IDLER. If not possible, set it to TARGET.
+        But there might be better ways. Necessary conditions are:
+        - The corresponding yeast shape must be of power 2.
+        - The corresponding yeast must be identities.
+        """
+
+        assert self.dimension & (self.dimension - 1) == 0
+        n = self.dimension.bit_length() - 1
+
+        controls = core2control(n, self.core)
+        controller = Qontroller(controls)
+        lookup = {idx: i for i, idx in enumerate(self.core)}
+
+        core = controller.core()
+        dim = len(core)
+        m = np.eye(dim, dtype=np.complexfloating)
+        for i, j in product(range(dim), range(dim)):
+            if core[i] not in lookup or core[j] not in lookup:
+                continue
+            idx = lookup[core[i]], lookup[core[j]]
+            m[i, j] = self.matrix[idx]
+        return CUnitary(m, controls)
+
 
 class CUnitary(UnitaryM):
     def __init__(self, m: NDArray, controls: Sequence[QType]):
@@ -202,30 +251,9 @@ class CUnitary(UnitaryM):
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
         """
-        self.controller = Controller(controls)
+        self.controller = Qontroller(controls)
         super().__init__(1 << len(controls), self.controller.core(), m, self.controller.yeast(), self.controller.factors())
 
     def __repr__(self):
         result = super().__repr__()
         return result + f',controls={repr(self.controller.controls)}'
-
-    @classmethod
-    def convert(cls, u: UnitaryM) -> list['CUnitary']:
-        # TODO 1. decide if u is a singleton or can be factored into singletons
-        # TODO 2. for singletons, generate the T, I, C sequences
-        # TODO 3. for multi-qubits, generate the T, I, C sequences
-
-        assert u.dimension & (u.dimension - 1) == 0
-        n = u.dimension.bit_length() - 1
-        controls = core2control(n, u.core)
-        core = control2core(controls)
-        lookup = {idx: i for i, idx in enumerate(u.core)}
-
-        dim = len(core)
-        m = np.eye(dim, dtype=np.complexfloating)
-        for i, j in product(range(dim), range(dim)):
-            if core[i] not in lookup or core[j] not in lookup:
-                continue
-            idx = lookup[core[i]], lookup[core[j]]
-            m[i, j] = u.matrix[idx]
-        return CUnitary(m, controls)

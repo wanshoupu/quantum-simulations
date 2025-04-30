@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, control2core, core2control
+from quompiler.construct.qontroller import Qontroller
 from quompiler.construct.types import UnivGate, QType
+from quompiler.utils.cgen import random_control2
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM, random_indexes
 
@@ -27,7 +29,7 @@ def test_core2control():
         gcb = core2control(blength, core)
         bitmatrix = np.array([list(bin(i)[2:].zfill(blength)) for i in core])
         # print(bitmatrix)
-        expected = [bool(int(bitmatrix[0, i])) if len(set(bitmatrix[:, i])) == 1 else None for i in range(blength)]
+        expected = [(QType.CONTROL1 if int(bitmatrix[0, i]) else QType.CONTROL0) if len(set(bitmatrix[:, i])) == 1 else QType(0) for i in range(blength)]
         assert gcb == tuple(expected), f'gcb {gcb} != expected {expected}'
 
 
@@ -41,7 +43,7 @@ def test_control2core_big_endian():
     n = 3
     core = [2, 3]
     control = core2control(n, core)
-    assert control == (False, True, None)
+    assert control == (QType.CONTROL0, QType.CONTROL1, QType(0))
 
 
 def test_control2core_single_index():
@@ -54,19 +56,22 @@ def test_control2core_single_index():
         index = core[0]
         control = core2control(n, core)
         print(control)
-        expected = tuple(bool(index & 1 << i) for i in range(n))[::-1]
+        expected = tuple(QType.CONTROL1 if bool(index & 1 << i) else QType.CONTROL0 for i in range(n))[::-1]
         assert control == expected
 
 
 def test_control2core():
     for _ in range(10):
         n = random.randint(1, 5)
-        k = random.randint(1, n)
-        control = random_control(n, k)
-        core = control2core(control)
+        control = [random.choice(list(QType)) for _ in range(n)]
+        k = control.count(QType.TARGET) + control.count(QType.IDLER)
+        core = Qontroller(control).core()
         assert len(core) == 1 << k
-        recovered_control = core2control(n, core)
-        assert control == recovered_control
+        for i in range(len(control)):
+            if control[i] == QType.TARGET or control[i] == QType.IDLER:
+                control[i] = QType(0)
+        expected = core2control(n, core)
+        assert tuple(control) == expected
 
 
 #
