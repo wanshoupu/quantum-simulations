@@ -16,7 +16,7 @@ def binary(bits: Sequence[int]) -> int:
     return sum(bit << i for i, bit in enumerate(reversed(bits)))
 
 
-class Controller:
+class Qontroller:
     def __init__(self, controls: Sequence[QType]):
         self.controls = controls
         self.length = len(controls)
@@ -33,7 +33,7 @@ class Controller:
         self._inflated_indexes = None
         self._lookup = {}
 
-    def map(self, index):
+    def mask(self, index):
         """
         Given an index, map it to the controlled index
         :param index: an integer, presumably the extension index

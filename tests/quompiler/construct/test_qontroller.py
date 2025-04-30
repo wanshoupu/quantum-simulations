@@ -4,57 +4,59 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from quompiler.construct.controller import Controller
+from quompiler.construct.qontroller import Qontroller
 from quompiler.construct.types import QType
 from quompiler.utils.cgen import random_control2
 
 random.seed(3)
 
 
-def test_controller_init():
+def test_qontroller_init():
     n = 5
     controls = random_control2(n)
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     assert controller is not None
 
 
-def test_controller_mask_zero():
+def test_qontroller_mask_zero():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     num = 0
-    new = controller.map(num)
+    new = controller.mask(num)
     assert new == 16
 
 
-def test_controller_mask_ones():
+def test_qontroller_mask_ones():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     n = len(controls)
     num = (1 << n) - 1
     print(bin(num))
-    new = controller.map(num)
+    new = controller.mask(num)
     assert new == num - 1
 
 
-#
-# def test_controller_mask_random():
-#     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-#     controller = Controller(controls)
-#     n = len(controls)
-#     for _ in range(10):
-#         num = random.randrange(1 << n)
-#         # print(bin(num))
-#         new = controller.mask(num)
-#         assert new == num
-
-
-def test_controller_core():
+def test_qontroller_mask_random():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Controller(controls)
+    controller = Qontroller(controls)
+    n = len(controls)
+    c1 = n - 1 - controls.index(QType.CONTROL1)
+    c0 = n - 1 - controls.index(QType.CONTROL0)
+    for _ in range(10):
+        num = random.randrange(1 << n)
+        # print(bin(num))
+        new = controller.mask(num)
+        expected = (num | (1 << c1)) & ((1 << n) - 1 - (1 << c0))
+        assert new == expected
+
+
+def test_qontroller_core():
+    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
+    controller = Qontroller(controls)
     indexes = controller.core()
     n = len(controls)
     num = 1 << n
-    expected = sorted(set(controller.map(i) for i in range(num)))
+    expected = sorted(set(controller.mask(i) for i in range(num)))
     assert indexes == expected
 
 
@@ -64,27 +66,27 @@ def test_controller_core():
     (QType.CONTROL1, [16]),
     (QType.CONTROL0, [0]),
 ])
-def test_controller_indexes(qtype, expected):
+def test_qontroller_indexes(qtype, expected):
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     indexes = controller.indexes(qtype)
     assert indexes == expected
 
 
-def test_controller_inflated_indexes_equivalence():
+def test_qontroller_inflated_indexes_equivalence():
     for _ in range(10):
         n = random.randint(1, 5)
         controls = random_control2(n)
-        controller = Controller(controls)
+        controller = Qontroller(controls)
         universe = reduce(lambda a, b: a | b, QType)
         indexes = controller.indexes(universe)
         expected = controller.core()
         assert indexes == expected
 
 
-def test_controller_indexes_target_idler_combined():
+def test_qontroller_indexes_target_idler_combined():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     qtype = QType.IDLER | QType.TARGET
     indexes = controller.indexes(qtype)
     assert len(indexes) == len(controller.core())
@@ -96,9 +98,9 @@ def test_controller_indexes_target_idler_combined():
     assert all(b - a == 16 for a, b in zip(indexes, controller.core()))
 
 
-def test_controller_yeast_factor():
+def test_qontroller_yeast_factor():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     yeast = controller.yeast()
     factors = controller.factors()
     assert len(yeast) == len(factors)
@@ -108,11 +110,11 @@ def test_controller_yeast_factor():
     assert factors == expected
 
 
-def test_controller_yeast_factor_random():
+def test_qontroller_yeast_factor_random():
     for _ in range(10):
         n = random.randint(1, 15)
         controls = random_control2(n)
-        controller = Controller(controls)
+        controller = Qontroller(controls)
         yeast = controller.yeast()
         factors = controller.factors()
         assert len(yeast) == len(factors)
