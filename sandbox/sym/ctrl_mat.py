@@ -4,7 +4,7 @@ import numpy as np
 import sympy
 from sympy import Matrix as NDArray
 
-from quompiler.construct.controller import Controller
+from quompiler.construct.qontroller import Qontroller
 from quompiler.construct.types import QType
 
 
@@ -18,7 +18,7 @@ class CUnitary:
         """
         self.mat = m
         self.controls = controls
-        self.controller = Controller(controls)
+        self.controller = Qontroller(controls)
         self.core = sorted(self.controller.indexes(QType.TARGET))
         self.multiplier = self.controller.indexes(QType.IDLER)
 
@@ -31,5 +31,5 @@ class CUnitary:
         result = sympy.eye(1 << length)
         for i, j in np.ndindex(self.mat.shape):
             for m in self.multiplier:
-                result[self.controller.map(m + self.core[i]), self.controller.map(m + self.core[j])] = self.mat[i, j]
+                result[self.controller.mask(m + self.core[i]), self.controller.mask(m + self.core[j])] = self.mat[i, j]
         return result

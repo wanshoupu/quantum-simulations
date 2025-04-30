@@ -5,7 +5,7 @@ import pytest
 import sympy
 
 from quompiler.construct.types import QType
-from quompiler.construct.controller import Controller
+from quompiler.construct.qontroller import Qontroller
 from quompiler.utils.cgen import random_control2
 from sandbox.sym.ctrl_mat import CUnitary
 from sandbox.sym.inter_product import mesh_product
@@ -88,7 +88,7 @@ def another_inflate(A: sympy.Matrix, controls: Sequence[QType]) -> sympy.Matrix:
     core = mesh_product(A, yeast, factors)
 
     result = sympy.eye(1 << n)
-    controller = Controller(controls)
+    controller = Qontroller(controls)
     for i, row in enumerate(controller.core()):
         for j, col in enumerate(controller.core()):
             result[row, col] = core[i, j]
