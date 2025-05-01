@@ -8,8 +8,6 @@ from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 import numpy as np
 
-random.seed(42)
-np.random.seed(42)
 formatter = MatrixFormatter(precision=2)
 
 

@@ -12,8 +12,6 @@ from sandbox.sym.inter_product import mesh_product
 from sandbox.sym.sym_gen import symmat
 from sandbox.sym.symmat_format import mat_print
 
-random.seed(3)
-
 
 @pytest.mark.parametrize("controls", [
     [QType.TARGET, QType.IDLER, QType.CONTROL0],

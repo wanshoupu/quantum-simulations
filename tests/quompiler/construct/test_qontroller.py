@@ -8,8 +8,6 @@ from quompiler.construct.qontroller import Qontroller
 from quompiler.construct.types import QType
 from quompiler.utils.mgen import random_control
 
-random.seed(3)
-
 
 def test_qontroller_init():
     n = 5

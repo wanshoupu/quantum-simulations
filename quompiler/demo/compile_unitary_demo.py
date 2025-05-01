@@ -23,9 +23,6 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input", type=str, help="Number of qubits. CAUTION: do not set n to big numbers as it scales exponentially.", required=False, default=2)
     args = parser.parse_args()
 
-    random.seed(0)
-    np.random.seed(0)
-
     n = int(args.input)
     dim = 1 << n
     u = random_unitary(dim)

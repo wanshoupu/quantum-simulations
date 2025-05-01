@@ -4,8 +4,6 @@ from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import *
 import numpy as np
 
-random.seed(3)
-np.random.seed(3)
 formatter = MatrixFormatter()
 
 

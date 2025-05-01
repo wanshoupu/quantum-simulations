@@ -8,8 +8,6 @@ from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_unitary
 
-random.seed(5)
-np.random.seed(5)
 formatter = MatrixFormatter(precision=2)
 
 

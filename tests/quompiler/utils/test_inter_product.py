@@ -11,8 +11,6 @@ from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recu
 from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import random_unitary
 
-random.seed(3)
-np.random.seed(3)
 formatter = MatrixFormatter(precision=2)
 
 

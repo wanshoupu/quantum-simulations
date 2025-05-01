@@ -9,8 +9,6 @@ from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_indexes, random_UnitaryM, random_control
 
-random.seed(42)
-np.random.seed(42)
 formatter = MatrixFormatter(precision=2)
 
 

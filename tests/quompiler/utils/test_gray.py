@@ -6,7 +6,6 @@ import numpy as np
 
 from quompiler.utils.gray import gray_code, cogray_code
 
-random.seed(5)
 formatter = MatrixFormatter()
 
 

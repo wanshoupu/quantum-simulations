@@ -8,8 +8,6 @@ from quompiler.circuits.interpreter import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 
-random.seed(42)
-np.random.seed(42)
 formatter = MatrixFormatter(precision=2)
 
 
@@ -66,15 +64,17 @@ def test_interp_cyclic_matrix(n, k, expected_moments):
 
 
 def test_interp_random_unitary():
-    for _ in range(3):
+    for _ in range(10):
         print(f'Test {_}th round')
         n = random.randint(1, 4)
         dim = 1 << n
-        m = random_unitary(dim)
+        expected = random_unitary(dim)
+
+        # execute
         builder = CirqBuilder(n)
-        CircuitInterp(builder).interpret(m)
+        CircuitInterp(builder).interpret(expected)
         circuit = builder.finish()
         qbs = circuit.all_qubits()
         assert len(qbs) == n
-        c = circuit.unitary(circuit.all_qubits())
-        assert np.allclose(m, c), f'circuit != input:\ncircuit=\n{formatter.tostr(c)},\ninput=\n{formatter.tostr(m)}'
+        actual = circuit.unitary(builder.qubits)
+        assert np.allclose(actual, expected), f'actual != expected:\nactual=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'

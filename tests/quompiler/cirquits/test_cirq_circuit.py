@@ -1,17 +1,16 @@
 import random
 
+import cirq
 import numpy as np
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.bytecode import BytecodeIter
-from quompiler.construct.cmat import CUnitary
+from quompiler.construct.cmat import CUnitary, UnitaryM
 from quompiler.construct.quompiler import quompile
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_control, random_unitary, cyclic_matrix
 
-random.seed(3)
-np.random.seed(3)
 formatter = MatrixFormatter(precision=2)
 
 
@@ -56,7 +55,7 @@ def test_builder_random_cunitary():
         n = random.randint(1, 4)
         k = random.randint(1, n)
         control = random_control(n, k)
-        core = 1 << control.count(None)
+        core = 1 << control.count(QType.TARGET)
         m = random_unitary(core)
         cu = CUnitary(m, control)
         cirqC = CirqBuilder(n)
@@ -89,3 +88,32 @@ def test_compile_cyclic_4_everything():
     print(circuit)
     v = circuit.unitary(cirqC.qubits)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
+
+
+def test_cirq_bug_4_qubits():
+    n = 4
+    qubits = cirq.LineQubit.range(n)
+    circuit = cirq.Circuit()
+    custom_gate = cirq.MatrixGate(np.eye(1 << n))
+
+    # execute
+    circuit.append(custom_gate(*qubits))
+
+    assert qubits != circuit.all_qubits()
+
+    # to bypass the cirq bug, always sort circuit.all_qubits().
+    assert qubits == sorted(circuit.all_qubits())
+
+
+def test_builder_custom_gate():
+    n = 4
+    dim = 1 << n
+    expected = UnitaryM(dim, [dim - 2, dim - 1], random_unitary(2))
+
+    # execute
+    builder = CirqBuilder(n)
+    builder.build_gate(expected)
+    circuit = builder.finish()
+
+    actual = circuit.unitary(builder.qubits)
+    assert np.allclose(actual, expected.inflate()), f'actual != expected:\nactual=\n{formatter.tostr(actual)},\nexpected.inflate()=\n{formatter.tostr(expected.inflate())}'
