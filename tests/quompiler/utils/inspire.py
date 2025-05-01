@@ -58,7 +58,8 @@ def test_inter_product_singlet_qubit():
     matrix = random_unitary(2)
     n = 2
     mats = [np.eye(2) for _ in range(n)]
-    mats.insert(random.randrange(n), matrix)
+    k = random.randrange(n)
+    mats.insert(k, matrix)
     for m in mats:
         print()
         print(formatter.tostr(m))

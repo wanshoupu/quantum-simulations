@@ -3,12 +3,11 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, control2core, core2control
-from quompiler.construct.qontroller import Qontroller
+from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, control2core
+from quompiler.construct.qontroller import Qontroller, core2control
 from quompiler.construct.types import UnivGate, QType
-from quompiler.utils.cgen import random_control2
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_control, random_UnitaryM, random_indexes
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_indexes, random_UnitaryM, random_control
 
 random.seed(42)
 np.random.seed(42)
@@ -89,47 +88,49 @@ def test_control2core_random():
         assert tuple(control) == expected
 
 
-#
-# def test_CUnitary_convert_invalid_dimension():
-#     cu = UnitaryM(3, (1, 2), random_unitary(2))
-#     with pytest.raises(AssertionError) as exc:
-#         CUnitary.convert(cu)
+def test_CUnitary_convert_invalid_dimension():
+    cu = UnitaryM(3, (1, 2), random_unitary(2))
+    with pytest.raises(AssertionError) as exc:
+        CUnitary.convert(cu)
 
 
-# def test_CUnitary_convert_no_inflation():
-#     for _ in range(10):
-#         n = random.randint(1, 5)
-#         dim = 1 << n
-#         k = random.randint(1, n)
-#         control = random_control(n, k)
-#         core = control2core(control)
-#         m = random_unitary(1 << k)
-#         assert m.shape[0] == 1 << k
-#         assert len(core) == 1 << k
-#         u = UnitaryM(dim, core, m)
-#         c = CUnitary.convert(u)
-#         assert np.array_equal(c.matrix, u.matrix)
-#
+def test_CUnitary_convert_no_inflation():
+    for _ in range(10):
+        n = random.randint(1, 5)
+        dim = 1 << n
+        k = random.randint(1, n)
+        control = random_control(n, k)
+        core = control2core(control)
+        m = random_unitary(1 << k)
+        assert m.shape[0] == 1 << k
+        assert len(core) == 1 << k
+        u = UnitaryM(dim, core, m)
 
-# def test_CUnitary_convert_verify_dimension():
-#     dimension = 4
-#     m = np.array([[0, 1], [1, 0]])
-#     u = UnitaryM(dimension, (0, 1), m)
-#     c = CUnitary.convert(u)
-#     assert c.dimension == 4
-#
-#
-# def test_CUnitary_convert():
-#     for _ in range(20):
-#         n = random.randint(1, 5)
-#         dim = 1 << n
-#         core = random.randint(2, dim)
-#         indexes = random.sample(range(dim), core)
-#         u = random_UnitaryM(dim, indexes)
-#         c = CUnitary.convert(u)
-#         assert c
-#         # print()
-#         # print(formatter.tostr(c.matrix))
+        # execute
+        c = CUnitary.convert(u)
+        assert np.array_equal(c.matrix, u.matrix)
+
+
+def test_CUnitary_convert_verify_dimension():
+    dimension = 4
+    m = np.array([[0, 1], [1, 0]])
+    u = UnitaryM(dimension, (0, 1), m)
+    c = CUnitary.convert(u)
+    assert c.dimension == 4
+
+
+def test_CUnitary_convert():
+    for _ in range(20):
+        print(f'test round {_}')
+        n = random.randint(1, 5)
+        dim = 1 << n
+        core = random.randint(2, dim)
+        indexes = random.sample(range(dim), core)
+        u = random_UnitaryM(dim, indexes)
+        c = CUnitary.convert(u)
+        assert c
+        # print()
+        # print(formatter.tostr(c.matrix))
 
 
 def test_idindexes():

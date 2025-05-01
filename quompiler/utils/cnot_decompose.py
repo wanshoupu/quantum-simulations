@@ -72,7 +72,8 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 from typing import Tuple
 from quompiler.construct.types import UnivGate
 
-from quompiler.construct.cmat import UnitaryM, CUnitary, core2control
+from quompiler.construct.cmat import UnitaryM, CUnitary
+from quompiler.construct.qontroller import core2control
 from quompiler.utils.gray import gray_code
 
 

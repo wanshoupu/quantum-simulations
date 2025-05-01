@@ -1,5 +1,5 @@
 from itertools import product
-from typing import Sequence
+from typing import Sequence, Tuple
 
 import numpy as np
 
@@ -32,6 +32,17 @@ class Qontroller:
         # cache fields
         self._inflated_indexes = None
         self._lookup = {}
+
+    @classmethod
+    def create(cls, n: int, core: Sequence[int]) -> 'Qontroller':
+        """
+        Create a Qontroller based on number of qubits and core indexes
+        :param n: number of qubits
+        :param core: a sequence of indexes
+        :return: Qontroller
+        """
+        controls = core2control(n, core)
+        return Qontroller(controls)
 
     def mask(self, index):
         """
@@ -73,5 +84,29 @@ class Qontroller:
     def factors(self) -> list[int]:
         targets = np.array(self.controls) == QType.TARGET
         cumsum = np.cumsum(targets[::-1])[::-1].astype(int)
-        rfactors = list(map(lambda a:1<<int(a), cumsum[np.array(self.controls) == QType.IDLER]))
+        rfactors = list(map(lambda a: 1 << int(a), cumsum[np.array(self.controls) == QType.IDLER]))
         return rfactors
+
+
+def core2control(bitlength: int, core: Sequence) -> Tuple[QType, ...]:
+    """
+    Generate the control sequence of a bundle of indexes given by core.
+    The CONTROL0/CONTROL1 correspond to the shared bits by all the indexes in the core. The rest are QType.TARGET.
+    The control sequence is formed by mapping the corresponding common bits in the core (0->CONTROL0, 1->CONTROL1).
+    Big endian is used, namely, most significant bits on the left most end of the array.
+    :param bitlength: total length of the control sequence
+    :param core: the core indexes, i.e., the indexes of the target bits
+    :return: Tuple[bool] corresponding to the control bits
+    """
+    assert core, f'Core cannot be empty'
+    dim = 1 << bitlength
+    assert max(core) < dim, f'Invalid core: some index in core are bigger than numbers representable by {dim} bits.'
+    idiff = []
+    for i in range(bitlength):
+        mask = 1 << i
+        if len({(a & mask) for a in core}) == 2:
+            idiff.append(i)
+    controls = [QType.CONTROL1 if core[0] & (1 << j) else QType.CONTROL0 for j in range(bitlength)]
+    for i in idiff:
+        controls[i] = QType.TARGET
+    return tuple(controls[::-1])
