@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes, control2core
+from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes
 from quompiler.construct.qontroller import Qontroller, core2control
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -100,7 +100,7 @@ def test_CUnitary_convert_no_inflation():
         dim = 1 << n
         k = random.randint(1, n)
         control = random_control(n, k)
-        core = control2core(control)
+        core = Qontroller(control).core()
         m = random_unitary(1 << k)
         assert m.shape[0] == 1 << k
         assert len(core) == 1 << k

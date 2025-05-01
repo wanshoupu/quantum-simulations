@@ -6,14 +6,14 @@ import pytest
 
 from quompiler.construct.qontroller import Qontroller
 from quompiler.construct.types import QType
-from quompiler.utils.cgen import random_control2
+from quompiler.utils.mgen import random_control
 
 random.seed(3)
 
 
 def test_qontroller_init():
     n = 5
-    controls = random_control2(n)
+    controls = random_control(n)
     controller = Qontroller(controls)
     assert controller is not None
 
@@ -76,7 +76,7 @@ def test_qontroller_indexes(qtype, expected):
 def test_qontroller_inflated_indexes_equivalence():
     for _ in range(10):
         n = random.randint(1, 5)
-        controls = random_control2(n)
+        controls = random_control(n)
         controller = Qontroller(controls)
         universe = reduce(lambda a, b: a | b, QType)
         indexes = controller.indexes(universe)
@@ -113,7 +113,7 @@ def test_qontroller_yeast_factor():
 def test_qontroller_yeast_factor_random():
     for _ in range(10):
         n = random.randint(1, 15)
-        controls = random_control2(n)
+        controls = random_control(n)
         controller = Qontroller(controls)
         yeast = controller.yeast()
         factors = controller.factors()

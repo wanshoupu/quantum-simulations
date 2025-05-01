@@ -41,23 +41,6 @@ def coreindexes(m: NDArray) -> Tuple[int, ...]:
     return tuple(sorted(set(range(dimension)) - set(idindexes(m))))
 
 
-def control2core(controls: Tuple[Optional[bool], ...]) -> Tuple[int, ...]:
-    """
-    Calculate the core indexes based on controls. Core indexes = the indexes spanned by the target bits encoded in controls.
-    Target bits are encoded in controls as those positions with value None.
-    :param controls: A tuple of bool or None on position of target bit
-    :return: a tuple of indexes spanned by the target bits in the matrix of dimension len(control)
-    """
-    t = [i for i, b in enumerate(controls) if b is None]
-    bits = ['1' if b else '0' for b in controls]
-    result = []
-    for keys in product(*[['0', '1']] * len(t)):
-        for i, k in enumerate(keys):
-            bits[t[i]] = k
-        result.append(int(''.join(bits), 2))
-    return tuple(result)
-
-
 def validm(m: NDArray):
     s = m.shape
     if len(s) != 2:

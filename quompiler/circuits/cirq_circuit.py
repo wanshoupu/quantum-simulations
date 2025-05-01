@@ -6,7 +6,7 @@ from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
 from quompiler.construct.cmat import UnitaryM, CUnitary
-from quompiler.construct.types import UnivGate
+from quompiler.construct.types import UnivGate, QType
 
 
 class CirqBuilder(CircuitBuilder):
@@ -38,9 +38,9 @@ class CirqBuilder(CircuitBuilder):
         if isinstance(m, CUnitary):
             # TODO add gate approximation
             gate = self.get_univ_gate(m) or cirq.MatrixGate(m.matrix)
-            target = [self.qubits[i] for i, c in enumerate(m.controls) if c is None]
-            control = [self.qubits[i] for i, c in enumerate(m.controls) if c is not None]
-            control_values = [int(c) for c in m.controls if c is not None]
+            target = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c is QType.TARGET]
+            control = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c in QType.CONTROL0 | QType.CONTROL1]
+            control_values = [c.base[0] for c in m.controller.controls if c in QType.CONTROL0 | QType.CONTROL1]
             self.circuit.append(gate(*target).controlled_by(*control, control_values=control_values))
             return
 

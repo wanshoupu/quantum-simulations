@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
 from quompiler.construct.cmat import UnitaryM, CUnitary
+from quompiler.construct.types import QType
 
 
 def random_unitary(n) -> NDArray:
@@ -33,8 +34,8 @@ def random_UnitaryM(dim, indexes) -> UnitaryM:
     return UnitaryM(dim, indexes, u)
 
 
-def random_CUnitary(controls: tuple[Optional[bool]]) -> UnitaryM:
-    core = controls.count(None)
+def random_CUnitary(controls: tuple[QType]) -> UnitaryM:
+    core = controls.count(QType.TARGET)
     u = unitary_group.rvs(core)
     return CUnitary(u, controls)
 
@@ -44,17 +45,20 @@ def random_indexes(n, k):
     return tuple(random.sample(indexes, k=k))
 
 
-def random_control(n, k) -> tuple[Optional[bool], ...]:
+def random_control(k, t=None) -> tuple[QType, ...]:
     """
     Generate a random control sequence with total n qubits, k target qubits, (n-k) control qubits
-    :param n: positive integer
-    :param k: 0< k <= n
+    :param k: positive integer
+    :param t: optional, it specifies the number of TARGET. If k is specified, it must satisfy 0 < t <= k. Otherwise, the number is left uncontrolled.
     :return: Control sequence
     """
-    assert 0 < k <= n
-    result = [bool(random.randrange(2)) for _ in range(n)]
-    for i in random.sample(range(n), k):
-        result[i] = None
+    if t is None:
+        return random.choices([QType.CONTROL1, QType.CONTROL0, QType.TARGET], k=k)
+
+    assert 0 < t <= k
+    result = random.choices([QType.CONTROL1, QType.CONTROL0], k=k)
+    for i in random.sample(range(k), t):
+        result[i] = QType.TARGET
     return tuple(result)
 
 

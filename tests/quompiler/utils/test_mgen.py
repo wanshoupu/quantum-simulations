@@ -64,4 +64,4 @@ def test_random_control():
         size = random.randrange(n)
         control = random_control(n, size)
         assert len(control) == n, f'Length of control {len(control)} is not {n}'
-        assert control.count(None) == size, f'Number of target bits {control.count(None)} is not expected {size}'
+        assert control.count(QType.TARGET) == size, f'Number of target bits, {control.count(QType.TARGET)}, does not equal to the expected {size}'

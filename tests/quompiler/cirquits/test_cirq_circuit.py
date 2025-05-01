@@ -6,7 +6,7 @@ from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cmat import CUnitary
 from quompiler.construct.quompiler import quompile
-from quompiler.construct.types import UnivGate
+from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_control, random_unitary, cyclic_matrix
 
@@ -21,7 +21,7 @@ def test_create_builder():
     array = random_UnitaryM_2l(dim, 3, 4)
     cirqC = CirqBuilder(n)
     cirqC.build_gate(array)
-    phase = CUnitary(UnivGate.S.mat, (None, False, True))
+    phase = CUnitary(UnivGate.S.mat, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
     # print(formatter.tostr(phase.inflate()))
     cirqC.build_gate(phase)

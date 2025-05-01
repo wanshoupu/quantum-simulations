@@ -6,7 +6,7 @@ import sympy
 
 from quompiler.construct.types import QType
 from quompiler.construct.qontroller import Qontroller
-from quompiler.utils.cgen import random_control2
+from quompiler.utils.mgen import random_control
 from sandbox.sym.ctrl_mat import CUnitary
 from sandbox.sym.inter_product import mesh_product
 from sandbox.sym.sym_gen import symmat
@@ -98,7 +98,7 @@ def another_inflate(A: sympy.Matrix, controls: Sequence[QType]) -> sympy.Matrix:
 def test_control2mat_random():
     for _ in range(10):
         n = random.randint(1, 5)
-        controls = random_control2(n)
+        controls = random_control(n)
         print()
         print(controls)
 
