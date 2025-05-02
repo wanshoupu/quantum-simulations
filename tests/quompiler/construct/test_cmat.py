@@ -181,6 +181,18 @@ def test_inflate_deflate():
     assert u.core == (1, 2), f'Core indexes is unexpected {u.core}'
 
 
+@pytest.mark.parametrize("dim,core,size,expected", [
+    [8, (3, 2), 2, True],
+    [4, (2, 3), 2, True],
+    [8, (3, 4), 2, False],  # core spans more than one qubit
+    [3, (3, 2), 2, False],  # dimension is not power of 2
+    [8, (0, 1, 2), 3, False],  # matrix takes more than one qubit
+])
+def test_UnitaryM_is_singlet(dim, core, size, expected):
+    u = UnitaryM(dim, core, random_unitary(size))
+    assert u.issinglet() == expected, f'Unexpected {u}'
+
+
 def test_CUnitary_init():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)

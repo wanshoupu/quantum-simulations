@@ -105,6 +105,9 @@ class UnitaryM:
         # TODO this is a quick but slow implementation. May be improved by finding the union/intersection of indices
         return UnitaryM.deflate(self.inflate() @ other.inflate())
 
+    def __repr__(self):
+        return f'{{dimension={self.dimension}, core={self.core}, matrix={self.matrix}}}'
+
     def inflate(self) -> NDArray:
         """
         Create a full-blown NDArray represented by UnitaryM. It is a readonly method.
@@ -147,15 +150,18 @@ class UnitaryM:
 
 
 class CUnitary(UnitaryM):
-    def __init__(self, m: NDArray, controls: Sequence[QType]):
+    def __init__(self, m: NDArray, controls: Sequence[QType], qspace: Sequence[int] = None, aspace: Sequence[int] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param m: the core matrix.
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
+        :param qspace: list of integer id of the qubits to be operated on.
         """
         assert m.shape[0] == (1 << controls.count(QType.TARGET))
         self.controller = Qontroller(controls)
+        self.qspace = qspace or list(range(len(controls)))
+        self.aspace = aspace or []
         super().__init__(1 << len(controls), self.controller.core(), m)
 
     def __repr__(self):
