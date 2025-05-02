@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     builder = CirqBuilder(n)
     CircuitInterp(builder).interpret(u)
-    circuit = builder.finish()
+    circuit = builder.finish(optimized=True)
     print(circuit)
     moments = circuit.moments
     # for m in moments:

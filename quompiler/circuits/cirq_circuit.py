@@ -57,6 +57,7 @@ class CirqBuilder(CircuitBuilder):
         self.circuit.append(custom_gate(*self.qubits))
 
     @override
-    def finish(self) -> cirq.Circuit:
-        self.circuit = optimize(self.circuit)
+    def finish(self, optimized=False) -> cirq.Circuit:
+        if optimized:
+            self.circuit = optimize(self.circuit)
         return self.circuit

@@ -24,7 +24,7 @@ class CircuitBuilder(ABC):
         pass
 
     @abstractmethod
-    def finish(self) -> object:
+    def finish(self, optimized=False) -> object:
         """
         Call this method after building process is done to retrieve what's built.
         It's expected that the building process is incremental meaning that
