@@ -1,12 +1,20 @@
 from typing import Optional
 
 import cirq
-from cirq import EigenGate
+from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
 from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
 from quompiler.construct.cmat import UnitaryM, CUnitary
 from quompiler.construct.types import UnivGate, QType
+
+
+def optimize(circuit: Circuit):
+    circuit = merge_single_qubit_gates_to_phased_x_and_z(circuit)
+    circuit = eject_z(circuit)
+    circuit = drop_negligible_operations(circuit)
+    circuit = drop_empty_moments(circuit)
+    return circuit
 
 
 class CirqBuilder(CircuitBuilder):
@@ -50,4 +58,5 @@ class CirqBuilder(CircuitBuilder):
 
     @override
     def finish(self) -> cirq.Circuit:
+        self.circuit = optimize(self.circuit)
         return self.circuit
