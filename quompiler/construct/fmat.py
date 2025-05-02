@@ -17,18 +17,20 @@ class FactorMat:
     """
     Represent a unitary matrix in factored format.
     """
-    def __init__(self, matrices: Sequence[NDArray] = tuple(), factors: Sequence[int] = tuple()):
+
+    def __init__(self, matrices: Sequence[NDArray] = tuple(), partitions: Sequence[int] = tuple()):
         """
         Instantiate a unitary matrix. The inflate method creates the extended matrix. See mesh_product for the requirements on the core, eyes, and factors.
         :param matrices: A list of integers (k1,k2,...) representing the identity matrices of corresponding dimension k1,k2, ..., for mesh_product.
-        :param factors: A list of integers [f1, f2, ...] for mesh_product.
+        :param partitions: A list of integers [f1, f2, ...] for mesh_product.
         """
-        assert len(matrices) == len(factors) + 1, f'Lengths of matrices and factors must be equal but got matrices={len(matrices)} and factors={len(factors)}'
-        validate_factors(factors)
+        assert len(matrices) == len(partitions), f'Lengths of matrices and factors must be equal but got matrices={len(matrices)} and factors={len(partitions)}'
+        assert partitions[-1] == matrices[0].shape[0], f'The last number in partitions must equal to the shape of the first matrix, matrices[0]'
+        validate_factors(partitions)
         assert all(len(m.shape) == 2 and m.shape[0] == m.shape[1] for m in matrices), f'Matrices must be 2D square.'
         assert all(np.allclose(m @ m.conj().T, np.eye(m.shape[0])) for m in matrices), f'Matrices must be unitary.'
         self.matrices = list(matrices)
-        self.factors = list(factors)
+        self.partitions = list(partitions)
 
     def __matmul__(self, other: Union['FactorMat', np.ndarray]) -> Union['FactorMat', np.ndarray]:
         if isinstance(other, np.ndarray):
@@ -37,9 +39,9 @@ class FactorMat:
             raise ValueError('matmul: Input operands have dimension mismatch.')
         pairs = zip(self.matrices, other.matrices)
         compatible = all(selfy.shape == othery.shape for selfy, othery in pairs)
-        if self.factors == other.factors and compatible:
+        if self.partitions == other.partitions and compatible:
             matrices = [selfy @ othery for selfy, othery in pairs]
-            return FactorMat(matrices, self.factors)
+            return FactorMat(matrices, self.partitions)
         return FactorMat.deflate(self.inflate() @ other.inflate())
 
     def order(self):
@@ -50,7 +52,7 @@ class FactorMat:
         Create a full-blown NDArray represented by FactorMat, namely mesh_product of the matrix, eyes, and factors.
         :return: The full-blown NDArray represented by FactorMat.
         """
-        return mesh_product(self.matrices, self.factors)
+        return mesh_product(self.matrices, self.partitions)
 
     @classmethod
     def deflate(cls, m: NDArray) -> 'FactorMat':
