@@ -146,7 +146,7 @@ def test_mesh_product_2_3_4():
     E = random_unitary(3)
 
     # execute
-    actual = mesh_product(A, [E], [4])
+    actual = mesh_product([A, E], [2, 8])
 
     expected = mykron(coms[0], E, coms[1], coms[2])
 
@@ -160,7 +160,7 @@ def test_mesh_product_4_3_2():
     E = random_unitary(3)
 
     # execute
-    actual = mesh_product(A, [E], [2])
+    actual = mesh_product([A, E], [4, 8])
 
     expected = mykron(coms[0], coms[1], E, coms[2])
     assert np.allclose(actual, expected)
@@ -171,7 +171,7 @@ def test_mesh_product_equiv_kron_reverse_order():
     A = random_unitary(n)
     E = random_unitary(3)
     # execute
-    actual = mesh_product(A, [E], [n])
+    actual = mesh_product([A, E], [1, n])
 
     expected = kron(E, A)
     assert np.allclose(actual, expected)
@@ -183,7 +183,7 @@ def test_mesh_product_inter_product_1():
     E = np.eye(2)
 
     # execute
-    actual = mesh_product(A, [E], [2])
+    actual = mesh_product([A, E], [4, 8])
     # print('actual')
     # print(formatter.tostr(actual))
 
@@ -198,7 +198,7 @@ def test_mesh_product_inter_product_2():
     A = inter_product(mykron(*coms), np.eye(2), 2)
     E = np.eye(2)
     # execute
-    actual = mesh_product(A, [E], [8])
+    actual = mesh_product([A, E], [2, 16])
 
     expected = mykron(coms[0], E, mykron(coms[1], np.eye(2), coms[2]))
     # print('expected')
@@ -213,7 +213,7 @@ def test_mesh_product_eyes_16_3_2_3_2():
     F = np.eye(2)
 
     # execute
-    actual = mesh_product(A, [E, F], [4, 2])
+    actual = mesh_product([A, E, F], [2, 4, 8])
     # print('actual')
     # print(formatter.tostr(actual))
 
@@ -233,7 +233,7 @@ def test_mesh_product_16_3_2_3_2():
     G = random_unitary(2)
 
     # execute
-    actual = mesh_product(A, (E, F, G), (4, 2, 2))
+    actual = mesh_product((A, E, F, G), (2, 4, 4))
     # print('actual')
     # print(formatter.tostr(actual))
 
@@ -317,15 +317,15 @@ def test_inter_factor_random():
     m = inter_product(a, b, 2)
     ms, factors = inter_factor(m)
     assert len(factors) == 1
-    dough, yeast = ms
+    dough, matrices = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
-    # print(f'yeast=\n{formatter.tostr(yeast)}')
-    p, _ = allprop(inter_product(dough, yeast, 2), m)
+    # print(f'matrices=\n{formatter.tostr(matrices)}')
+    p, _ = allprop(inter_product(dough, matrices, 2), m)
     assert p
     dp, _ = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(yeast, b)
-    assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
+    yp, _ = allprop(matrices, b)
+    assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
 
 
 def test_inter_factor_identity_factors():
@@ -335,15 +335,15 @@ def test_inter_factor_identity_factors():
     m = inter_product(a, b, 2)
     ms, factors = inter_factor(m)
     assert len(factors) == 1
-    dough, yeast = ms
+    dough, matrices = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
-    # print(f'yeast=\n{formatter.tostr(yeast)}')
-    p, _ = allprop(inter_product(dough, yeast, 2), m)
+    # print(f'matrices=\n{formatter.tostr(matrices)}')
+    p, _ = allprop(inter_product(dough, matrices, 2), m)
     assert p
     dp, _ = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(yeast, b)
-    assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
+    yp, _ = allprop(matrices, b)
+    assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
 
 
 def test_inter_factor_all_identities():
@@ -353,30 +353,46 @@ def test_inter_factor_all_identities():
     m = inter_product(a, b, 2)
     ms, factors = inter_factor(m)
     assert len(factors) == 1
-    dough, yeast = ms
+    dough, matrices = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
-    # print(f'yeast=\n{formatter.tostr(yeast)}')
-    p, _ = allprop(inter_product(dough, yeast, 2), m)
+    # print(f'matrices=\n{formatter.tostr(matrices)}')
+    p, _ = allprop(inter_product(dough, matrices, 2), m)
     assert p
     dp, _ = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(yeast, b)
-    assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
+    yp, _ = allprop(matrices, b)
+    assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
+
+
+def test_mesh_product_u_eye3():
+    """
+    This test is to demonstrate the effect of order between dough and matrices
+    When factor = 1, it means divide the dough into one block (that is, dough, the matrix itself), and multiplying all the matrices on the left.
+    """
+    n = 3
+    coms = [np.array([[2, 3], [4, 5]])] + [np.eye(2) for _ in range(n)]
+    expected = mykron(*coms[1:], coms[0])
+    # print('expected')
+    # print(formatter.tostr(expected))
+
+    # execute
+    factors = [1] * 3 + [2]
+    u = mesh_product(coms, factors)
+    assert np.allclose(u, expected)
 
 
 def test_mesh_factor_inter_product_1():
-    coms = np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]])
-    A = mykron(*coms)
+    A = mykron(np.array([[2, 3], [4, 5]]), np.array([[6, 7], [8, 9]]), np.array([[10, 11], [12, 13]]))
     E = np.eye(2)
-    test = inter_product(A, E, 2)
-    # print('test')
-    # print(formatter.tostr(test))
+    expected = inter_product(A, E, 2)
+    # print('expected')
+    # print(formatter.tostr(expected))
 
     # execute
-    dough, yeast, factors = mesh_factor(test)
-    assert len(factors) == 3
-    u = mesh_product(dough, yeast, factors)
-    assert np.allclose(u, test)
+    matrices, factors = mesh_factor(expected)
+    assert len(factors) == 4
+    u = mesh_product(matrices, factors)
+    assert np.allclose(u, expected)
 
 
 def test_mesh_factor_inter_product_2():
@@ -386,10 +402,10 @@ def test_mesh_factor_inter_product_2():
     test = inter_product(A, E, 8)
 
     # execute
-    dough, yeast, factors = mesh_factor(test)
+    matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 4
-    u = mesh_product(dough, yeast, factors)
+    assert len(factors) == 5
+    u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
 
@@ -398,16 +414,16 @@ def test_mesh_factor_eyes_16_3_2_3_2():
     A = mykron(*coms)
     E = np.eye(2)
     F = np.eye(2)
-    test = mesh_product(A, (E, F), (4, 2))
+    test = mesh_product((A, E, F), (2, 4))
     # print('test')
     # print(formatter.tostr(test))
 
     # execute
 
-    dough, yeast, factors = mesh_factor(test)
+    matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 4
-    u = mesh_product(dough, yeast, factors)
+    assert len(factors) == 5
+    u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
 
@@ -418,39 +434,39 @@ def test_mesh_factor_16_3_2_3_2():
     E = random_unitary(2)
 
     F = random_unitary(2)
-    test = mesh_product(A, (E, F), (4, 2))
+    test = mesh_product((A, E, F), (2, 4))
     # print('test')
     # print(formatter.tostr(test))
 
     # execute
-    dough, yeast, factors = mesh_factor(test)
+    matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 4
-    u = mesh_product(dough, yeast, factors)
+    assert len(factors) == 5
+    u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
 
 def test_mesh_factor_3_yeast():
     a, b, c, d = random_unitary(6), random_unitary(2), np.eye(3), random_unitary(3)
-    test = mesh_product(a, [b, c, d], [3, 3, 1])
+    test = mesh_product([a, b, c, d], [2, 2, 6, 6])
 
     # execute
-    dough, yeast, factors = mesh_factor(test)
+    matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 3
-    u = mesh_product(dough, yeast, factors)
+    assert len(factors) == 4
+    u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
 
 def test_mesh_factor_eye_yeast():
     a, b, c, d = random_unitary(6), np.eye(2), np.eye(4), np.eye(4)
-    test = mesh_product(a, [b, c, d], [3, 3, 1])
+    test = mesh_product([a, b, c, d], [2, 2, 6])
 
     # execute
-    dough, yeast, factors = mesh_factor(test)
+    matrices, factors = mesh_factor(test)
 
-    # The np.eye(4) are also factored into np.eye(2). Therefore we have 5 factors
-    assert len(factors) == 5
-    u = mesh_product(dough, yeast, factors)
+    # The np.eye(4) are also factored into np.eye(2). Therefore we have 6 factors
+    assert len(factors) == 6
+    u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
-    assert all(np.allclose(y, np.eye(y.shape[0])) for y in yeast)
+    assert all(np.allclose(y, np.eye(y.shape[0])) for y in matrices[1:])

@@ -114,21 +114,16 @@ def validate_factors(factors):
     """
     Validate the relationship between m and factors and among the factors.
     Namely:
-           a. f1 > f2 > f3 > ...
-           b. f1 % f2 == 0, f2 % f3 == 0, ...
-    If condition a. is violated, ValueError with message "Combine adjacent yeast (with same factor) together" will be raised;
-    If condition b. is violated, ValueError with message "Invalid factors are detected and mesh_product cannot be carried out" will be raised.
-    :param factors: list of int, (f1,f2,...) denotes the sizes of blocks to divide, bread, the original matrix into.
-           seeds matrices will be mesh multiplied in Kronecker fashion.
+           a. 1 <= f1 <= f2 <= f3 <= ... <= n
+           b. f2 % f1 == 0, f3 % f2 == 0, ...
+    :param factors: list of int, (f1,f2,...) denotes the number of blocks to divide matrix into to perform the Tracy-Singh product successively.
            The size of factors == size of seeds and also m must be divisible by product(f0, f1, ...).
     """
-    if any(f1 < f2 for f1, f2 in zip(factors, factors[1:])):
-        raise ValueError(f'Some factors are inverted. Ensure factors are in non-decreasing order.')
-    if any(f1 % f2 for f1, f2 in zip(factors, factors[1:])):
-        raise ValueError(f'Some factor cannot equally divides its predecessor.')
+    if any(f2 % f1 for f1, f2 in zip(factors, factors[1:])):
+        raise ValueError(f'A factor must divide its respective predecessor.')
 
 
-def mesh_product(dough, yeast: Sequence[NDArray], factors: Sequence[int]):
+def mesh_product(matrices: Sequence[NDArray], factors: Sequence[int]):
     """
     This method is a shorthand for reverse sequentially applying `inter_product`:
     inter_product(inter_product(inter_product(A, B, m), C, n), ...) where yeast = [..., C, B]
@@ -149,10 +144,9 @@ def mesh_product(dough, yeast: Sequence[NDArray], factors: Sequence[int]):
     https://en.wikipedia.org/wiki/Kronecker_product#Tracy%E2%80%93Singh_product
 
     **Parameters:**
-    :param dough: A square matrix of shape (m, m), where m > 0.
-    :param yeast: A list of square matrices with shapes (k1, k1), (k2, k2), ..., where each ki > 0.
+    :param matrices: A list of square matrices with shapes (k1, k1), (k2, k2), ..., where each ki > 0.
     :param factors: A list of integers [f0, f1, ...], where:
-        - f1 divides m, f2 divides f1, and so on,
+        - f2 divides 1, f3 divides f2, ..., m divides fn
         - len(factors) == len(yeast),
 
     Each factor determines how the matrix (bread) is recursively partitioned into smaller blocks. The corresponding yeast matrices are then applied using a Kronecker-style (mesh) multiplication to enrich the structure.
@@ -162,28 +156,28 @@ def mesh_product(dough, yeast: Sequence[NDArray], factors: Sequence[int]):
         A(f0) ⨂ Y1 ⨂ A(f1) ⨂ ... ⨂ Yn ⨂ A(fn)
     """
     validate_factors(factors)
-    factor = 1
-    for s, f in zip(yeast[::-1], factors[::-1]):
-        dough = inter_product(dough, s, f * factor)
-        factor *= s.shape[0]
+    dough = matrices[0]
+    N = dough.shape[0]
+    for s, f in zip(matrices[1:], factors):
+        dough = inter_product(dough, s, N // f)
     return dough
 
 
-def mesh_factor(M: NDArray) -> tuple[NDArray, list[NDArray], list[int]]:
+def mesh_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
     """
     This is a reverse function of mesh_product: it factors mesh_product into its factor matrices and rising factors.
     :param M: a square matrix to be factored.
-    :return: a tuple(dough, yeast or list of factor matrices, and list of block sizes) according to the mesh_product rule.
-    The length of the factor matrices is either 1 and 2. The block size is either empty or contains one int.
-    When block size is empty, there should be exactly one factor which is M itself.
+    :return: A list of factor matrices and their meshing size according to the mesh_product rule.
+    The two list should be of same size. The last number in the meshing size is the dough shape[0].
+    When there is no way to factor M, return [M], [M.shape[0]].
     """
     ms, factors = inter_factor(M)
     if not factors:
-        return M, [], []
+        return [M], [M.shape[0]]
     dough, yeast = ms
-    dough2, ms2, factor2 = mesh_factor(dough)
-    adjusted_factor = factors[0] * dough2.shape[0] // dough.shape[0]
-    return dough2, [yeast] + ms2, [adjusted_factor] + factor2
+    ms2, factor2 = mesh_factor(dough)
+    dough2, yeast2 = ms2[0], ms2[1:]
+    return [dough2, yeast] + yeast2, [dough.shape[0] // factors[0]] + factor2
 
 
 def inter_product(A, B, m):
@@ -229,10 +223,7 @@ def inter_product(A, B, m):
     assert len(A.shape) == 2 and A.shape[0] == A.shape[1]
     N = A.shape[0]
     assert len(B.shape) == 2 and B.shape[0] == B.shape[1]
-    n = B.shape[0]
-
-    # no change to A
-    if n == 1:
+    if B.shape[0] == 1:
         return A * B[0, 0]
     if N % m:
         raise ValueError(f'The dimension of A must be divisible by m but got N={N} and m={m}')
@@ -254,6 +245,9 @@ def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
     """
     This is a reverse function of inter_product: it factors inter_product into its factor matrices, if any.
     :param M: a square matrix to be factored.
+    :return: A list of factor matrices and their meshing size according to the mesh_product rule.
+    The two list should be of same size. The last number in the meshing size is the dough shape[0].
+    When there is no way to factor M, return [M], [M.shape[0]].
     :return: a tuple(list of factor matrices and list of block sizes) according to the inter_product rule.
     The length of the factor matrices is either 1 and 2. The block size is either empty or contains one int.
     When block size is empty, there should be exactly one factor which is M itself.
