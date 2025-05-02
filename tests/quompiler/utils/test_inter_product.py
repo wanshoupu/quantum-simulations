@@ -1,14 +1,15 @@
 import random
 from itertools import product
+from trace import Trace
 
 import numpy as np
 import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import inter_product, mesh_product
+from quompiler.utils.inter_product import inter_product, mesh_product, normalize
 from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recursive_kron_factor, inter_factor, int_factors
-from quompiler.utils.mfun import allprop
+from quompiler.utils.mfun import allprop, unitary_prop
 from quompiler.utils.mgen import random_unitary
 
 formatter = MatrixFormatter(precision=2)
@@ -335,15 +336,15 @@ def test_inter_factor_identity_factors():
     m = inter_product(a, b, 2)
     ms, factors = inter_factor(m)
     assert len(factors) == 1
-    dough, matrices = ms
+    dough, yeast = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
-    # print(f'matrices=\n{formatter.tostr(matrices)}')
-    p, _ = allprop(inter_product(dough, matrices, 2), m)
+    # print(f'yeast=\n{formatter.tostr(yeast)}')
+    p, _ = allprop(inter_product(dough, yeast, 2), m)
     assert p
     dp, _ = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(matrices, b)
-    assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
+    yp, _ = allprop(yeast, b)
+    assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
 
 
 def test_inter_factor_all_identities():
@@ -362,6 +363,113 @@ def test_inter_factor_all_identities():
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
     yp, _ = allprop(matrices, b)
     assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
+
+
+def test_allprop_false():
+    a = np.array([[1, 1], [1, 1]]) * np.pi
+    p, r = allprop(a, np.eye(a.shape[0]))
+    assert not p
+    if p:
+        assert np.isclose(r, np.pi)
+
+
+def test_allprop_zeros_prop():
+    shape = (2, 3)
+    a = np.zeros(shape)
+    b = np.zeros(shape)
+    p, r = allprop(a, b)
+    assert p
+    assert np.isclose(r, 0)
+
+
+def test_allprop_zeros_atol():
+    shape = (2, 3)
+    a = np.zeros(shape)
+    b = np.zeros(shape) + 1e-6
+    p, r = allprop(a, b)
+    assert p
+    assert r == 0
+
+
+def test_allprop_partial_zeros():
+    shape = (2, 3)
+    a = np.array([[0, 0], [0, 1]]) * np.pi
+    b = np.zeros(shape) + 1e-6
+    p, r = allprop(a, b)
+    assert not p
+
+
+def test_unitary_prop_eye():
+    a = np.eye(5)
+    p, r = unitary_prop(a)
+    assert p
+    assert np.isclose(r, 1)
+
+
+def test_unitary_prop_1():
+    a = random_unitary(5)
+    p, r = unitary_prop(a)
+    assert p
+    assert np.isclose(r, 1)
+
+
+def test_unitary_prop_pi():
+    a = random_unitary(5) * np.pi
+    p, r = unitary_prop(a)
+    assert p
+    assert np.isclose(r, np.pi)
+
+
+def test_unitary_prop_rank_deficit():
+    a = np.array([[1, 1], [1, 1]]) * np.pi
+    p, r = unitary_prop(a)
+    assert not p
+
+
+def test_unitary_prop_zeros():
+    shape = (2, 3)
+    a = np.zeros(shape)
+    p, r = unitary_prop(a)
+    assert not p
+    assert np.isclose(r, 0), f'ratio = {r}'
+
+
+@pytest.mark.parametrize("epsilon,expected", [
+    [1e-7, True],
+    [1e-8, False],
+])
+def test_unitary_prop_close2zero(epsilon, expected):
+    a = np.eye(2) * epsilon
+    p, r = unitary_prop(a)
+    assert p == expected
+    if p:
+        assert np.isclose(r, epsilon), f'ratio = {r}'
+
+
+def test_normalize_all():
+    a = random_unitary(2)
+    b = np.eye(3)
+    c, d = normalize((a, b))
+    assert np.allclose(c, a)
+    assert np.allclose(d, b)
+
+
+def test_normalize_id_preserved():
+    factor = 1.3
+    a = random_unitary(2)
+    b = np.eye(3) * factor
+    c, d = normalize([a, b])
+    assert np.allclose(d, np.eye(3))
+    assert np.allclose(c, a * factor)
+
+
+def test_normalize_all_ids():
+    factor = 1.3
+    a = np.eye(2)
+    b = np.eye(3)
+    c, d = normalize([a, b * factor])
+    assert np.allclose(d, b)
+    assert np.allclose(c, a * factor)
 
 
 def test_mesh_product_u_eye3():

@@ -2,10 +2,11 @@ from itertools import chain
 from typing import Sequence
 
 import numpy as np
+from future.backports.xmlrpc.client import dumps
 from numpy import kron
 from numpy.typing import NDArray
 
-from quompiler.utils.mfun import allprop
+from quompiler.utils.mfun import unitary_prop, id_prop
 
 ONE = np.eye(1)
 
@@ -34,21 +35,37 @@ def int_factors(n: int) -> Sequence[tuple[int, int]]:
     return result
 
 
-def clean_id(*factors):
+def normalize(factors: Sequence[NDArray]) -> list[NDArray]:
     """
-    Detect matrices that's proportional to identities and scale them to make them identities while preserving the overall product unchanged.
+    Clean up and normalize the factors such that identity matrices, unitary matrices would be made so as much as it can.
+    Detect matrices that's proportional to unitary matrices and scale them to make them unitary while preserving the overall product unchanged.
     :param factors: matrix factors.
-    :return: Make as many factors identity as possible and return the scaled factors. Otherwise, return factors as is.
+    :return: Make as many factors unitary as possible and return the scaled factors. Otherwise, return factors as is.
     """
-    assert len(factors) > 1
-    data = [allprop(m, np.eye(m.shape[0])) + (m,) for m in factors]
-    dump = next((i for i, t in enumerate(data) if not t[0]), 0)
+    length = len(factors)
+    assert length > 1
+
     factors = list(factors)
-    for i in range(len(data)):
-        y, r, m = data[i]
-        if y:
-            factors[i] /= r
-            factors[dump] *= r
+    scale = 1
+    nonids = []
+    for i in range(length):
+        p, r = id_prop(factors[i])
+        if p:
+            factors[i] = factors[i] / r
+            scale *= r
+        else:
+            nonids.append(i)
+    dump_idxs = []
+    for i in nonids:
+        p, r = unitary_prop(factors[i])
+        if p:
+            factors[i] = factors[i] / r
+            scale *= r
+        else:
+            dump_idxs.append(i)
+    dump_idx = dump_idxs[0] if dump_idxs else (nonids[0] if nonids else 0)
+    factors[dump_idx] *= scale
+
     return factors
 
 
@@ -70,7 +87,7 @@ def kron_factor(M: NDArray) -> list[NDArray]:
         B = np.sqrt(s) * v.reshape(b, b)
 
         if np.allclose(mykron(A, B), M):
-            return list(clean_id(A, B))
+            return normalize([A, B])
     return [M]
 
 
@@ -272,6 +289,6 @@ def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
             B = np.sqrt(s) * v.reshape(b, b)
 
             if np.allclose(inter_product(A, B, c), M):
-                return list(clean_id(A, B)), [c]
+                return normalize([A, B]), [c]
     kf = kron_factor(M)
     return kf, [1] * (len(kf) - 1)
