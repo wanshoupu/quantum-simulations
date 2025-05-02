@@ -123,42 +123,39 @@ def validate_factors(factors):
         raise ValueError(f'A factor must divide its respective predecessor.')
 
 
-def mesh_product(matrices: Sequence[NDArray], factors: Sequence[int]):
+def mesh_product(matrices: Sequence[NDArray], partitions: Sequence[int]):
     """
-    This method is a shorthand for reverse sequentially applying `inter_product`:
-    inter_product(inter_product(inter_product(A, B, m), C, n), ...) where yeast = [..., C, B]
-
-    It carries out the `inter_product` operation reverse sequentially:
-    - `dough = A` (the initial matrix),
-    - `yeast = [..., C, B]` to be ⨂ onto dough in reverse sequential order,
-    - `factor = [..., n, m]` are the corresponding `rising factors`.
+    This method is a shorthand for successively applying `inter_product` between the first two matrices in matrices:
+    inter_product(inter_product(inter_product(A, B, m), C, n), ...) where matrices = [B, C, ...] and partitions = [m, n, ...].
 
     **Concept:**
-    Yeast is applied to the dough in the order—i.e., the first yeast in the list affects the finest subdivision of the matrix dough.
-    Visually:
-        -yeast0-yeast1-...-yeast2-yeast3-
-    This requires that the factors shall be non-increasing order.
-    If we divide A into equal blocks by factors, the block sizes will be the factors, f0, f1, ...
-    We use notation A(f0), A(f1), ... to repr the factor matrices after this division.
-    For more detail, see
+    This is a special case of Tracy-Singh product. For more detail, see
     https://en.wikipedia.org/wiki/Kronecker_product#Tracy%E2%80%93Singh_product
+    An analogy is made below for this mathematical operation:
+    - The `dough` the first element in matrices, start with matrices[0]
+    - The `yeast` the subsequent element in matrices. Yeast is to be ⨂ onto dough in successively.
+    - The `meshing partition` the number of rows and columns to partition the dough into, namely, m x m equal-sized blocks.
+    It is required that the partitions shall satisfy the hierarchical relationship. See :param partitions.
+    We use notation A(m), A(n), ... to repr the block matrices of size m x m, n x n, ...
 
     **Parameters:**
     :param matrices: A list of square matrices with shapes (k1, k1), (k2, k2), ..., where each ki > 0.
-    :param factors: A list of integers [f0, f1, ...], where:
-        - f2 divides 1, f3 divides f2, ..., m divides fn
-        - len(factors) == len(yeast),
-
-    Each factor determines how the matrix (bread) is recursively partitioned into smaller blocks. The corresponding yeast matrices are then applied using a Kronecker-style (mesh) multiplication to enrich the structure.
+    :param partitions: A list of integers [f0, f1, ...], representing the hierarchical meshing partitions of the matrix, dough, into blocks.
+    The partitions must satisfy the following conditions:
+        - partitions start coarse and become finder and finer, namely, m <= n <= ...
+        - partitions are nested, namely, m % 1 == n % m == ... == z % dough.shape[0] == 0.
+        - len(partitions) == len(matrices)
 
     **Returns:**
     The result of the recursive inter-product operation:
-        A(f0) ⨂ Y1 ⨂ A(f1) ⨂ ... ⨂ Yn ⨂ A(fn)
+        A(m) ⨂ Yi ⨂ A(n) ⨂ ... ⨂ Yj ⨂ A(z)
     """
-    validate_factors(factors)
+    assert len(matrices) == len(partitions)
+    assert partitions[-1] == matrices[0].shape[0]
+    validate_factors(partitions)
     dough = matrices[0]
     N = dough.shape[0]
-    for s, f in zip(matrices[1:], factors):
+    for s, f in zip(matrices[1:], partitions):
         dough = inter_product(dough, s, N // f)
     return dough
 
@@ -167,8 +164,8 @@ def mesh_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
     """
     This is a reverse function of mesh_product: it factors mesh_product into its factor matrices and rising factors.
     :param M: a square matrix to be factored.
-    :return: A list of factor matrices and their meshing size according to the mesh_product rule.
-    The two list should be of same size. The last number in the meshing size is the dough shape[0].
+    :return: A list of factor matrices and their meshing partitions according to the mesh_product rule.
+    The two list should be of same size. The last number in the meshing partitions is the dough shape[0].
     When there is no way to factor M, return [M], [M.shape[0]].
     """
     ms, factors = inter_factor(M)

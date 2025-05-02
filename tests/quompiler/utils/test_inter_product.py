@@ -233,7 +233,7 @@ def test_mesh_product_16_3_2_3_2():
     G = random_unitary(2)
 
     # execute
-    actual = mesh_product((A, E, F, G), (2, 4, 4))
+    actual = mesh_product((A, E, F, G), (2, 4, 4, 8))
     # print('actual')
     # print(formatter.tostr(actual))
 
@@ -390,7 +390,7 @@ def test_mesh_factor_inter_product_1():
 
     # execute
     matrices, factors = mesh_factor(expected)
-    assert len(factors) == 4
+    assert len(factors) == 4 == len(matrices)
     u = mesh_product(matrices, factors)
     assert np.allclose(u, expected)
 
@@ -404,7 +404,7 @@ def test_mesh_factor_inter_product_2():
     # execute
     matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 5
+    assert len(factors) == 5 == len(matrices)
     u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
@@ -414,7 +414,7 @@ def test_mesh_factor_eyes_16_3_2_3_2():
     A = mykron(*coms)
     E = np.eye(2)
     F = np.eye(2)
-    test = mesh_product((A, E, F), (2, 4))
+    test = mesh_product((A, E, F), (2, 4, 8))
     # print('test')
     # print(formatter.tostr(test))
 
@@ -422,7 +422,7 @@ def test_mesh_factor_eyes_16_3_2_3_2():
 
     matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 5
+    assert len(factors) == 5 == len(matrices)
     u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
@@ -434,14 +434,14 @@ def test_mesh_factor_16_3_2_3_2():
     E = random_unitary(2)
 
     F = random_unitary(2)
-    test = mesh_product((A, E, F), (2, 4))
+    test = mesh_product((A, E, F), (2, 4, 8))
     # print('test')
     # print(formatter.tostr(test))
 
     # execute
     matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 5
+    assert len(factors) == 5 == len(matrices)
     u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
@@ -453,20 +453,21 @@ def test_mesh_factor_3_yeast():
     # execute
     matrices, factors = mesh_factor(test)
 
-    assert len(factors) == 4
+    assert len(factors) == 4 == len(matrices)
     u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
 
 
 def test_mesh_factor_eye_yeast():
     a, b, c, d = random_unitary(6), np.eye(2), np.eye(4), np.eye(4)
-    test = mesh_product([a, b, c, d], [2, 2, 6])
+    test = mesh_product([a, b, c, d], [2, 2, 6, 6])
 
     # execute
     matrices, factors = mesh_factor(test)
 
     # The np.eye(4) are also factored into np.eye(2). Therefore we have 6 factors
-    assert len(factors) == 6
+    assert len(factors) == 6 == len(matrices)
+    assert factors[-1] == matrices[0].shape[0]
     u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
     assert all(np.allclose(y, np.eye(y.shape[0])) for y in matrices[1:])
