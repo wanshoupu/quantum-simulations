@@ -1,7 +1,3 @@
-Great! Here's the final version of your `README.md` with **badges**, **license**, and **contributors** sections added:
-
----
-
 # quantum-simulations
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
