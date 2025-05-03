@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from quompiler.construct.types import UnivGate, QType
+from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary
 
 
@@ -39,6 +40,31 @@ def test_univ_gate_get_H():
     mat = (UnivGate.Z.mat + UnivGate.X.mat) / np.sqrt(2)
     gate = UnivGate.get(mat)
     assert gate == UnivGate.H
+
+
+@pytest.mark.parametrize('name,expected', [
+    ['I', UnivGate.I],
+    ['X', UnivGate.X],
+    ['Y', UnivGate.Y],
+    ['Z', UnivGate.Z],
+    ['H', UnivGate.H],
+    ['S', UnivGate.S],
+    ['T', UnivGate.T],
+])
+def test_univ_gate_get_by_name(name, expected):
+    g = UnivGate[name]
+    assert g == expected
+
+
+def test_univ_gate_RY():
+    from scipy.linalg import expm
+    g = UnivGate.Z
+    theta = np.pi * 2
+    u = expm(-theta * 1j * g.mat / 2)
+    formatter = MatrixFormatter(precision=2)
+    # print(f'\n{g.name}=\n{formatter.tostr(g.mat)}')
+    # print(f'\nexp(-{formatter.nformat(theta)}iY/2=\n{formatter.tostr(u)}')
+    assert np.allclose(u, -np.eye(2))
 
 
 def test_univ_gate_commutator():
