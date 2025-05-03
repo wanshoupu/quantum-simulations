@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()  
 *A generic quantum compiler for quantum computing*
 
-Given a Hamiltonian — including its most general Lindblad form, i.e., Lindbladian — this tool compiles it into an executable quantum circuit. It currently supports **Cirq**, **Qiskit**, **SymPy**,
+Given a Hamiltonian — even its most general Lindblad form, i.e., Lindbladian — this tool compiles it into an executable quantum circuit. It currently supports **Cirq**, **Qiskit**, **SymPy**,
 and is designed to be extensible to other frameworks.
 
 The project is still under active development, but you can check out the working demos here:  
