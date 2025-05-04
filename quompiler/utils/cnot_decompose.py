@@ -87,23 +87,25 @@ def euler_decompose(u: NDArray) -> tuple[complex, float, float, float]:
     :param u: U(2) matrix as input
     :return: scalar factor + Euler angles (b, c, d), such that u = a * Rz(b) @ Ry(c) @ Rz(d)
     """
-    assert len(u.shape) == 2
-    assert u.shape[0] == 2 == u.shape[1]
-    assert np.allclose(u.conj() @ u.T, np.eye(2))
+    assert u.shape == (2, 2) and np.allclose(u.conj().T @ u, np.eye(2)), "u must be unitary"
     det = np.linalg.det(u)
     c2 = u[0, 0] * u[1, 1] / det
     s2 = -u[1, 0] * u[0, 1] / det
     # assert np.isclose(1, c2 + s2)
     plus = c2 if np.isclose(c2, 0) else np.angle(u[1, 1] / u[0, 0])
     minus = s2 if np.isclose(s2, 0) else np.angle(-u[1, 0] / u[0, 1])
-    b = (plus + minus) / 2
-    d = (plus - minus) / 2
-    x = c2 - s2
-    y = 2 * u[1, 0] * u[1, 1] / det / np.exp(1j * b)
+
+    b = (plus + minus) / 2  # angle before Y rotation
+    d = (plus - minus) / 2  # angle after Y rotation
+
+    # Determine rotation angle around Y (theta)
+    x = np.real_if_close(c2 - s2)
+    y = np.real_if_close(2 * u[1, 0] * u[1, 1] / det / np.exp(1j * b))
     # assert np.isclose(x.imag, 0) and np.isclose(y.imag, 0)
-    c = np.arctan2(y.real, x.real)
+    c = np.arctan2(y, x)
+    # Global phase
     a = (u[1, 1] / (np.cos(c / 2) * np.exp(.5j * (b + d)))) if c2 > s2 else (u[1, 0] / (np.sin(c / 2) * np.exp(.5j * (b - d))))
-    return a, b, c, d
+    return a, b, c, d  # Global phase (a), and Euler angles (b, c, d)
 
 
 def control_decompose(cu: CUnitary) -> list[CUnitary]:
