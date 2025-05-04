@@ -1,6 +1,93 @@
 import numpy as np
 
+from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
+from tests.quompiler.construct.test_cmat import formatter
+
+
+def test_intify_int():
+    x = 1 + 1e-8
+    formatter = MatrixFormatter()
+    d = formatter.intify(x)
+    assert isinstance(d, int)
+    assert d == 1
+
+
+def test_intify_negative_int():
+    x = -1 + 1e-9
+    formatter = MatrixFormatter()
+    d = formatter.intify(x)
+    assert isinstance(d, int)
+    assert d == -1
+
+
+def test_intify_nonint():
+    x = -1 + 1e-4
+    formatter = MatrixFormatter()
+    d = formatter.intify(x)
+    assert isinstance(d, float)
+    assert d == x
+
+
+def test_nformat_zero():
+    c = 1e-8 + 1e-8 * 1j
+    formatter = MatrixFormatter()
+    d = formatter.nformat(c)
+    assert isinstance(d, int)
+    assert d == 0
+
+
+def test_nformat_positive_real():
+    c = 1.2 + 1e-8 * 1j
+    formatter = MatrixFormatter()
+    d = formatter.nformat(c)
+    assert isinstance(d, float)
+    assert d > 0
+
+
+def test_nformat_negative_real():
+    c = -1.2 + 1e-8 * 1j
+    formatter = MatrixFormatter()
+    d = formatter.nformat(c)
+    assert isinstance(d, float)
+    assert d < 0
+
+
+def test_nformat_positive_imag():
+    c = 1e-8 + .8j
+    formatter = MatrixFormatter()
+    d = formatter.nformat(c)
+    assert isinstance(d, complex)
+    assert d.real == 0
+    assert d.imag > 0
+    assert repr(d) == '0.8j'
+
+
+def test_nformat_negative_imag():
+    c = 1e-8 - .8j
+    formatter = MatrixFormatter()
+    d = formatter.nformat(c)
+    assert isinstance(d, complex)
+    assert d.real == 0
+    assert d.imag < 0
+    assert repr(d) == '(-0-0.8j)'
+
+
+def test_1darray():
+    array = np.array([1.0, 2.345678, 3 + 0j, 4 + 5j, -3 - 0j, -4 - 5j, -2.0, -5.5, +2.0, -5.5], dtype=np.complexfloating)
+    s = formatter.tostr(array)
+    # print(s)
+    assert s == '[      1    2.35       3  (4+5j)      -3 (-4-5j)      -2    -5.5       2    -5.5]'
+
+
+def test_gate_mat():
+    m = -1j * UnivGate.H.mat
+    d = formatter.nformat(m[0, 0])
+    print()
+    print(d)
+    assert isinstance(d, complex)
+    assert d.real == 0
+    assert d.imag < 0
 
 
 def test_precision():
