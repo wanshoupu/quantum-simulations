@@ -56,15 +56,13 @@ def test_univ_gate_get_by_name(name, expected):
     assert g == expected
 
 
-def test_univ_gate_RY():
-    from scipy.linalg import expm
-    g = UnivGate.Z
+@pytest.mark.parametrize('name', ['X', 'Y', 'Z', 'H', 'I'])
+def test_univ_gate_rmat(name):
+    g = UnivGate[name]
     theta = np.pi * 2
-    u = expm(-theta * 1j * g.mat / 2)
+    u = g.rmat(theta)
     formatter = MatrixFormatter(precision=2)
-    # print(f'\n{g.name}=\n{formatter.tostr(g.mat)}')
-    # print(f'\nexp(-{formatter.nformat(theta)}iY/2=\n{formatter.tostr(u)}')
-    assert np.allclose(u, -np.eye(2))
+    assert np.allclose(u, -np.eye(2)), f'\nexp(-{formatter.nformat(theta)}i{g.name}/2=\n{formatter.tostr(u)}'
 
 
 def test_univ_gate_commutator():

@@ -156,7 +156,8 @@ class CUnitary(UnitaryM):
         :param m: the core matrix.
         :param controls: the control qubit together with the 0(False) and 1 (True) state to actuate the control. There should be exactly one None state which is the target qubit.
         Dimension of the matrix is given by len(controls).
-        :param qspace: list of integer id of the qubits to be operated on.
+        :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
+        :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
         """
         assert m.shape[0] == (1 << controls.count(QType.TARGET))
         self.controller = Qontroller(controls)

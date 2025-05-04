@@ -3,6 +3,7 @@ from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.linalg import expm
 
 
 class UnivGate(Enum):
@@ -23,6 +24,9 @@ class UnivGate(Enum):
         for g in UnivGate:
             if m.shape == g.mat.shape and np.allclose(m, g.mat):
                 return g
+
+    def rmat(self, theta):
+        return expm(-.5j * theta * self.mat)
 
 
 class QType(IntFlag):

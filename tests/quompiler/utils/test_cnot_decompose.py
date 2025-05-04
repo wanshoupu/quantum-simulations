@@ -2,9 +2,11 @@ import random
 from functools import reduce
 
 import numpy as np
+import pytest
 
 from quompiler.construct.cmat import UnitaryM, CUnitary
-from quompiler.utils.cnot_decompose import cnot_decompose
+from quompiler.construct.types import UnivGate
+from quompiler.utils.cnot_decompose import cnot_decompose, euler_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_unitary
 
@@ -74,3 +76,20 @@ def test_cnot_decompose_random():
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
         assert all(isinstance(v, CUnitary) for v in ms)
+
+
+@pytest.mark.parametrize('gate,expected', [
+    [UnivGate.I, (1, 0, 0, 0)],
+    [UnivGate.X, (-1j, np.pi / 2, np.pi, -np.pi / 2)],
+    [UnivGate.Y, (-1j, 0, -np.pi, 0)],
+    [UnivGate.Z, (1j, np.pi / 2, 0, np.pi / 2)],
+    [UnivGate.H, (1j, np.pi, -np.pi / 2, 0)],
+    [UnivGate.S, (np.sqrt(1j), np.pi / 4, 0, np.pi / 4)],
+    [UnivGate.T, (np.power(1j, 1 / 4), np.pi / 8, 0, np.pi / 8)],
+])
+def test_euler_decompose(gate: UnivGate, expected: tuple):
+    coms = euler_decompose(gate.mat)
+    a, b, c, d = coms
+    actual = a * UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c) @ UnivGate.Z.rmat(d)
+    assert np.allclose(actual, gate.mat), f'Decomposition altered\n{formatter.tostr(actual)}!=\n{formatter.tostr(gate.mat)}'
+    assert np.allclose(coms, expected), f'for gate={gate.name}, {formatter.tostr(coms)} != {formatter.tostr(expected)}'
