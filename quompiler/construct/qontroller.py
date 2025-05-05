@@ -41,6 +41,7 @@ class Qontroller:
         :param core: a sequence of indexes
         :return: Qontroller
         """
+        assert len(core) > 1
         controls = core2control(n, core)
         return Qontroller(controls)
 

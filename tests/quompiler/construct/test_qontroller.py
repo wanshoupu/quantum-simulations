@@ -58,6 +58,19 @@ def test_qontroller_core():
     assert indexes == expected
 
 
+def test_qontroller_core_create():
+    for _ in range(10):
+        n = random.randint(1, 10)
+        dim = 1 << n
+        k = random.randint(2, min(dim, 100))
+        core = (random.sample(range(dim), k))
+        controller = Qontroller.create(n, core)
+        controlled_core = controller.core()
+        assert set(core) <= set(controlled_core)
+        expected = sorted(set(controller.mask(i) for i in range(dim)))
+        assert controlled_core == expected
+
+
 @pytest.mark.parametrize("qtype,expected", [
     (QType.IDLER, [0, 2, 8, 10]),
     (QType.TARGET, [0, 4, 32, 36]),
