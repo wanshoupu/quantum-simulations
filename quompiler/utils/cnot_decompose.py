@@ -110,8 +110,7 @@ def euler_decompose(u: NDArray) -> tuple[complex, float, float, float]:
 
 def control_decompose(cu: CUnitary) -> list[CUnitary]:
     assert cu.issinglet()
-    u = cu.matrix
-    a, b, c, d = euler_decompose(u)
+    a, b, c, d = euler_decompose(cu.unitary.matrix)
     phase = a * np.eye(2)
     A = UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c / 2)
     B = UnivGate.Y.rmat(-c / 2) @ UnivGate.Z.rmat(-(d + b) / 2)
@@ -151,4 +150,4 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[i
         #  the final swap altered the original ordering of the core matrix
         v = xmat @ m.matrix @ xmat
     cu = CUnitary(v, core2control(n, code[-2:]), qspace, aspace)
-    return tuple(components + control_decompose(cu) + components[::-1])
+    return tuple(components + [cu] + components[::-1])
