@@ -5,10 +5,10 @@ import numpy as np
 import pytest
 
 from quompiler.construct.cmat import UnitaryM, CUnitary
-from quompiler.construct.types import UnivGate
-from quompiler.utils.cnot_decompose import cnot_decompose, euler_decompose
+from quompiler.construct.types import UnivGate, QType
+from quompiler.utils.cnot_decompose import cnot_decompose, euler_decompose, control_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_UnitaryM_2l, random_unitary
+from quompiler.utils.mgen import random_UnitaryM_2l, random_unitary, random_control
 
 formatter = MatrixFormatter(precision=2)
 
@@ -93,3 +93,68 @@ def test_euler_decompose(gate: UnivGate, expected: tuple):
     actual = a * UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c) @ UnivGate.Z.rmat(d)
     assert np.allclose(actual, gate.mat), f'Decomposition altered\n{formatter.tostr(actual)}!=\n{formatter.tostr(gate.mat)}'
     assert np.allclose(coms, expected), f'for gate={gate.name}, {formatter.tostr(coms)} != {formatter.tostr(expected)}'
+
+
+def test_control_decompose_basics():
+    u = random_unitary(2)
+    controls = random_control(3, 1)
+    cu = CUnitary(u, controls)
+    result = control_decompose(cu)
+    assert len(result) == 6
+    assert all(com is not None for com in result)
+    actual = reduce(lambda a, b: a @ b, result)
+    assert np.allclose(actual.inflate(), cu.inflate())
+
+def test_control_decompose_noop_control():
+    # Verify that ABC = I
+    u = random_unitary(2)
+    controls = random_control(3, 1)
+    cu = CUnitary(u, controls)
+    result = control_decompose(cu)
+    assert len(result) == 6
+    assert all(com is not None for com in result)
+    actual = reduce(lambda a, b: a @ b, result)
+    assert np.allclose(actual.inflate(), cu.inflate())
+
+
+def test_control_decompose_custom_qspace():
+    u = random_unitary(2)
+    n = 3
+    offset = 500
+    qspace = list(range(offset, offset + n))
+    controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
+    target = controls.index(QType.TARGET)
+    cu = CUnitary(u, controls, qspace)
+
+    # execute
+    result = control_decompose(cu)
+
+    # verify
+    assert len(result) == 6
+    assert all(com is not None for com in result)
+    uncontrolled = [0, 1, 3, 5]
+    for i in uncontrolled:
+        r = result[i]
+        assert tuple(r.qspace) == (offset + target,)
+
+
+def test_control_decompose_random():
+    for _ in range(10):
+        u = random_unitary(2)
+        n = random.randint(1, 5)
+        offset = random.randrange(500)
+        qspace = list(range(offset, offset + n))
+        controls = random_control(n, 1)
+        target = controls.index(QType.TARGET)
+        cu = CUnitary(u, controls, qspace)
+
+        # execute
+        result = control_decompose(cu)
+
+        # verify
+        assert len(result) == 6
+        assert all(com is not None for com in result)
+        uncontrolled = [0, 1, 3, 5]
+        for i in uncontrolled:
+            r = result[i]
+            assert tuple(r.qspace) == (offset + target,)

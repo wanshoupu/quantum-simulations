@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 
 from quompiler.construct.cmat import UnitaryM, CUnitary, coreindexes, idindexes
-from quompiler.construct.qontroller import Qontroller, core2control
+from quompiler.construct.qontroller import Qontroller, core2control, QSpace
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_indexes, random_UnitaryM, random_control
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_indexes, random_UnitaryM, random_control, random_UnitaryM_2l
 
 formatter = MatrixFormatter(precision=2)
 
@@ -106,15 +106,39 @@ def test_CUnitary_convert_no_inflation():
 
         # execute
         c = CUnitary.convert(u)
-        assert np.array_equal(c.matrix, u.matrix)
+        assert np.array_equal(c.unitary.matrix, u.matrix)
 
 
 def test_CUnitary_convert_verify_dimension():
+    for _ in range(10):
+        n = random.randint(1, 5)
+        dim = 1 << n
+        core = random.randint(2, dim)
+        indexes = random.sample(range(dim), core)
+        u = random_UnitaryM(dim, indexes)
+        c = CUnitary.convert(u)
+        assert c.unitary.dimension == dim
+
+
+def test_CUnitary_convert_expansion():
+    for _ in range(1):
+        print(f'Test round {_}')
+        n = random.randint(1, 5)
+        dim = 1 << n
+        core = random.randint(2, dim)
+        indexes = random.sample(range(dim), core)
+        unitM = random_UnitaryM(dim, indexes)
+        ctrlM = CUnitary.convert(unitM)
+        assert np.allclose(ctrlM.inflate(), unitM.inflate()), f'ctrlM=\n{formatter.tostr(ctrlM.inflate())}\nexpected=\n{formatter.tostr(unitM.inflate())}'
+
+
+def test_CUnitary_convert_verify_inflation_invariance():
     dimension = 4
-    m = np.array([[0, 1], [1, 0]])
-    u = UnitaryM(dimension, (0, 1), m)
+    k = random.randint(2, dimension)
+    core = sorted(random_indexes(dimension, k))
+    u = random_UnitaryM(dimension, core)
     c = CUnitary.convert(u)
-    assert c.dimension == 4
+    assert np.allclose(c.inflate(), u.inflate()), f'actual=\n{formatter.tostr(c.inflate())}\nexpected=\n{formatter.tostr(u.inflate())}'
 
 
 def test_CUnitary_convert():
@@ -167,6 +191,16 @@ def test_inflate():
     assert indxs == (1, 2), f'Core indexes is unexpected {indxs}'
 
 
+def test_inflate_shuffled_core():
+    unitary = random_unitary(2)
+    dim = 2
+    a = UnitaryM(dim, (1, 0), unitary)
+    expected = np.eye(dim, dtype=np.complexfloating)
+    idxs = np.ix_(a.core, a.core)
+    expected[idxs] = unitary
+    assert np.allclose(a.inflate(), expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(a.inflate())}'
+
+
 def test_deflate():
     m = cyclic_matrix(8, 2)
     u = UnitaryM.deflate(m)
@@ -179,6 +213,31 @@ def test_inflate_deflate():
     m = cu.inflate()
     u = UnitaryM.deflate(m)
     assert u.core == (1, 2), f'Core indexes is unexpected {u.core}'
+
+
+def test_matmult_identical_cores():
+    core = (1, 2)
+    a = UnitaryM(3, core, random_unitary(2))
+    b = UnitaryM(3, core, random_unitary(2))
+    c = a @ b
+    assert c.core == core, f'Core indexes is unexpected {c.core}'
+    assert np.allclose(c.matrix, a.matrix @ b.matrix)
+
+
+def test_matmult_diff_cores():
+    dim = 3
+    a = UnitaryM(dim, (1, 2), random_unitary(2))
+    b = UnitaryM(dim, (0, 2), random_unitary(2))
+    c = a @ b
+    assert c.core == (0, 1, 2), f'Core indexes is unexpected {c.core}'
+    a_expanded = np.eye(dim, dtype=np.complexfloating)
+    idxs = np.ix_(a.core, a.core)
+    a_expanded[idxs] = a.matrix
+    b_expanded = np.eye(dim, dtype=np.complexfloating)
+    idxs = np.ix_(b.core, b.core)
+    b_expanded[idxs] = b.matrix
+    expected = a_expanded @ b_expanded
+    assert np.allclose(c.matrix, expected)
 
 
 @pytest.mark.parametrize("dim,core,size,expected", [
@@ -198,7 +257,31 @@ def test_CUnitary_init():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     cu = CUnitary(m, controls)
     # print(formatter.tostr(cu.inflate()))
-    assert tuple(cu.core) == (6, 7), f'Core indexes is unexpected {cu.core}'
+    assert tuple(cu.unitary.core) == (6, 7), f'Core indexes is unexpected {cu.unitary.core}'
+
+
+def test_CUnitary_init_qontroller():
+    m = random_unitary(2)
+    controller = Qontroller((QType.CONTROL1, QType.CONTROL1, QType.TARGET))
+    cu = CUnitary(m, controller)
+    assert cu.controller == controller
+
+
+def test_CUnitary_init_qspace_seq():
+    m = random_unitary(2)
+    controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
+    qspace = list(range(3))
+    random.shuffle(qspace)
+    cu = CUnitary(m, controls, qspace)
+    assert cu.qspace.qids == qspace
+
+
+def test_CUnitary_init_qspace_obj():
+    m = random_unitary(2)
+    controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
+    qspace = QSpace(list(range(3)))
+    cu = CUnitary(m, controls, qspace)
+    assert cu.qspace.qids == list(range(3))
 
 
 def test_univ_Y():
@@ -210,6 +293,7 @@ def test_univ_Y():
     # print()
     # print(formatter.tostr(expected))
     u = cu.inflate()
+    assert u
     assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
 
