@@ -4,7 +4,7 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from quompiler.construct.qontroller import Qontroller
+from quompiler.construct.qontroller import Qontroller, QSpace
 from quompiler.construct.types import QType
 from quompiler.utils.mgen import random_control
 
@@ -133,3 +133,36 @@ def test_qontroller_yeast_factor_random():
         filtered_controls = [q for q in controls if q == QType.TARGET or q == QType.IDLER]
         expected = [1 << filtered_controls[i:].count(QType.TARGET) for i, q in enumerate(filtered_controls) if q == QType.IDLER]
         assert factors == expected
+
+
+def test_qspace_init_random():
+    dim = 100
+    for _ in range(10):
+        qids = np.random.choice(dim, size=10, replace=False)
+        qs = QSpace(qids)
+        assert qs
+        sorting = np.argsort(qids).tolist()
+        # print(sorting)
+        assert sorting == qs.sorting
+
+
+@pytest.mark.parametrize("qids,n,expected", [
+    [[10, 0, 7, 1, 8], 0b10101, 0b11100],
+])
+def test_qspace_map(qids, n, expected):
+    qids = [10, 0, 7, 1, 8]
+    qs = QSpace(qids)
+    actual = qs.map(n)
+    assert actual == expected
+
+
+def test_qspace_map_random():
+    dim = 100
+    for _ in range(10):
+        k = random.randint(1, 10)
+        qids = np.random.choice(dim, size=k, replace=False)
+        qs = QSpace(qids)
+        indexes = list(range(1 << k))
+        actual = [qs.map(i) for i in indexes]
+        # print(f'mapped={actual}')
+        assert sorted(actual) == indexes
