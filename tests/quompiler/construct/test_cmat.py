@@ -1,6 +1,4 @@
 import random
-from collections import defaultdict
-from itertools import groupby, accumulate
 
 import numpy as np
 import pytest
@@ -11,7 +9,7 @@ from quompiler.construct.qontroller import Qontroller, core2control, QSpace
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import mesh_product, inter_product
-from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_indexes, random_UnitaryM, random_control, random_UnitaryM_2l
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_indexes, random_UnitaryM, random_control
 
 formatter = MatrixFormatter(precision=2)
 
@@ -219,7 +217,7 @@ def test_UnitaryM_inflate_deflate():
     assert u.core == (1, 2), f'Core indexes is unexpected {u.core}'
 
 
-def test_UnitaryM_matmult_identical_cores():
+def test_UnitaryM_matmul_identical_cores():
     core = (1, 2)
     a = UnitaryM(3, core, random_unitary(2))
     b = UnitaryM(3, core, random_unitary(2))
@@ -228,7 +226,7 @@ def test_UnitaryM_matmult_identical_cores():
     assert np.allclose(c.matrix, a.matrix @ b.matrix)
 
 
-def test_UnitaryM_matmult_diff_cores():
+def test_UnitaryM_matmul_diff_cores():
     dim = 3
     a = UnitaryM(dim, (1, 2), random_unitary(2))
     b = UnitaryM(dim, (0, 2), random_unitary(2))
@@ -278,6 +276,15 @@ def test_CUnitary_init_qspace_seq():
     random.shuffle(qspace)
     cu = CUnitary(m, controls, qspace)
     assert cu.qspace.qids == qspace
+
+
+def test_CUnitary_init_qspace_numpy_array():
+    k = random.randint(2, 5)
+    t = random.randint(1, k)
+    controls = random_control(k, t)
+    qids = np.random.choice(1 << k, size=k, replace=False)
+    cu = CUnitary(random_unitary(2), controls, qspace=qids)
+    assert cu.qspace.qids == qids.tolist()
 
 
 def test_CUnitary_init_qspace_obj():
@@ -383,3 +390,114 @@ def test_CUnitary_expand_random():
         assert ex
         # print()
         # print(formatter.tostr(ex.inflate()))
+
+
+def test_CUnitary_matmul_identical_controls():
+    k = random.randint(2, 5)
+    t = random.randint(1, k)
+    controls = random_control(k, t)
+    a = CUnitary(random_unitary(1 << t), controls)
+    b = CUnitary(random_unitary(1 << t), controls)
+    c = a @ b
+    assert np.allclose(c.unitary.matrix, a.unitary.matrix @ b.unitary.matrix)
+    assert c.qspace.qids == a.qspace.qids == b.qspace.qids
+
+
+def test_CUnitary_matmul_identical_qspace_diff_controls():
+    k = random.randint(2, 5)
+    t = random.randint(1, k)
+    a = CUnitary(random_unitary(2), random_control(k, t))
+    b = CUnitary(random_unitary(2), random_control(k, t))
+
+    # execute
+    c = a @ b
+    # print()
+    # print(formatter.tostr(c.inflate()))
+    expected = a.inflate() @ b.inflate()
+    assert np.allclose(c.inflate(), expected)
+    assert c.qspace.qids == a.qspace.qids == b.qspace.qids
+
+
+def test_CUnitary_matmul_verify_qspace():
+    controls = [QType.TARGET, QType.TARGET]  # all targets, no control
+    qid1 = [3, 0]
+    a = CUnitary(random_unitary(4), controls, qspace=qid1)
+    qid2 = [1, 0]
+    b = CUnitary(random_unitary(4), controls, qspace=qid2)
+
+    # execute
+    c = a @ b
+
+    assert a.qspace.qids == qid1
+    assert b.qspace.qids == qid2
+    assert c.qspace.qids == sorted(set(qid1 + qid2))
+
+
+def test_CUnitary_matmul_uncontrolled_diff_qspace():
+    # TODO failing test
+    controls = [QType.TARGET, QType.TARGET]  # all targets, no control
+    qid1 = [3, 0]
+    unitary1 = random_unitary(4)
+    print('unitary1')
+    print(formatter.tostr(unitary1))
+    a = CUnitary(unitary1, controls, qspace=qid1)
+    print('a')
+    print(formatter.tostr(a.inflate()))
+
+    qid2 = [1, 0]
+    unitary2 = random_unitary(4)
+    print('unitary2')
+    print(formatter.tostr(unitary2))
+    b = CUnitary(unitary2, controls, qspace=qid2)
+    print('b')
+    print(formatter.tostr(b.inflate()))
+
+    # execute
+    c = a @ b
+    print('c')
+    print(formatter.tostr(c.inflate()))
+
+    ai = inter_product(a.inflate(), np.eye(2), 2)
+    print('ai')
+    print(formatter.tostr(ai))
+    bi = kron(b.inflate(), np.eye(2))
+    print('bi')
+    print(formatter.tostr(bi))
+    expected = ai @ bi
+    print('expected')
+    print(formatter.tostr(expected))
+    univ = sorted(set(a.qspace.qids + b.qspace.qids))
+    # assert c.qspace.qids == univ
+    assert np.allclose(c.inflate(), expected)
+
+
+def test_CUnitary_matmul_random():
+    for _ in range(10):
+        # print(f'Test {_}th round')
+        k = random.randint(2, 5)
+        t = random.randint(1, k)
+        rqids = lambda: np.random.choice(1 << k, size=k, replace=False)
+        a = CUnitary(random_unitary(1 << t), random_control(k, t), qspace=rqids())
+        b = CUnitary(random_unitary(1 << t), random_control(k, t), qspace=rqids())
+
+        # execute
+        c = a @ b
+        assert c is not None
+        # print()
+        # print(formatter.tostr(c.inflate()))
+
+
+def test_CUnitary_matmul_diff_cores():
+    dim = 3
+    a = UnitaryM(dim, (1, 2), random_unitary(2))
+    b = UnitaryM(dim, (0, 2), random_unitary(2))
+    c = a @ b
+    assert c.core == (0, 1, 2), f'Core indexes is unexpected {c.core}'
+    a_expanded = np.eye(dim, dtype=np.complexfloating)
+    idxs = np.ix_(a.core, a.core)
+    a_expanded[idxs] = a.matrix
+    b_expanded = np.eye(dim, dtype=np.complexfloating)
+    idxs = np.ix_(b.core, b.core)
+    b_expanded[idxs] = b.matrix
+    expected = a_expanded @ b_expanded
+    assert np.allclose(c.matrix, expected)

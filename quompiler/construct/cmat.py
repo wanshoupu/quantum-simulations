@@ -183,7 +183,7 @@ class CUnitary:
         assert m.shape[0] == len(core)
         dim = 1 << self.controller.length
         self.unitary = UnitaryM(dim, core, m)
-        if not qspace:
+        if qspace is None:
             self.qspace = QSpace(list(range(self.controller.length)))
         elif isinstance(qspace, QSpace):
             self.qspace = qspace
@@ -219,8 +219,8 @@ class CUnitary:
 
     def __matmul__(self, other: 'CUnitary') -> 'CUnitary':
         if self.qspace == other.qspace:
-            res = self.unitary @ other.unitary
-            return CUnitary.convert(res)
+            unitary = self.unitary @ other.unitary
+            return CUnitary.convert(unitary, self.qspace)
         univ = sorted(set(self.qspace.qids + other.qspace.qids))
         qspace = QSpace(univ)
         return self.expand(qspace) @ other.expand(qspace)
@@ -241,7 +241,7 @@ class CUnitary:
         return new
 
     @classmethod
-    def convert(cls, u: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> 'CUnitary':
+    def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None) -> 'CUnitary':
         """
         Convert a UnitaryM to CUnitary based on organically grown control sequence.
         This can potentially expand the order of matrix to a number that is power of 2.
@@ -250,15 +250,22 @@ class CUnitary:
         :param aspace:
         :return:
         """
-        if qspace:
-            n = len(qspace)
-            assert u.order() == 1 << n
-            assert u.core in set(qspace)
-        else:
+        if qspace is None:
             assert u.order() & (u.order() - 1) == 0
             n = u.order().bit_length() - 1
+            qspace = QSpace(range(n))
+        elif not isinstance(qspace, QSpace):
+            # qspace is a sequence
+            assert len(qspace) == len(set(qspace))  # uniqueness
+            qspace = QSpace(qspace)
+            n = qspace.length
+            assert u.order() == 1 << n
+            assert u.core in set(qspace.qids)
+        else:
+            n = qspace.length
 
         controller = Qontroller.create(n, u.core)
+        assert qspace.length == len(controller.controls)  # consistency
         core = controller.core()
         # assert set(u.core) <= set(core)
         lookup = {idx: i for i, idx in enumerate(core)}
@@ -269,8 +276,8 @@ class CUnitary:
 
     def sort(self):
         """
-        Sort the CUnitary according the sorting order prescribed by qspace, if not already.
-        This will place the qspace in sorted order and shuffles the unitary and controls accordingly.
+        Sort the CUnitary so that the qspace are made in sorted order.
+        This necessarily incurs changes in other parts according the sorting order prescribed by qspace as well.
         :return: An equivalent CUnitary whose qspace is in sorted order (ascending)
         """
         if self.qspace.is_sorted():
@@ -300,7 +307,7 @@ class CUnitary:
         assert all(qspace.qids[i - 1] < qspace.qids[i] for i in range(1, qspace.length))
         assert set(self.qspace.qids) <= set(qspace.qids)
         if set(self.qspace.qids) == set(qspace.qids):
-            return self
+            return self.sort()
         extended_tids = sorted(set(qspace.qids) - set(self.control_qids()))
         mat = self._calc_mat(self.sort(), extended_tids)
 

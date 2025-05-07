@@ -30,6 +30,16 @@ class QSpace:
         self.length = len(qids)
         self.sorting = np.argsort(qids).tolist()
 
+    def __repr__(self):
+        return repr(self.qids)
+
+    def __eq__(self, __value):
+        if __value is None:
+            return False
+        if not isinstance(__value, QSpace):
+            return False
+        return self.qids == __value.qids
+
     def map_all(self, indexes: Sequence[int]) -> list[int]:
         """
         Convenient method built on top of self.map
