@@ -30,6 +30,14 @@ class QSpace:
         self.length = len(qids)
         self.sorting = np.argsort(qids).tolist()
 
+    def map_all(self, indexes: Sequence[int]) -> list[int]:
+        """
+        Convenient method built on top of self.map
+        :param indexes: a sequence of indexes
+        :return: a list of mapped indexes
+        """
+        return [self.map(i) for i in indexes]
+
     def map(self, n: int) -> int:
         """
         Shuffle the bits of an input integer viewed as binary according to the sorting order of qids.
@@ -46,6 +54,9 @@ class QSpace:
             bit = (n >> s) & 1
             result |= (bit << i)
         return result
+
+    def is_sorted(self) -> bool:
+        return all(self.qids[i - 1] < self.qids[i] for i in range(1, len(self.qids)))
 
 
 class Qontroller:

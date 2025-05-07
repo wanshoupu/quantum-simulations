@@ -4,15 +4,15 @@ It also contains the controlled mat (cmat) which is represented by a core unitar
 This module differs from scipy.sparse in that we provide convenience specifically for quantum computer controlled unitary matrices.
 """
 import copy
-from itertools import product
-from typing import Tuple, Optional, Union, Sequence
+from itertools import groupby, accumulate
+from typing import Tuple, Union, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
-from qiskit.circuit.add_control import control
 
 from quompiler.construct.qontroller import Qontroller, QSpace
 from quompiler.construct.types import QType
+from quompiler.utils.inter_product import mesh_product
 
 
 def immutable(m: NDArray):
@@ -199,7 +199,9 @@ class CUnitary:
 
     def inflate(self) -> NDArray:
         res = self.unitary.inflate()
-        indexes = [self.qspace.map(i) for i in range(res.shape[0])]
+        if self.qspace.is_sorted():
+            return res
+        indexes = self.qspace.map_all(range(res.shape[0]))
         return res[np.ix_(indexes, indexes)]
 
     def isid(self) -> bool:
@@ -220,7 +222,6 @@ class CUnitary:
             res = self.unitary @ other.unitary
             return CUnitary.convert(res)
         univ = sorted(set(self.qspace.qids + other.qspace.qids))
-        controls = [QType.]
         qspace = QSpace(univ)
         return self.expand(qspace) @ other.expand(qspace)
 
@@ -266,16 +267,62 @@ class CUnitary:
         m[np.ix_(indxs, indxs)] = u.matrix
         return CUnitary(m, controller, qspace=qspace, aspace=aspace)
 
-    def expand(self, qspace: QSpace) -> 'CUnitary':
+    def sort(self):
+        """
+        Sort the CUnitary according the sorting order prescribed by qspace, if not already.
+        This will place the qspace in sorted order and shuffles the unitary and controls accordingly.
+        :return: An equivalent CUnitary whose qspace is in sorted order (ascending)
+        """
+        if self.qspace.is_sorted():
+            return self
+
+        # prepare the controls
+        sorting = np.argsort(self.qspace.qids)
+        controls = [self.controller.controls[i] for i in sorting]
+        # create the sorted CUnitary
+        return CUnitary(self.unitary.matrix, controls, sorted(self.qspace.qids))
+
+    def control_qids(self) -> list[int]:
+        target = self.target_qids()
+        return [qid for qid in self.qspace.qids if qid not in target]
+
+    def target_qids(self) -> list[int]:
+        return [qid for i, qid in enumerate(self.qspace.qids) if self.controller.controls[i] == QType.TARGET]
+
+    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> 'CUnitary':
         """
         Expand into the super qspace by adding necessary dimensions.
-        :param qspace: the super qspace that must be a cover of self.qspace
+        :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.
         :return: a CUnitary
         """
+        if not isinstance(qspace, QSpace):
+            qspace = QSpace(qspace)
+        assert all(qspace.qids[i - 1] < qspace.qids[i] for i in range(1, qspace.length))
         assert set(self.qspace.qids) <= set(qspace.qids)
-        controls = [QType.T]
-        return [control[i] for i in indexes]
-        controls = qspace.align(self.controller.controls)
-        core = qspace.map(self.unitary.core)
-        mat = shuffle(self.unitary.matrix, core)
+        if set(self.qspace.qids) == set(qspace.qids):
+            return self
+        extended_tids = sorted(set(qspace.qids) - set(self.control_qids()))
+        mat = self._calc_mat(self.sort(), extended_tids)
+
+        # prepare the new control sequence
+        controls = [QType.TARGET] * qspace.length
+        for i, qid in enumerate(self.sort().qspace.qids):
+            j = qspace.qids.index(qid)
+            controls[j] = self.sort().controller.controls[i]
         return CUnitary(mat, controls, qspace)
+
+    @staticmethod
+    def _calc_mat(cu, extended_ids):
+        core_ids = set(cu.target_qids())
+        labels = [x in core_ids for x in extended_ids]
+        counts = [(k, sum(1 for _ in g)) for k, g in groupby(labels)]
+        matrices = [cu.unitary.matrix] + [np.eye(1 << c) for k, c in counts if not k]
+
+        skips = list(accumulate([c for k, c in counts if k]))
+        if not counts[0][0]:
+            skips = [1] + skips
+        if len(skips) < len(matrices):
+            skips.append(len(core_ids))
+        partitions = [1 << n for n in skips]
+        assert len(matrices) == len(partitions)
+        return mesh_product(matrices, partitions)

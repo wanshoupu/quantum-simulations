@@ -200,7 +200,7 @@ def inter_product(A, B, m):
     https://en.wikipedia.org/wiki/Kronecker_product#Tracy%E2%80%93Singh_product
     Matrix A is first divided up into n x n number of m x m sized blocks;
     Then B is mesh multiplied between the n x n number of m x m sized blocks.
-    For example,
+    For example, with a block size of 2x2
         A =
         ⎡a₀₀  a₀₁  a₀₂  a₀₃⎤
         ⎢                  ⎥
