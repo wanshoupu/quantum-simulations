@@ -5,7 +5,8 @@ from typing import List
 
 import numpy as np
 
-from quompiler.construct.cmat import UnitaryM, coreindexes, validm2l
+from quompiler.utils.mat_utils import coreindexes, validm2l
+from quompiler.construct.unitary import UnitaryM
 
 
 def mat2l_decompose(m: UnitaryM) -> List[UnitaryM]:

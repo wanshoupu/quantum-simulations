@@ -1,12 +1,12 @@
 import random
-from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
-from quompiler.construct.cmat import UnitaryM, CUnitary
+from quompiler.construct.cmat import ControlledM
 from quompiler.construct.types import QType
+from quompiler.construct.unitary import UnitaryM
 
 
 def random_unitary(n) -> NDArray:
@@ -37,7 +37,7 @@ def random_UnitaryM(dim, indexes) -> UnitaryM:
 def random_CUnitary(controls: tuple[QType]) -> UnitaryM:
     core = controls.count(QType.TARGET)
     u = unitary_group.rvs(core)
-    return CUnitary(u, controls)
+    return ControlledM(u, controls)
 
 
 def random_indexes(n, k):

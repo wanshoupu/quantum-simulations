@@ -1,7 +1,8 @@
 from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.cmat import validm2l, UnitaryM
+from quompiler.utils.mat_utils import validm2l
+from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from quompiler.construct.cmat import UnitaryM
+from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 
 formatter = MatrixFormatter()

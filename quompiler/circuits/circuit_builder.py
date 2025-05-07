@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from quompiler.construct.cmat import UnitaryM
+from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
 
 

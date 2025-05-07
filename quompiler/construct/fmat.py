@@ -4,7 +4,7 @@ from typing import Union, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from quompiler.construct.cmat import coreindexes
+from quompiler.utils.mat_utils import coreindexes
 from quompiler.utils.inter_product import validate_factors, mesh_product, validm, mesh_factor
 
 
@@ -13,7 +13,7 @@ def ispow2(n):
     return n & (n - 1) == 0
 
 
-class FactorMat:
+class FactoredM:
     """
     Represent a unitary matrix in factored format.
     """
@@ -32,7 +32,7 @@ class FactorMat:
         self.matrices = list(matrices)
         self.partitions = list(partitions)
 
-    def __matmul__(self, other: Union['FactorMat', np.ndarray]) -> Union['FactorMat', np.ndarray]:
+    def __matmul__(self, other: Union['FactoredM', np.ndarray]) -> Union['FactoredM', np.ndarray]:
         if isinstance(other, np.ndarray):
             return self.inflate() @ other
         if self.order() != other.order():
@@ -41,8 +41,8 @@ class FactorMat:
         compatible = all(selfy.shape == othery.shape for selfy, othery in pairs)
         if self.partitions == other.partitions and compatible:
             matrices = [selfy @ othery for selfy, othery in pairs]
-            return FactorMat(matrices, self.partitions)
-        return FactorMat.deflate(self.inflate() @ other.inflate())
+            return FactoredM(matrices, self.partitions)
+        return FactoredM.deflate(self.inflate() @ other.inflate())
 
     def order(self):
         return reduce(lambda a, b: a * b, [y.shape[0] for y in self.matrices], 1)
@@ -55,13 +55,13 @@ class FactorMat:
         return mesh_product(self.matrices, self.partitions)
 
     @classmethod
-    def deflate(cls, m: NDArray) -> 'FactorMat':
+    def deflate(cls, m: NDArray) -> 'FactoredM':
         validm(m)
         indxs = coreindexes(m)
         if not indxs:
             indxs = (0, 1)
         matrix = m[np.ix_(indxs, indxs)]
-        return FactorMat(*mesh_factor(matrix))
+        return FactoredM(*mesh_factor(matrix))
 
     def isid(self) -> bool:
         pairs = [(m, np.eye(m.shape[0])) for m in self.matrices]

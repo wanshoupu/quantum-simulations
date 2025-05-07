@@ -5,7 +5,8 @@ from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z,
 from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
-from quompiler.construct.cmat import UnitaryM, CUnitary
+from quompiler.construct.cmat import ControlledM
+from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
 
 
@@ -43,7 +44,7 @@ class CirqBuilder(CircuitBuilder):
 
     @override
     def build_gate(self, m: UnitaryM):
-        if isinstance(m, CUnitary):
+        if isinstance(m, ControlledM):
             # TODO add gate approximation
             gate = self.get_univ_gate(m) or cirq.MatrixGate(m.matrix)
             target = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c is QType.TARGET]

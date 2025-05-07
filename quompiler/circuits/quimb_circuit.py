@@ -4,7 +4,8 @@ import quimb.tensor as qtn
 from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
-from quompiler.construct.cmat import UnitaryM, validm2l
+from quompiler.utils.mat_utils import validm2l
+from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
 
 
