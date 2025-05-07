@@ -322,28 +322,28 @@ def test_CUnitary_UnivGate_Z():
 def test_CUnitary_sorted_4x4():
     m = random_unitary(2)
     controls = (QType.TARGET, QType.CONTROL1)
-    qids = [1, 0]
+    qids = [3, 0]
     cu = CUnitary(m, controls, qids)
     # print()
     # print(formatter.tostr(cu.inflate()))
     assert tuple(cu.unitary.core) == (1, 3), f'Core indexes is unexpected {cu.unitary.core}'
-    sorted_cu = cu.sort()
+    sorted_cu = cu.sorted()
     assert tuple(sorted_cu.unitary.core) == (2, 3), f'Core indexes is unexpected {sorted_cu.unitary.core}'
     assert np.allclose(sorted_cu.inflate(), cu.inflate())
 
 
-def test_CUnitary_sort_noop():
+def test_CUnitary_sorted_noop():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qids = list(range(3))
     expected = CUnitary(m, controls, qids)
     # print()
     # print(formatter.tostr(expected.inflate()))
-    actual = expected.sort()
+    actual = expected.sorted()
     assert actual == expected
 
 
-def test_CUnitary_sort_8x8():
+def test_CUnitary_sorted_8x8():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qids = [2, 0, 1]
@@ -353,7 +353,7 @@ def test_CUnitary_sort_8x8():
     # print(formatter.tostr(expected))
 
     # execute
-    sorted_cu = cu.sort()
+    sorted_cu = cu.sorted()
 
     assert tuple(sorted_cu.unitary.core) == (5, 7), f'Core indexes is unexpected {sorted_cu.unitary.core}'
     actual = sorted_cu.inflate()
@@ -433,8 +433,25 @@ def test_CUnitary_matmul_verify_qspace():
     assert c.qspace.qids == sorted(set(qid1 + qid2))
 
 
-def test_CUnitary_matmul_uncontrolled_diff_qspace():
-    # TODO failing test
+def test_CUnitary_expand_eqiv_left_kron():
+    controls = [QType.TARGET, QType.TARGET]  # all targets, no control
+    qid1 = [1, 3]
+    unitary1 = random_unitary(4)
+    print('unitary1')
+    print(formatter.tostr(unitary1))
+    a = CUnitary(unitary1, controls, qspace=qid1)
+    print('a')
+    print(formatter.tostr(a.inflate()))
+
+    univ = [0, 1, 3]
+    actual = a.expand(univ)
+    # print('actual')
+    # print(formatter.tostr(actual.inflate()))
+    expected = kron(np.eye(2), a.inflate())
+    assert np.allclose(actual.inflate(), expected)
+
+
+def test_CUnitary_expand_eqiv_inter_product():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
     qid1 = [3, 0]
     unitary1 = random_unitary(4)
@@ -444,30 +461,43 @@ def test_CUnitary_matmul_uncontrolled_diff_qspace():
     print('a')
     print(formatter.tostr(a.inflate()))
 
-    qid2 = [1, 0]
-    unitary2 = random_unitary(4)
-    print('unitary2')
-    print(formatter.tostr(unitary2))
-    b = CUnitary(unitary2, controls, qspace=qid2)
-    print('b')
-    print(formatter.tostr(b.inflate()))
+    univ = [0, 1, 3]
+    actual = a.expand(univ)
+    print('actual')
+    print(formatter.tostr(actual.inflate()))
+    expected = inter_product(a.sorted().inflate(), np.eye(2), 2)
+    print('expected')
+    print(formatter.tostr(expected))
+    assert np.allclose(actual.inflate(), expected)
+
+
+def test_CUnitary_matmul_uncontrolled_diff_qspace():
+    controls = [QType.TARGET, QType.TARGET]  # all targets, no control
+    a = CUnitary(random_unitary(4), controls, qspace=[1, 3])
+    # print('a')
+    # print(formatter.tostr(a.inflate()))
+
+    b = CUnitary(random_unitary(4), controls, qspace=[3, 0])
+    # print('b')
+    # print(formatter.tostr(b.inflate()))
 
     # execute
     c = a @ b
-    print('c')
-    print(formatter.tostr(c.inflate()))
+    # print('c')
+    # print(formatter.tostr(c.inflate()))
 
-    ai = inter_product(a.inflate(), np.eye(2), 2)
-    print('ai')
-    print(formatter.tostr(ai))
-    bi = kron(b.inflate(), np.eye(2))
-    print('bi')
-    print(formatter.tostr(bi))
-    expected = ai @ bi
-    print('expected')
-    print(formatter.tostr(expected))
     univ = sorted(set(a.qspace.qids + b.qspace.qids))
-    # assert c.qspace.qids == univ
+    assert c.qspace.qids == univ
+
+    ai = kron(np.eye(2), a.sorted().inflate())
+    # print('ai')
+    # print(formatter.tostr(ai))
+    bi = inter_product(b.sorted().inflate(), np.eye(2), 2)
+    # print('bi')
+    # print(formatter.tostr(bi))
+    expected = ai @ bi
+    # print('expected')
+    # print(formatter.tostr(expected))
     assert np.allclose(c.inflate(), expected)
 
 

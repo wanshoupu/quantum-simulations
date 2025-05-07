@@ -274,11 +274,13 @@ class CUnitary:
         m[np.ix_(indxs, indxs)] = u.matrix
         return CUnitary(m, controller, qspace=qspace, aspace=aspace)
 
-    def sort(self):
+    def sorted(self):
         """
-        Sort the CUnitary so that the qspace are made in sorted order.
-        This necessarily incurs changes in other parts according the sorting order prescribed by qspace as well.
-        :return: An equivalent CUnitary whose qspace is in sorted order (ascending)
+        Create a sorted version of this CUnitary.
+        Sorting the CUnitary means to sort the qspace in ascending order.
+        Unless the qspace was originally sorted in this order, this necessarily incurs changes in other parts such as control sequence.
+        This latter will in turn change the core indexes in the field `unitary`.
+        :return: A sorted version of this CUnitary whose qspace is in ascending order. If this is already sorted, return self.
         """
         if self.qspace.is_sorted():
             return self
@@ -306,16 +308,17 @@ class CUnitary:
             qspace = QSpace(qspace)
         assert all(qspace.qids[i - 1] < qspace.qids[i] for i in range(1, qspace.length))
         assert set(self.qspace.qids) <= set(qspace.qids)
-        if set(self.qspace.qids) == set(qspace.qids):
-            return self.sort()
-        extended_tids = sorted(set(qspace.qids) - set(self.control_qids()))
-        mat = self._calc_mat(self.sort(), extended_tids)
+        scu = self.sorted()
+        if scu.qspace.qids == qspace.qids:
+            return scu
+        extended_tids = sorted(set(qspace.qids) - set(scu.control_qids()))
+        mat = scu._calc_mat(scu, extended_tids)
 
         # prepare the new control sequence
         controls = [QType.TARGET] * qspace.length
-        for i, qid in enumerate(self.sort().qspace.qids):
+        for i, qid in enumerate(scu.qspace.qids):
             j = qspace.qids.index(qid)
-            controls[j] = self.sort().controller.controls[i]
+            controls[j] = scu.controller.controls[i]
         return CUnitary(mat, controls, qspace)
 
     @staticmethod
@@ -327,7 +330,7 @@ class CUnitary:
 
         skips = list(accumulate([c for k, c in counts if k]))
         if not counts[0][0]:
-            skips = [1] + skips
+            skips = [0] + skips
         if len(skips) < len(matrices):
             skips.append(len(core_ids))
         partitions = [1 << n for n in skips]

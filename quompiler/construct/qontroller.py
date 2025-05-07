@@ -86,6 +86,9 @@ class Qontroller:
         self._inflated_indexes = None
         self._lookup = {}
 
+    def __repr__(self):
+        return repr(self.controls)
+
     @classmethod
     def create(cls, n: int, core: Sequence[int]) -> 'Qontroller':
         """
