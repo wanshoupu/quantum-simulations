@@ -72,13 +72,12 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 from typing import Tuple, Sequence
 
 import numpy as np
-
-from quompiler.construct.types import UnivGate, QType
+from numpy.typing import NDArray
 
 from quompiler.construct.cmat import UnitaryM, CUnitary
 from quompiler.construct.qontroller import core2control
+from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.gray import gray_code
-from numpy.typing import NDArray
 
 
 def euler_decompose(u: NDArray) -> tuple[complex, float, float, float]:
@@ -115,14 +114,15 @@ def control_decompose(cu: CUnitary) -> list[CUnitary]:
     A = UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c / 2)
     B = UnivGate.Y.rmat(-c / 2) @ UnivGate.Z.rmat(-(d + b) / 2)
     C = UnivGate.Z.rmat((d - b) / 2)
-    target = cu.qspace[cu.controller.controls.index(QType.TARGET)]
+    target = cu.target_qids()
 
-    return [CUnitary(phase, [QType.TARGET], [target]),
-            CUnitary(A, [QType.TARGET], [target]),
-            CUnitary(UnivGate.X.mat, cu.controller.controls, cu.qspace),
-            CUnitary(B, [QType.TARGET], [target]),
-            CUnitary(UnivGate.X.mat, cu.controller.controls, cu.qspace),
-            CUnitary(C, [QType.TARGET], [target])]
+    result = [CUnitary(phase, cu.controller, cu.qspace),
+              CUnitary(A, [QType.TARGET], target),
+              CUnitary(UnivGate.X.mat, cu.controller, cu.qspace),
+              CUnitary(B, [QType.TARGET], target),
+              CUnitary(UnivGate.X.mat, cu.controller, cu.qspace),
+              CUnitary(C, [QType.TARGET], target)]
+    return result
 
 
 def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> Tuple[CUnitary, ...]:

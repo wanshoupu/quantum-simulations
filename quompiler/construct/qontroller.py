@@ -40,6 +40,9 @@ class QSpace:
             return False
         return self.qids == __value.qids
 
+    def __getitem__(self, index: int):
+        return self.qids[index]
+
     def map_all(self, indexes: Sequence[int]) -> list[int]:
         """
         Convenient method built on top of self.map
@@ -85,6 +88,9 @@ class Qontroller:
         # cache fields
         self._inflated_indexes = None
         self._lookup = {}
+
+    def __getitem__(self, index: int):
+        return self.controls[index]
 
     def __repr__(self):
         return repr(self.controls)

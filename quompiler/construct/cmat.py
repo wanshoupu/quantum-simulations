@@ -107,7 +107,7 @@ class UnitaryM:
     def __matmul__(self, other: 'UnitaryM') -> 'UnitaryM':
         if self.dimension != other.dimension:
             raise ValueError('matmul: Input operands have dimension mismatch.')
-        if self.core == other.core and self.matrix.shape == other.matrix.shape:
+        if self.core == other.core:
             return UnitaryM(self.dimension, self.core, self.matrix @ other.matrix)
         # TODO this is a quick but slow implementation. May be improved by finding the union/intersection of indices
         return UnitaryM.deflate(self.inflate() @ other.inflate())
@@ -212,18 +212,17 @@ class CUnitary:
 
     def issinglet(self) -> bool:
         """
-        Check if the UnitaryM is a matrix
-        :return:
+        Check if this CUnitary only operates on a single-qubit
+        :return: True if this CUnitary only operates on a single-qubit. False otherwise.
         """
-        return self.unitary.issinglet()
+        return len(self.target_qids()) == 1
 
     def __matmul__(self, other: 'CUnitary') -> 'CUnitary':
         if self.qspace == other.qspace:
             unitary = self.unitary @ other.unitary
             return CUnitary.convert(unitary, self.qspace)
         univ = sorted(set(self.qspace.qids + other.qspace.qids))
-        qspace = QSpace(univ)
-        return self.expand(qspace) @ other.expand(qspace)
+        return self.expand(univ) @ other.expand(univ)
 
     def __copy__(self):
         return CUnitary(self.unitary.matrix, self.controller.controls, self.qspace, self.aspace)
