@@ -166,3 +166,25 @@ def test_qspace_map_random():
         actual = [qs.map(i) for i in indexes]
         # print(f'mapped={actual}')
         assert sorted(actual) == indexes
+
+
+@pytest.mark.parametrize("qids,expected", [
+    [[10, 0, 7, 1, 8], False],
+    [[0, 1, 7, 8, 10], True],
+])
+def test_qspace_is_sorted(qids, expected):
+    qs = QSpace(qids)
+    assert qs.is_sorted() == expected
+
+
+def test_qspace_map_all_random():
+    dim = 100
+    for _ in range(10):
+        k = random.randint(1, 10)
+        qids = np.random.choice(dim, size=k, replace=False)
+        qs = QSpace(qids)
+        size = random.randint(1, 1 << k)
+        indexes = np.random.choice(1 << k, size=size, replace=False)
+        expected = [qs.map(i) for i in indexes]
+        actual = qs.map_all(indexes)
+        assert actual == expected
