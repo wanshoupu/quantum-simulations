@@ -17,18 +17,14 @@ class CtrlGate:
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """
 
-    def __init__(self, m: NDArray, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None):
+    def __init__(self, m: NDArray, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param m: the core matrix.
         :param control: the control sequence or a Qontroller.
         Dimension of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
-        :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
-               The usage of aspace is TODO.
         """
-        if aspace:
-            assert len(set(aspace)) == len(aspace)  # uniqueness
         self.controller = control if isinstance(control, Qontroller) else Qontroller(control)
         core = self.controller.core()
         assert m.shape[0] == len(core)
@@ -43,7 +39,6 @@ class CtrlGate:
             assert len(qspace) == len(set(qspace))  # uniqueness
             assert len(qspace) == len(control)  # consistency
             self.qspace = QSpace(qspace)
-        self.aspace = aspace or []
 
     def __repr__(self):
         return f'{repr(self.unitary)},controls={repr(self.controller.controls)},qspace={self.qspace}'
@@ -79,17 +74,12 @@ class CtrlGate:
         return self.expand(univ) @ other.expand(univ)
 
     def __copy__(self):
-        return CtrlGate(self.unitary.matrix, self.controller.controls, self.qspace, self.aspace)
+        return CtrlGate(self.unitary.matrix, self.controller.controls, self.qspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
-        new = CtrlGate(
-            copy.deepcopy(self.unitary.matrix, memodict),
-            copy.deepcopy(self.controller.controls, memodict),
-            copy.deepcopy(self.qspace, memodict),
-            copy.deepcopy(self.aspace, memodict),
-        )
+        new = CtrlGate(copy.deepcopy(self.unitary.matrix, memodict), copy.deepcopy(self.controller.controls, memodict), copy.deepcopy(self.qspace, memodict))
         memodict[self] = new
         return new
 
@@ -125,7 +115,7 @@ class CtrlGate:
         indxs = [lookup[c] for c in u.core]
         m = np.eye(len(core), dtype=np.complexfloating)
         m[np.ix_(indxs, indxs)] = u.matrix
-        return CtrlGate(m, controller, qspace=qspace, aspace=aspace)
+        return CtrlGate(m, controller, qspace=qspace)
 
     def is_sorted(self) -> bool:
         return self.qspace.is_sorted()

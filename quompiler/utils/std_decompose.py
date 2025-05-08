@@ -8,6 +8,10 @@ from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate, QType
 
 
+def toffoli_decompose(ctrlGate: CtrlStdGate) -> list[Union[UnivGate, CtrlStdGate]]:
+    pass
+
+
 def ctrl_decompose(ctrlGate: CtrlGate) -> list[Union[UnivGate, CtrlStdGate]]:
     return [ctrlGate]
 

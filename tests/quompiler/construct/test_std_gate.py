@@ -22,7 +22,7 @@ def test_convert_invalid_dimension():
         CtrlStdGate.convert(cu)
 
 
-def test_convert_convert_standard_gates():
+def test_convert_standard_gates():
     for gate in UnivGate:
         controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
         cu = CtrlGate(gate.matrix, controls)

@@ -74,6 +74,7 @@ def test_nformat_negative_imag():
 
 def test_1darray():
     array = np.array([1.0, 2.345678, 3 + 0j, 4 + 5j, -3 - 0j, -4 - 5j, -2.0, -5.5, +2.0, -5.5], dtype=np.complexfloating)
+    formatter = MatrixFormatter(precision=2)
     s = formatter.tostr(array)
     # print(s)
     assert s == '[      1    2.35       3  (4+5j)      -3 (-4-5j)      -2    -5.5       2    -5.5]'
@@ -81,6 +82,7 @@ def test_1darray():
 
 def test_gate_mat():
     m = -1j * UnivGate.H.matrix
+    formatter = MatrixFormatter(precision=2)
     d = formatter.nformat(m[0, 0])
     print()
     print(d)

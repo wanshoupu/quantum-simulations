@@ -23,7 +23,7 @@ class CtrlStdGate:
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
         """
-        self.controlledM: CtrlGate = CtrlGate(gate.matrix, control, qspace, aspace)
+        self.controlledM: CtrlGate = CtrlGate(gate.matrix, control, qspace)
         self.gate: UnivGate = gate
 
     def __repr__(self):
@@ -42,14 +42,14 @@ class CtrlStdGate:
         return self.controlledM @ other.controlledM
 
     def __copy__(self):
-        return CtrlStdGate(self.gate, self.controlledM.controller, self.controlledM.qspace, self.controlledM.aspace)
+        return CtrlStdGate(self.gate, self.controlledM.controller, self.controlledM.qspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
         gate: UnivGate = copy.deepcopy(self.gate, memodict),
         controlledM: CtrlGate = copy.deepcopy(self.controlledM, memodict),
-        new = CtrlStdGate(gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
+        new = CtrlStdGate(gate, controlledM.controller, controlledM.qspace)
         memodict[self] = new
         return new
 
@@ -60,7 +60,7 @@ class CtrlStdGate:
     def convert(cls, cm: CtrlGate) -> 'CtrlStdGate':
         assert cm.is_std()
         result = UnivGate.get(cm.unitary.matrix)
-        return CtrlStdGate(result, cm.controller, cm.qspace, cm.aspace)
+        return CtrlStdGate(result, cm.controller, cm.qspace)
 
     def is_sorted(self) -> bool:
         return self.controlledM.is_sorted()
@@ -76,7 +76,7 @@ class CtrlStdGate:
         if self.controlledM.is_sorted():
             return self
         controlledM: CtrlGate = self.controlledM.sorted()
-        return CtrlStdGate(self.gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
+        return CtrlStdGate(self.gate, controlledM.controller, controlledM.qspace)
 
     def control_qids(self) -> list[int]:
         return self.controlledM.control_qids()
