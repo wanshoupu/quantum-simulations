@@ -16,6 +16,7 @@ from quompiler.construct.types import QType, UnivGate
 class ControlledStdGate:
     """
     Represent a controlled standard gate operation, namely, a single-qubit unitary matrix in one of the UnivGate along with a number of control sequence.
+    See also: :class:`cgate.ControlledGate`
     """
 
     def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None):

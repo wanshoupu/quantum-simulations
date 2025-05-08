@@ -7,7 +7,8 @@ import pytest
 from quompiler.construct.cgate import ControlledGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
-from quompiler.utils.cnot_decompose import cnot_decompose, euler_decompose, std_decompose
+from quompiler.utils.cnot_decompose import cnot_decompose
+from quompiler.utils.std_decompose import std_decompose, euler_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_unitary, random_control
 
