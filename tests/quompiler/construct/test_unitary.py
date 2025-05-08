@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from quompiler.construct.types import UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mat_utils import coreindexes
@@ -64,6 +65,28 @@ def test_matmul_identical_cores():
     c = a @ b
     assert c.core == core, f'Core indexes is unexpected {c.core}'
     assert np.allclose(c.matrix, a.matrix @ b.matrix)
+
+
+def test_deflate_deficit_core():
+    dim = 4
+    for n in range(4):
+        m = np.eye(dim, dtype=np.complexfloating)
+        indxs = np.random.choice(dim, size=n, replace=False)
+        m[np.ix_(indxs, indxs)] = random_unitary(n)
+        u = UnitaryM.deflate(m)
+        assert u is not None
+        assert len(u.core) >= 2, f'Core has < 2 indexes: {u.core}'
+        assert sorted(u.core) == list(u.core), f'Core indexes is not sorted {u.core}'
+
+
+def test_matmul_eye_phase():
+    core = (1, 3)
+    a = UnitaryM(4, core, UnivGate.I.matrix)
+    core2 = (0, 2)
+    b = UnitaryM(4, core2, UnivGate.S.matrix)
+    c = a @ b
+    assert c is not None
+    assert len(c.core) == 2, f'Core indexes is unexpected {c.core}'
 
 
 def test_matmul_diff_cores():

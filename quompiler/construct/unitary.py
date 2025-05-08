@@ -3,12 +3,13 @@ from typing import Sequence
 import numpy as np
 from numpy._typing import NDArray
 
-from quompiler.utils.mat_utils import coreindexes, validm
+from quompiler.utils.mat_utils import coreindexes, validm, idindexes
 
 
 def ispow2(n):
     assert n >= 0
     return n & (n - 1) == 0
+
 
 class UnitaryM:
     """
@@ -67,8 +68,10 @@ class UnitaryM:
     def deflate(cls, m: NDArray) -> 'UnitaryM':
         validm(m)
         indxs = coreindexes(m)
-        if not indxs:
-            indxs = (0, 1)
+        #  in case when the matrix is so close to identity that there aren't enough for core, we take the lowest identity indexes into core.
+        if len(indxs) < 2:
+            ids = idindexes(m)
+            indxs = sorted(indxs + ids[:2 - len(indxs)])
         matrix = m[np.ix_(indxs, indxs)]
         return UnitaryM(m.shape[0], indxs, matrix)
 
