@@ -55,13 +55,16 @@ class ControlledM:
 
     def inflate(self) -> NDArray:
         res = self.unitary.inflate()
-        if self.qspace.is_sorted():
+        if self.is_sorted():
             return res
         indexes = self.qspace.map_all(range(res.shape[0]))
         return res[np.ix_(indexes, indexes)]
 
     def isid(self) -> bool:
         return self.unitary.isid()
+
+    def is_std(self) -> bool:
+        return UnivGate.get(self.unitary.matrix) is not None
 
     def is2l(self) -> bool:
         return self.unitary.is2l()
@@ -129,6 +132,9 @@ class ControlledM:
         m[np.ix_(indxs, indxs)] = u.matrix
         return ControlledM(m, controller, qspace=qspace, aspace=aspace)
 
+    def is_sorted(self) -> bool:
+        return self.qspace.is_sorted()
+
     def sorted(self):
         """
         Create a sorted version of this ControlledM.
@@ -137,7 +143,7 @@ class ControlledM:
         This latter will in turn change the core indexes in the field `unitary`.
         :return: A sorted version of this ControlledM whose qspace is in ascending order. If this is already sorted, return self.
         """
-        if self.qspace.is_sorted():
+        if self.is_sorted():
             return self
 
         # prepare the controls
