@@ -16,7 +16,7 @@ from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import mesh_product
 
 
-class ControlledM:
+class ControlledGate:
     """
     Represent a controlled unitary operation with a control sequence and an n-qubit unitary matrix.
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
@@ -71,25 +71,25 @@ class ControlledM:
 
     def issinglet(self) -> bool:
         """
-        Check if this ControlledM only operates on a single-qubit
-        :return: True if this ControlledM only operates on a single-qubit. False otherwise.
+        Check if this ControlledGate only operates on a single-qubit
+        :return: True if this ControlledGate only operates on a single-qubit. False otherwise.
         """
         return len(self.target_qids()) == 1
 
-    def __matmul__(self, other: 'ControlledM') -> 'ControlledM':
+    def __matmul__(self, other: 'ControlledGate') -> 'ControlledGate':
         if self.qspace == other.qspace:
             unitary = self.unitary @ other.unitary
-            return ControlledM.convert(unitary, self.qspace)
+            return ControlledGate.convert(unitary, self.qspace)
         univ = sorted(set(self.qspace.qids + other.qspace.qids))
         return self.expand(univ) @ other.expand(univ)
 
     def __copy__(self):
-        return ControlledM(self.unitary.matrix, self.controller.controls, self.qspace, self.aspace)
+        return ControlledGate(self.unitary.matrix, self.controller.controls, self.qspace, self.aspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
-        new = ControlledM(
+        new = ControlledGate(
             copy.deepcopy(self.unitary.matrix, memodict),
             copy.deepcopy(self.controller.controls, memodict),
             copy.deepcopy(self.qspace, memodict),
@@ -99,9 +99,9 @@ class ControlledM:
         return new
 
     @classmethod
-    def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None) -> 'ControlledM':
+    def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None) -> 'ControlledGate':
         """
-        Convert a UnitaryM to ControlledM based on organically grown control sequence.
+        Convert a UnitaryM to ControlledGate based on organically grown control sequence.
         This can potentially expand the order of matrix to a number that is power of 2.
         :param u:
         :param qspace:
@@ -130,18 +130,18 @@ class ControlledM:
         indxs = [lookup[c] for c in u.core]
         m = np.eye(len(core), dtype=np.complexfloating)
         m[np.ix_(indxs, indxs)] = u.matrix
-        return ControlledM(m, controller, qspace=qspace, aspace=aspace)
+        return ControlledGate(m, controller, qspace=qspace, aspace=aspace)
 
     def is_sorted(self) -> bool:
         return self.qspace.is_sorted()
 
     def sorted(self):
         """
-        Create a sorted version of this ControlledM.
-        Sorting the ControlledM means to sort the qspace in ascending order.
+        Create a sorted version of this ControlledGate.
+        Sorting the ControlledGate means to sort the qspace in ascending order.
         Unless the qspace was originally sorted in this order, this necessarily incurs changes in other parts such as control sequence.
         This latter will in turn change the core indexes in the field `unitary`.
-        :return: A sorted version of this ControlledM whose qspace is in ascending order. If this is already sorted, return self.
+        :return: A sorted version of this ControlledGate whose qspace is in ascending order. If this is already sorted, return self.
         """
         if self.is_sorted():
             return self
@@ -149,8 +149,8 @@ class ControlledM:
         # prepare the controls
         sorting = np.argsort(self.qspace.qids)
         controls = [self.controller.controls[i] for i in sorting]
-        # create the sorted ControlledM
-        return ControlledM(self.unitary.matrix, controls, sorted(self.qspace.qids))
+        # create the sorted ControlledGate
+        return ControlledGate(self.unitary.matrix, controls, sorted(self.qspace.qids))
 
     def control_qids(self) -> list[int]:
         target = self.target_qids()
@@ -159,11 +159,11 @@ class ControlledM:
     def target_qids(self) -> list[int]:
         return [qid for i, qid in enumerate(self.qspace.qids) if self.controller.controls[i] == QType.TARGET]
 
-    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> 'ControlledM':
+    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> 'ControlledGate':
         """
         Expand into the super qspace by adding necessary dimensions.
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.
-        :return: a ControlledM
+        :return: a ControlledGate
         """
         if not isinstance(qspace, QSpace):
             qspace = QSpace(qspace)
@@ -180,7 +180,7 @@ class ControlledM:
         for i, qid in enumerate(scu.qspace.qids):
             j = qspace.qids.index(qid)
             controls[j] = scu.controller.controls[i]
-        return ControlledM(mat, controls, qspace)
+        return ControlledGate(mat, controls, qspace)
 
     @staticmethod
     def _calc_mat(cu, extended_ids):

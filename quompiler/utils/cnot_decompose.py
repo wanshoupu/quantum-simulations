@@ -74,7 +74,7 @@ from typing import Tuple, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from quompiler.construct.cmat import ControlledM
+from quompiler.construct.cgate import ControlledGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.qontroller import core2control
 from quompiler.construct.types import UnivGate, QType
@@ -108,7 +108,12 @@ def euler_decompose(u: NDArray) -> tuple[complex, float, float, float]:
     return a, b, c, d  # Global phase (a), and Euler angles (b, c, d)
 
 
-def control_decompose(cu: ControlledM) -> list[ControlledM]:
+def std_decompose(cu: ControlledGate) -> list[ControlledGate]:
+    """
+    Given a controlled unitary matrix, decompose it into controlled standard gate operations `ControlledGate`.
+    :param cu: controlled unitary matrix as input
+    :return: a list of controlled standard gate operations
+    """
     assert cu.issinglet()
     a, b, c, d = euler_decompose(cu.unitary.matrix)
     phase = a * np.eye(2)
@@ -117,22 +122,22 @@ def control_decompose(cu: ControlledM) -> list[ControlledM]:
     C = UnivGate.Z.rotationM((d - b) / 2)
     target = cu.target_qids()
 
-    result = [ControlledM(phase, cu.controller, cu.qspace),
-              ControlledM(A, [QType.TARGET], target),
-              ControlledM(UnivGate.X.matrix, cu.controller, cu.qspace),
-              ControlledM(B, [QType.TARGET], target),
-              ControlledM(UnivGate.X.matrix, cu.controller, cu.qspace),
-              ControlledM(C, [QType.TARGET], target)]
+    result = [ControlledGate(phase, cu.controller, cu.qspace),
+              ControlledGate(A, [QType.TARGET], target),
+              ControlledGate(UnivGate.X.matrix, cu.controller, cu.qspace),
+              ControlledGate(B, [QType.TARGET], target),
+              ControlledGate(UnivGate.X.matrix, cu.controller, cu.qspace),
+              ControlledGate(C, [QType.TARGET], target)]
     return result
 
 
-def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> Tuple[ControlledM, ...]:
+def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> Tuple[ControlledGate, ...]:
     """
     Decompose an arbitrary unitary matrix into single-qubit operations in universal gates.
     :param m: UnitaryM to be decomposed
     :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
     :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
-    :return: a tuple of ControlledM objects.
+    :return: a tuple of ControlledGate objects.
     """
     if m.dimension & (m.dimension - 1):
         raise ValueError(f'The dimension of the unitary matrix is not power of 2: {m.dimension}')
@@ -143,12 +148,12 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[i
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
     code = gray_code(*m.core)
     xmat = UnivGate.X.matrix
-    components = [ControlledM(xmat, core2control(n, core), qspace, aspace) for core in zip(code, code[1:-1])]
+    components = [ControlledGate(xmat, core2control(n, core), qspace, aspace) for core in zip(code, code[1:-1])]
     if code[-2] < code[-1]:
         #  the final swap preserves the original ordering of the core matrix
         v = m.matrix
     else:
         #  the final swap altered the original ordering of the core matrix
         v = xmat @ m.matrix @ xmat
-    cu = ControlledM(v, core2control(n, code[-2:]), qspace, aspace)
+    cu = ControlledGate(v, core2control(n, code[-2:]), qspace, aspace)
     return tuple(components + [cu] + components[::-1])

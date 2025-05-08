@@ -6,18 +6,16 @@ This module differs from scipy.sparse in that we provide convenience specificall
 import copy
 from typing import Union, Sequence
 
-import numpy as np
 from numpy.typing import NDArray
 
-from quompiler.construct.cmat import ControlledM
+from quompiler.construct.cgate import ControlledGate
 from quompiler.construct.qontroller import Qontroller, QSpace
 from quompiler.construct.types import QType, UnivGate
 
 
-class ControlledGate:
+class ControlledStdGate:
     """
-    Represent a controlled standard gate operation with a control sequence and an n-qubit unitary matrix given by one of the UnivGate enum.
-    Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
+    Represent a controlled standard gate operation, a single-qubit unitary matrix in one of the UnivGate along with the control from another qubit.
     """
 
     def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None):
@@ -29,7 +27,7 @@ class ControlledGate:
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
         """
-        self.controlledM: ControlledM = ControlledM(gate.matrix, control, qspace, aspace)
+        self.controlledM: ControlledGate = ControlledGate(gate.matrix, control, qspace, aspace)
         self.gate: UnivGate = gate
 
     def __repr__(self):
@@ -41,34 +39,34 @@ class ControlledGate:
     def isid(self) -> bool:
         return self.gate == UnivGate.I
 
-    def __matmul__(self, other: 'ControlledGate') -> ControlledM:
+    def __matmul__(self, other: 'ControlledStdGate') -> ControlledGate:
         return self.controlledM @ other.controlledM
 
     def __copy__(self):
-        return ControlledGate(self.gate, self.controlledM.controller, self.controlledM.qspace, self.controlledM.aspace)
+        return ControlledStdGate(self.gate, self.controlledM.controller, self.controlledM.qspace, self.controlledM.aspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
         gate: UnivGate = copy.deepcopy(self.gate, memodict),
-        controlledM: ControlledM = copy.deepcopy(self.controlledM, memodict),
-        new = ControlledGate(gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
+        controlledM: ControlledGate = copy.deepcopy(self.controlledM, memodict),
+        new = ControlledStdGate(gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
         memodict[self] = new
         return new
 
-    def to_controlledM(self) -> ControlledM:
+    def to_controlledM(self) -> ControlledGate:
         return self.controlledM
 
     @classmethod
-    def convert(cls, cm: ControlledM) -> 'ControlledGate':
+    def convert(cls, cm: ControlledGate) -> 'ControlledStdGate':
         assert cm.is_std()
         result = UnivGate.get(cm.unitary.matrix)
-        return ControlledGate(result, cm.controller, cm.qspace, cm.aspace)
+        return ControlledStdGate(result, cm.controller, cm.qspace, cm.aspace)
 
     def is_sorted(self) -> bool:
         return self.controlledM.is_sorted()
 
-    def sorted(self) -> 'ControlledGate':
+    def sorted(self) -> 'ControlledStdGate':
         """
         Create a sorted version of this ControlledGate.
         Sorting the ControlledGate means to sort the qspace in ascending order.
@@ -78,8 +76,8 @@ class ControlledGate:
         """
         if self.controlledM.is_sorted():
             return self
-        controlledM: ControlledM = self.controlledM.sorted()
-        return ControlledGate(self.gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
+        controlledM: ControlledGate = self.controlledM.sorted()
+        return ControlledStdGate(self.gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
 
     def control_qids(self) -> list[int]:
         return self.controlledM.control_qids()
@@ -87,7 +85,7 @@ class ControlledGate:
     def target_qids(self) -> list[int]:
         return self.controlledM.target_qids()
 
-    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> ControlledM:
+    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> ControlledGate:
         """
         Expand into the super qspace by adding necessary dimensions.
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.

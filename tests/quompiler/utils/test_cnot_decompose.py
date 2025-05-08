@@ -4,10 +4,10 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from quompiler.construct.cmat import ControlledM
+from quompiler.construct.cgate import ControlledGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
-from quompiler.utils.cnot_decompose import cnot_decompose, euler_decompose, control_decompose
+from quompiler.utils.cnot_decompose import cnot_decompose, euler_decompose, std_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_unitary, random_control
 
@@ -29,7 +29,7 @@ def test_decompose_sing_qubit_circuit():
     bc = cnot_decompose(u)
     # print(bc)
     assert len(bc) == 1
-    assert all(isinstance(v, ControlledM) for v in bc)
+    assert all(isinstance(v, ControlledGate) for v in bc)
 
 
 def test_cnot_decompose8():
@@ -42,7 +42,7 @@ def test_cnot_decompose8():
     # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-    assert all(isinstance(v, ControlledM) for v in ms)
+    assert all(isinstance(v, ControlledGate) for v in ms)
 
 
 def test_cnot_decompose4():
@@ -55,7 +55,7 @@ def test_cnot_decompose4():
     # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-    assert all(isinstance(v, ControlledM) for v in ms)
+    assert all(isinstance(v, ControlledGate) for v in ms)
 
 
 def test_cnot_decompose_random():
@@ -76,7 +76,7 @@ def test_cnot_decompose_random():
         # print()
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-        assert all(isinstance(v, ControlledM) for v in ms)
+        assert all(isinstance(v, ControlledGate) for v in ms)
 
 
 @pytest.mark.parametrize('gate,expected', [
@@ -110,10 +110,10 @@ def test_control_decompose_identity():
         # print(f'Test {_}th round')
         n = random.randint(1, 5)
         controls = random_control(n, 1)
-        cu = ControlledM(random_unitary(2), controls)
+        cu = ControlledGate(random_unitary(2), controls)
 
         # execute
-        result = control_decompose(cu)
+        result = std_decompose(cu)
         assert len(result) == 6
         assert all(com is not None for com in result)
         actual = reduce(lambda a, b: a @ b, result[1::2]).inflate()
@@ -122,10 +122,10 @@ def test_control_decompose_identity():
 
 def test_control_decompose_uncontrolled_equality():
     expected = random_unitary(2)
-    cu = ControlledM(expected, [QType.TARGET])
+    cu = ControlledGate(expected, [QType.TARGET])
 
     # execute
-    result = control_decompose(cu)
+    result = std_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result).inflate()
     assert np.allclose(actual, expected)
 
@@ -134,10 +134,10 @@ def test_control_decompose_controlled_equality_1_target():
     u = random_unitary(2)
     controls = [QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
-    cu = ControlledM(u, controls)
+    cu = ControlledGate(u, controls)
 
     # execute
-    result = control_decompose(cu)
+    result = std_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result)
     print('actual:')
     print(formatter.tostr(actual.inflate()))
@@ -150,10 +150,10 @@ def test_control_decompose_controlled_equality_C1T():
     u = random_unitary(2)
     controls = [QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
-    cu = ControlledM(u, controls)
+    cu = ControlledGate(u, controls)
 
     # execute
-    result = control_decompose(cu)
+    result = std_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
@@ -166,10 +166,10 @@ def test_control_decompose_controlled_equality_C0T():
     u = random_unitary(2)
     controls = [QType.CONTROL0, QType.TARGET]
     # random.shuffle(controls)
-    cu = ControlledM(u, controls)
+    cu = ControlledGate(u, controls)
 
     # execute
-    result = control_decompose(cu)
+    result = std_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
@@ -182,10 +182,10 @@ def test_control_decompose_controlled_equality_C0TC1():
     u = random_unitary(2)
     controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
     # random.shuffle(controls)
-    cu = ControlledM(u, controls)
+    cu = ControlledGate(u, controls)
 
     # execute
-    result = control_decompose(cu)
+    result = std_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
@@ -198,8 +198,8 @@ def test_control_decompose_noop_control():
     # Verify that ABC = I
     u = random_unitary(2)
     controls = random_control(3, 1)
-    cu = ControlledM(u, controls)
-    result = control_decompose(cu)
+    cu = ControlledGate(u, controls)
+    result = std_decompose(cu)
     assert len(result) == 6
     assert all(com is not None for com in result)
     actual = reduce(lambda a, b: a @ b, result)
@@ -213,10 +213,10 @@ def test_control_decompose_custom_qspace():
     qspace = list(range(offset, offset + n))
     controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
     target = controls.index(QType.TARGET)
-    cu = ControlledM(u, controls, qspace)
+    cu = ControlledGate(u, controls, qspace)
 
     # execute
-    result = control_decompose(cu)
+    result = std_decompose(cu)
 
     # verify
     for i in [1, 3, 5]:
@@ -232,10 +232,10 @@ def test_control_decompose_random():
         qspace = list(range(offset, offset + n))
         controls = random_control(n, 1)
         target = controls.index(QType.TARGET)
-        cu = ControlledM(u, controls, qspace)
+        cu = ControlledGate(u, controls, qspace)
 
         # execute
-        result = control_decompose(cu)
+        result = std_decompose(cu)
 
         # verify
         assert len(result) == 6

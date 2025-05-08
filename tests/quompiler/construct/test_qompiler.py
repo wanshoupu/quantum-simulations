@@ -2,7 +2,7 @@ import random
 from functools import reduce
 
 from quompiler.construct.bytecode import BytecodeIter
-from quompiler.construct.cmat import ControlledM
+from quompiler.construct.cgate import ControlledGate
 from quompiler.construct.quompiler import quompile
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
@@ -29,7 +29,7 @@ def test_compile_sing_qubit_circuit():
     # print(bc)
     assert bc is not None
     assert 1 == len([a for a in BytecodeIter(bc)])
-    assert isinstance(bc.data, ControlledM)
+    assert isinstance(bc.data, ControlledGate)
 
 
 def test_compile_cyclic_8():
@@ -38,7 +38,7 @@ def test_compile_cyclic_8():
     # print(bc)
     assert bc is not None
     assert 18 == len([a for a in BytecodeIter(bc)])
-    leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, ControlledM)]
+    leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, ControlledGate)]
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 
@@ -49,7 +49,7 @@ def test_compile_cyclic_4():
     # print(bc)
     assert bc is not None
     assert 6 == len([a for a in BytecodeIter(bc)])
-    leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, ControlledM)]
+    leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, ControlledGate)]
     assert len(leaves) == 4
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
@@ -62,6 +62,6 @@ def test_interp_random_unitary():
         dim = 1 << n
         m = random_unitary(dim)
         bc = quompile(m)
-        leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, ControlledM)]
+        leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, ControlledGate)]
         v = reduce(lambda a, b: a @ b, leaves)
         assert np.allclose(v, m), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(m)}'
