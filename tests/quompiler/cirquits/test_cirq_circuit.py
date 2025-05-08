@@ -5,7 +5,7 @@ import numpy as np
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.bytecode import BytecodeIter
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.quompiler import quompile
 from quompiler.construct.types import UnivGate, QType
@@ -21,7 +21,7 @@ def test_create_builder():
     array = random_UnitaryM_2l(dim, 3, 4)
     cirqC = CirqBuilder(n)
     cirqC.build_gate(array)
-    phase = ControlledGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
+    phase = CtrlGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
     # print(formatter.tostr(phase.inflate()))
     cirqC.build_gate(phase)
@@ -38,7 +38,7 @@ def test_builder_standard_controlledm():
         n = random.randint(1, 4)
         control = random_control(n, 1)
         print(f'n={n}, control={control}')
-        cu = ControlledGate(gate.matrix, control)
+        cu = CtrlGate(gate.matrix, control)
         cirqC = CirqBuilder(n)
 
         # execution
@@ -58,7 +58,7 @@ def test_builder_random_controlledm():
         control = random_control(n, k)
         core = 1 << control.count(QType.TARGET)
         m = random_unitary(core)
-        cu = ControlledGate(m, control)
+        cu = CtrlGate(m, control)
         cirqC = CirqBuilder(n)
 
         # execution
@@ -77,7 +77,7 @@ def test_compile_cyclic_4_everything():
     # print(bc)
     assert 6 == len([a for a in BytecodeIter(bc)])
     # we need to revert the order bc the last element appears first in the circuit
-    leaves = [a.data for a in BytecodeIter(bc) if isinstance(a.data, ControlledGate)][::-1]
+    leaves = [a.data for a in BytecodeIter(bc) if isinstance(a.data, CtrlGate)][::-1]
     assert len(leaves) == 4
 
     cirqC = CirqBuilder(n)

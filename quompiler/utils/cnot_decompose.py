@@ -71,14 +71,14 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 """
 from typing import Tuple, Sequence
 
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.qontroller import core2control
 from quompiler.construct.types import UnivGate
 from quompiler.utils.gray import gray_code
 
 
-def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> Tuple[ControlledGate, ...]:
+def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> Tuple[CtrlGate, ...]:
     """
     Decompose an arbitrary unitary matrix into single-qubit operations in universal gates.
     :param m: UnitaryM to be decomposed
@@ -95,12 +95,12 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[i
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
     code = gray_code(*m.core)
     xmat = UnivGate.X.matrix
-    components = [ControlledGate(xmat, core2control(n, core), qspace, aspace) for core in zip(code, code[1:-1])]
+    components = [CtrlGate(xmat, core2control(n, core), qspace, aspace) for core in zip(code, code[1:-1])]
     if code[-2] < code[-1]:
         #  the final swap preserves the original ordering of the core matrix
         v = m.matrix
     else:
         #  the final swap altered the original ordering of the core matrix
         v = xmat @ m.matrix @ xmat
-    cu = ControlledGate(v, core2control(n, code[-2:]), qspace, aspace)
+    cu = CtrlGate(v, core2control(n, code[-2:]), qspace, aspace)
     return tuple(components + [cu] + components[::-1])

@@ -1,11 +1,18 @@
+from typing import Union
+
 import numpy as np
 from numpy._typing import NDArray
 
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate, QType
 
 
-def std_decompose(cu: ControlledGate) -> list[ControlledGate]:
+def ctrl_decompose(ctrlGate: CtrlGate) -> list[Union[UnivGate, CtrlStdGate]]:
+    return [ctrlGate]
+
+
+def std_decompose(cu: CtrlGate) -> list[Union[UnivGate, CtrlStdGate]]:
     """
     Given a controlled unitary matrix, decompose it into controlled standard gate operations `ControlledGate`.
     :param cu: controlled unitary matrix as input
@@ -19,12 +26,12 @@ def std_decompose(cu: ControlledGate) -> list[ControlledGate]:
     C = UnivGate.Z.rotation((d - b) / 2)
     target = cu.target_qids()
 
-    result = [ControlledGate(phase, cu.controller, cu.qspace),
-              ControlledGate(A, [QType.TARGET], target),
-              ControlledGate(UnivGate.X.matrix, cu.controller, cu.qspace),
-              ControlledGate(B, [QType.TARGET], target),
-              ControlledGate(UnivGate.X.matrix, cu.controller, cu.qspace),
-              ControlledGate(C, [QType.TARGET], target)]
+    result = [*ctrl_decompose(CtrlGate(phase, cu.controller, cu.qspace)),
+              *ctrl_decompose(CtrlGate(A, [QType.TARGET], target)),
+              *ctrl_decompose(CtrlGate(UnivGate.X.matrix, cu.controller, cu.qspace)),
+              *ctrl_decompose(CtrlGate(B, [QType.TARGET], target)),
+              *ctrl_decompose(CtrlGate(UnivGate.X.matrix, cu.controller, cu.qspace)),
+              *ctrl_decompose(CtrlGate(C, [QType.TARGET], target))]
     return result
 
 

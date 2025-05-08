@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import QType
 from quompiler.construct.unitary import UnitaryM
 
@@ -37,7 +37,7 @@ def random_UnitaryM(dim, indexes) -> UnitaryM:
 def random_ControlledGate(controls: tuple[QType]) -> UnitaryM:
     core = controls.count(QType.TARGET)
     u = unitary_group.rvs(core)
-    return ControlledGate(u, controls)
+    return CtrlGate(u, controls)
 
 
 def random_indexes(n, k):

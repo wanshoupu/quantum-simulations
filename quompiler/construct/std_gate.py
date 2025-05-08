@@ -3,12 +3,12 @@ from typing import Union, Sequence
 
 from numpy.typing import NDArray
 
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import Qontroller, QSpace
 from quompiler.construct.types import QType, UnivGate
 
 
-class ControlledStdGate:
+class CtrlStdGate:
     """
     Represent a controlled standard gate operation, namely, a single-qubit unitary matrix in one of the UnivGate along with a number of control sequence.
     See also: :class:`cgate.ControlledGate`
@@ -23,7 +23,7 @@ class ControlledStdGate:
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
         """
-        self.controlledM: ControlledGate = ControlledGate(gate.matrix, control, qspace, aspace)
+        self.controlledM: CtrlGate = CtrlGate(gate.matrix, control, qspace, aspace)
         self.gate: UnivGate = gate
 
     def __repr__(self):
@@ -38,34 +38,34 @@ class ControlledStdGate:
     def is_ctrl_singlet(self) -> bool:
         return 1 == len(self.controlledM.control_qids())
 
-    def __matmul__(self, other: 'ControlledStdGate') -> ControlledGate:
+    def __matmul__(self, other: 'CtrlStdGate') -> CtrlGate:
         return self.controlledM @ other.controlledM
 
     def __copy__(self):
-        return ControlledStdGate(self.gate, self.controlledM.controller, self.controlledM.qspace, self.controlledM.aspace)
+        return CtrlStdGate(self.gate, self.controlledM.controller, self.controlledM.qspace, self.controlledM.aspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
         gate: UnivGate = copy.deepcopy(self.gate, memodict),
-        controlledM: ControlledGate = copy.deepcopy(self.controlledM, memodict),
-        new = ControlledStdGate(gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
+        controlledM: CtrlGate = copy.deepcopy(self.controlledM, memodict),
+        new = CtrlStdGate(gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
         memodict[self] = new
         return new
 
-    def to_controlledM(self) -> ControlledGate:
+    def to_controlledM(self) -> CtrlGate:
         return self.controlledM
 
     @classmethod
-    def convert(cls, cm: ControlledGate) -> 'ControlledStdGate':
+    def convert(cls, cm: CtrlGate) -> 'CtrlStdGate':
         assert cm.is_std()
         result = UnivGate.get(cm.unitary.matrix)
-        return ControlledStdGate(result, cm.controller, cm.qspace, cm.aspace)
+        return CtrlStdGate(result, cm.controller, cm.qspace, cm.aspace)
 
     def is_sorted(self) -> bool:
         return self.controlledM.is_sorted()
 
-    def sorted(self) -> 'ControlledStdGate':
+    def sorted(self) -> 'CtrlStdGate':
         """
         Create a sorted version of this ControlledGate.
         Sorting the ControlledGate means to sort the qspace in ascending order.
@@ -75,8 +75,8 @@ class ControlledStdGate:
         """
         if self.controlledM.is_sorted():
             return self
-        controlledM: ControlledGate = self.controlledM.sorted()
-        return ControlledStdGate(self.gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
+        controlledM: CtrlGate = self.controlledM.sorted()
+        return CtrlStdGate(self.gate, controlledM.controller, controlledM.qspace, controlledM.aspace)
 
     def control_qids(self) -> list[int]:
         return self.controlledM.control_qids()
@@ -84,7 +84,7 @@ class ControlledStdGate:
     def target_qids(self) -> list[int]:
         return self.controlledM.target_qids()
 
-    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> ControlledGate:
+    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> CtrlGate:
         """
         Expand into the super qspace by adding necessary dimensions.
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.

@@ -4,7 +4,7 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.cnot_decompose import cnot_decompose
@@ -30,7 +30,7 @@ def test_decompose_sing_qubit_circuit():
     bc = cnot_decompose(u)
     # print(bc)
     assert len(bc) == 1
-    assert all(isinstance(v, ControlledGate) for v in bc)
+    assert all(isinstance(v, CtrlGate) for v in bc)
 
 
 def test_cnot_decompose8():
@@ -43,7 +43,7 @@ def test_cnot_decompose8():
     # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-    assert all(isinstance(v, ControlledGate) for v in ms)
+    assert all(isinstance(v, CtrlGate) for v in ms)
 
 
 def test_cnot_decompose4():
@@ -56,7 +56,7 @@ def test_cnot_decompose4():
     # print()
     recovered = reduce(lambda x, y: x @ y, ms)
     assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-    assert all(isinstance(v, ControlledGate) for v in ms)
+    assert all(isinstance(v, CtrlGate) for v in ms)
 
 
 def test_cnot_decompose_random():
@@ -77,7 +77,7 @@ def test_cnot_decompose_random():
         # print()
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
-        assert all(isinstance(v, ControlledGate) for v in ms)
+        assert all(isinstance(v, CtrlGate) for v in ms)
 
 
 @pytest.mark.parametrize('gate,expected', [
@@ -111,7 +111,7 @@ def test_std_decompose_identity():
         # print(f'Test {_}th round')
         n = random.randint(1, 5)
         controls = random_control(n, 1)
-        cu = ControlledGate(random_unitary(2), controls)
+        cu = CtrlGate(random_unitary(2), controls)
 
         # execute
         result = std_decompose(cu)
@@ -123,7 +123,7 @@ def test_std_decompose_identity():
 
 def test_std_decompose_uncontrolled_equality():
     expected = random_unitary(2)
-    cu = ControlledGate(expected, [QType.TARGET])
+    cu = CtrlGate(expected, [QType.TARGET])
 
     # execute
     result = std_decompose(cu)
@@ -135,7 +135,7 @@ def test_std_decompose_controlled_equality_1_target():
     u = random_unitary(2)
     controls = [QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
-    cu = ControlledGate(u, controls)
+    cu = CtrlGate(u, controls)
 
     # execute
     result = std_decompose(cu)
@@ -151,7 +151,7 @@ def test_std_decompose_controlled_equality_C1T():
     u = random_unitary(2)
     controls = [QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
-    cu = ControlledGate(u, controls)
+    cu = CtrlGate(u, controls)
 
     # execute
     result = std_decompose(cu)
@@ -167,7 +167,7 @@ def test_std_decompose_controlled_equality_C0T():
     u = random_unitary(2)
     controls = [QType.CONTROL0, QType.TARGET]
     # random.shuffle(controls)
-    cu = ControlledGate(u, controls)
+    cu = CtrlGate(u, controls)
 
     # execute
     result = std_decompose(cu)
@@ -183,7 +183,7 @@ def test_std_decompose_controlled_equality_C0TC1():
     u = random_unitary(2)
     controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
     # random.shuffle(controls)
-    cu = ControlledGate(u, controls)
+    cu = CtrlGate(u, controls)
 
     # execute
     result = std_decompose(cu)
@@ -199,7 +199,7 @@ def test_std_decompose_noop_control():
     # Verify that ABC = I
     u = random_unitary(2)
     controls = random_control(3, 1)
-    cu = ControlledGate(u, controls)
+    cu = CtrlGate(u, controls)
     result = std_decompose(cu)
     assert len(result) == 6
     assert all(com is not None for com in result)
@@ -214,7 +214,7 @@ def test_std_decompose_custom_qspace():
     qspace = list(range(offset, offset + n))
     controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
     target = controls.index(QType.TARGET)
-    cu = ControlledGate(u, controls, qspace)
+    cu = CtrlGate(u, controls, qspace)
 
     # execute
     result = std_decompose(cu)
@@ -233,7 +233,7 @@ def test_std_decompose_random():
         qspace = list(range(offset, offset + n))
         controls = random_control(n, 1)
         target = controls.index(QType.TARGET)
-        cu = ControlledGate(u, controls, qspace)
+        cu = CtrlGate(u, controls, qspace)
 
         # execute
         result = std_decompose(cu)

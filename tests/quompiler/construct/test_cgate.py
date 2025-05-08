@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy import kron
 
-from quompiler.construct.cgate import ControlledGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import Qontroller, QSpace
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
@@ -18,7 +18,7 @@ formatter = MatrixFormatter(precision=2)
 def test_convert_invalid_dimension():
     cu = UnitaryM(3, (1, 2), random_unitary(2))
     with pytest.raises(AssertionError) as exc:
-        ControlledGate.convert(cu)
+        CtrlGate.convert(cu)
 
 
 def test_convert_no_inflation():
@@ -34,7 +34,7 @@ def test_convert_no_inflation():
         u = UnitaryM(dim, core, m)
 
         # execute
-        c = ControlledGate.convert(u)
+        c = CtrlGate.convert(u)
         assert np.array_equal(c.unitary.matrix, u.matrix)
 
 
@@ -45,7 +45,7 @@ def test_convert_verify_dimension():
         core = random.randint(2, dim)
         indexes = random.sample(range(dim), core)
         u = random_UnitaryM(dim, indexes)
-        c = ControlledGate.convert(u)
+        c = CtrlGate.convert(u)
         assert c.unitary.dimension == dim
 
 
@@ -57,7 +57,7 @@ def test_convert_expansion():
         core = random.randint(2, dim)
         indexes = random.sample(range(dim), core)
         unitM = random_UnitaryM(dim, indexes)
-        ctrlM = ControlledGate.convert(unitM)
+        ctrlM = CtrlGate.convert(unitM)
         assert np.allclose(ctrlM.inflate(), unitM.inflate()), f'ctrlM=\n{formatter.tostr(ctrlM.inflate())}\nexpected=\n{formatter.tostr(unitM.inflate())}'
 
 
@@ -66,7 +66,7 @@ def test_convert_verify_inflation_invariance():
     k = random.randint(2, dimension)
     core = sorted(random_indexes(dimension, k))
     u = random_UnitaryM(dimension, core)
-    c = ControlledGate.convert(u)
+    c = CtrlGate.convert(u)
     assert np.allclose(c.inflate(), u.inflate()), f'actual=\n{formatter.tostr(c.inflate())}\nexpected=\n{formatter.tostr(u.inflate())}'
 
 
@@ -78,7 +78,7 @@ def test_convert():
         core = random.randint(2, dim)
         indexes = random.sample(range(dim), core)
         u = random_UnitaryM(dim, indexes)
-        c = ControlledGate.convert(u)
+        c = CtrlGate.convert(u)
         assert c
         # print()
         # print(formatter.tostr(c.matrix))
@@ -87,7 +87,7 @@ def test_convert():
 def test_init():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    cu = ControlledGate(m, controls)
+    cu = CtrlGate(m, controls)
     # print(formatter.tostr(cu.inflate()))
     assert tuple(cu.unitary.core) == (6, 7), f'Core indexes is unexpected {cu.unitary.core}'
 
@@ -95,7 +95,7 @@ def test_init():
 def test_init_qontroller():
     m = random_unitary(2)
     controller = Qontroller((QType.CONTROL1, QType.CONTROL1, QType.TARGET))
-    cu = ControlledGate(m, controller)
+    cu = CtrlGate(m, controller)
     assert cu.controller == controller
 
 
@@ -104,7 +104,7 @@ def test_init_qspace_seq():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qspace = list(range(3))
     random.shuffle(qspace)
-    cu = ControlledGate(m, controls, qspace)
+    cu = CtrlGate(m, controls, qspace)
     assert cu.qspace.qids == qspace
 
 
@@ -113,7 +113,7 @@ def test_init_qspace_numpy_array():
     t = random.randint(1, k)
     controls = random_control(k, t)
     qids = np.random.choice(1 << k, size=k, replace=False)
-    cu = ControlledGate(random_unitary(2), controls, qspace=qids)
+    cu = CtrlGate(random_unitary(2), controls, qspace=qids)
     assert cu.qspace.qids == qids.tolist()
 
 
@@ -121,14 +121,14 @@ def test_init_qspace_obj():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qspace = QSpace(list(range(3)))
-    cu = ControlledGate(m, controls, qspace)
+    cu = CtrlGate(m, controls, qspace)
     assert cu.qspace.qids == list(range(3))
 
 
 def test_univ_Y():
     gate = UnivGate.Y
     control = (QType.CONTROL0, QType.CONTROL0, QType.TARGET)
-    cu = ControlledGate(gate.matrix, control)
+    cu = CtrlGate(gate.matrix, control)
     expected = np.eye(8, dtype=np.complexfloating)
     expected[:2, :2] = gate.matrix
     # print()
@@ -140,7 +140,7 @@ def test_univ_Y():
 def test_UnivGate_Z():
     gate = UnivGate.Z
     control = (QType.CONTROL1, QType.CONTROL0, QType.CONTROL0, QType.TARGET)
-    cu = ControlledGate(gate.matrix, control)
+    cu = CtrlGate(gate.matrix, control)
     expected = np.eye(16, dtype=np.complexfloating)
     expected[8:10, 8:10] = gate.matrix
     # print()
@@ -153,7 +153,7 @@ def test_sorted_4x4():
     m = random_unitary(2)
     controls = (QType.TARGET, QType.CONTROL1)
     qids = [3, 0]
-    cu = ControlledGate(m, controls, qids)
+    cu = CtrlGate(m, controls, qids)
     # print()
     # print(formatter.tostr(cu.inflate()))
     assert tuple(cu.unitary.core) == (1, 3), f'Core indexes is unexpected {cu.unitary.core}'
@@ -166,7 +166,7 @@ def test_sorted_noop():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qids = list(range(3))
-    expected = ControlledGate(m, controls, qids)
+    expected = CtrlGate(m, controls, qids)
     # print()
     # print(formatter.tostr(expected.inflate()))
     actual = expected.sorted()
@@ -177,7 +177,7 @@ def test_sorted_8x8():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qids = [2, 0, 1]
-    cu = ControlledGate(m, controls, qids)
+    cu = CtrlGate(m, controls, qids)
     expected = cu.inflate()
     # print()
     # print(formatter.tostr(expected))
@@ -194,7 +194,7 @@ def test_expand():
     m = random_unitary(2)
     controls = (QType.TARGET, QType.CONTROL1)
     qids = [1, 0]
-    cu = ControlledGate(m, controls, qids)
+    cu = CtrlGate(m, controls, qids)
     univ = list(range(3))
     ex = cu.expand(univ)
     # print()
@@ -212,7 +212,7 @@ def test_expand_random():
         m = random_unitary(1 << t)
         controls = random_control(k, t)
         qids = random.sample(range(n), k)
-        cu = ControlledGate(m, controls, qids)
+        cu = CtrlGate(m, controls, qids)
         univ = list(range(n))
 
         # execute
@@ -226,8 +226,8 @@ def test_matmul_identical_controls():
     k = random.randint(2, 5)
     t = random.randint(1, k)
     controls = random_control(k, t)
-    a = ControlledGate(random_unitary(1 << t), controls)
-    b = ControlledGate(random_unitary(1 << t), controls)
+    a = CtrlGate(random_unitary(1 << t), controls)
+    b = CtrlGate(random_unitary(1 << t), controls)
     c = a @ b
     assert np.allclose(c.unitary.matrix, a.unitary.matrix @ b.unitary.matrix)
     assert c.qspace.qids == a.qspace.qids == b.qspace.qids
@@ -236,8 +236,8 @@ def test_matmul_identical_controls():
 def test_matmul_identical_qspace_diff_controls():
     k = random.randint(2, 5)
     t = random.randint(1, k)
-    a = ControlledGate(random_unitary(2), random_control(k, t))
-    b = ControlledGate(random_unitary(2), random_control(k, t))
+    a = CtrlGate(random_unitary(2), random_control(k, t))
+    b = CtrlGate(random_unitary(2), random_control(k, t))
 
     # execute
     c = a @ b
@@ -251,9 +251,9 @@ def test_matmul_identical_qspace_diff_controls():
 def test_matmul_verify_qspace():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
     qid1 = [3, 0]
-    a = ControlledGate(random_unitary(4), controls, qspace=qid1)
+    a = CtrlGate(random_unitary(4), controls, qspace=qid1)
     qid2 = [1, 0]
-    b = ControlledGate(random_unitary(4), controls, qspace=qid2)
+    b = CtrlGate(random_unitary(4), controls, qspace=qid2)
 
     # execute
     c = a @ b
@@ -269,7 +269,7 @@ def test_expand_eqiv_left_kron():
     unitary1 = random_unitary(4)
     print('unitary1')
     print(formatter.tostr(unitary1))
-    a = ControlledGate(unitary1, controls, qspace=qid1)
+    a = CtrlGate(unitary1, controls, qspace=qid1)
     print('a')
     print(formatter.tostr(a.inflate()))
 
@@ -287,7 +287,7 @@ def test_expand_eqiv_inter_product():
     unitary1 = random_unitary(4)
     print('unitary1')
     print(formatter.tostr(unitary1))
-    a = ControlledGate(unitary1, controls, qspace=qid1)
+    a = CtrlGate(unitary1, controls, qspace=qid1)
     print('a')
     print(formatter.tostr(a.inflate()))
 
@@ -303,11 +303,11 @@ def test_expand_eqiv_inter_product():
 
 def test_matmul_uncontrolled_diff_qspace():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
-    a = ControlledGate(random_unitary(4), controls, qspace=[1, 3])
+    a = CtrlGate(random_unitary(4), controls, qspace=[1, 3])
     # print('a')
     # print(formatter.tostr(a.inflate()))
 
-    b = ControlledGate(random_unitary(4), controls, qspace=[3, 0])
+    b = CtrlGate(random_unitary(4), controls, qspace=[3, 0])
     # print('b')
     # print(formatter.tostr(b.inflate()))
 
@@ -337,8 +337,8 @@ def test_matmul_random():
         k = random.randint(2, 5)
         t = random.randint(1, k)
         rqids = lambda: np.random.choice(1 << k, size=k, replace=False)
-        a = ControlledGate(random_unitary(1 << t), random_control(k, t), qspace=rqids())
-        b = ControlledGate(random_unitary(1 << t), random_control(k, t), qspace=rqids())
+        a = CtrlGate(random_unitary(1 << t), random_control(k, t), qspace=rqids())
+        b = CtrlGate(random_unitary(1 << t), random_control(k, t), qspace=rqids())
 
         # execute
         c = a @ b
