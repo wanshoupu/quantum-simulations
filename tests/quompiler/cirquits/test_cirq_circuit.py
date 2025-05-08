@@ -21,7 +21,7 @@ def test_create_builder():
     array = random_UnitaryM_2l(dim, 3, 4)
     cirqC = CirqBuilder(n)
     cirqC.build_gate(array)
-    phase = ControlledM(UnivGate.S.mat, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
+    phase = ControlledM(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
     # print(formatter.tostr(phase.inflate()))
     cirqC.build_gate(phase)
@@ -38,7 +38,7 @@ def test_builder_standard_controlledm():
         n = random.randint(1, 4)
         control = random_control(n, 1)
         print(f'n={n}, control={control}')
-        cu = ControlledM(gate.mat, control)
+        cu = ControlledM(gate.matrix, control)
         cirqC = CirqBuilder(n)
 
         # execution

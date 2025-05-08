@@ -17,16 +17,16 @@ class UnivGate(Enum):
 
     def __init__(self, label, mat: NDArray):
         self.label = label
-        self.mat = mat
+        self.matrix = mat
 
     @staticmethod
     def get(m: NDArray) -> Optional['UnivGate']:
         for g in UnivGate:
-            if m.shape == g.mat.shape and np.allclose(m, g.mat):
+            if m.shape == g.matrix.shape and np.allclose(m, g.matrix):
                 return g
 
-    def rmat(self, theta):
-        return expm(-.5j * theta * self.mat)
+    def rotationM(self, theta):
+        return expm(-.5j * theta * self.matrix)
 
 
 class QType(IntFlag):

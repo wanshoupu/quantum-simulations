@@ -10,12 +10,12 @@ from quompiler.utils.mgen import random_unitary
 
 
 def test_univ_gate_X():
-    assert np.all(np.equal(UnivGate.X.mat[::-1], np.eye(2)))
+    assert np.all(np.equal(UnivGate.X.matrix[::-1], np.eye(2)))
 
 
 def test_univ_gate_Y():
-    mat = UnivGate.Y.mat
-    assert np.array_equal(mat, UnivGate.Z.mat[[1, 0]] * 1j)
+    mat = UnivGate.Y.matrix
+    assert np.array_equal(mat, UnivGate.Z.matrix[[1, 0]] * 1j)
 
 
 def test_univ_gate_get_none():
@@ -31,13 +31,13 @@ def test_univ_gate_get_T():
 
 
 def test_univ_gate_get_Z():
-    mat = UnivGate.H.mat @ UnivGate.X.mat @ UnivGate.H.mat
+    mat = UnivGate.H.matrix @ UnivGate.X.matrix @ UnivGate.H.matrix
     gate = UnivGate.get(mat)
     assert gate == UnivGate.Z
 
 
 def test_univ_gate_get_H():
-    mat = (UnivGate.Z.mat + UnivGate.X.mat) / np.sqrt(2)
+    mat = (UnivGate.Z.matrix + UnivGate.X.matrix) / np.sqrt(2)
     gate = UnivGate.get(mat)
     assert gate == UnivGate.H
 
@@ -60,14 +60,14 @@ def test_univ_gate_get_by_name(name, expected):
 def test_univ_gate_rmat(name):
     g = UnivGate[name]
     theta = np.pi * 2
-    u = g.rmat(theta)
+    u = g.rotationM(theta)
     formatter = MatrixFormatter(precision=2)
     assert np.allclose(u, -np.eye(2)), f'\nexp(-{formatter.nformat(theta)}i{g.name}/2=\n{formatter.tostr(u)}'
 
 
 def test_univ_gate_commutator():
-    mat = UnivGate.Z.mat @ UnivGate.Y.mat @ UnivGate.Z.mat
-    assert np.array_equal(mat, -UnivGate.Y.mat), f'mat unexpected {mat}'
+    mat = UnivGate.Z.matrix @ UnivGate.Y.matrix @ UnivGate.Z.matrix
+    assert np.array_equal(mat, -UnivGate.Y.matrix), f'mat unexpected {mat}'
 
 
 def test_qtype_empty_state():

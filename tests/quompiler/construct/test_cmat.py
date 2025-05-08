@@ -128,9 +128,9 @@ def test_init_qspace_obj():
 def test_univ_Y():
     gate = UnivGate.Y
     control = (QType.CONTROL0, QType.CONTROL0, QType.TARGET)
-    cu = ControlledM(gate.mat, control)
+    cu = ControlledM(gate.matrix, control)
     expected = np.eye(8, dtype=np.complexfloating)
-    expected[:2, :2] = gate.mat
+    expected[:2, :2] = gate.matrix
     # print()
     # print(formatter.tostr(expected))
     u = cu.inflate()
@@ -140,9 +140,9 @@ def test_univ_Y():
 def test_UnivGate_Z():
     gate = UnivGate.Z
     control = (QType.CONTROL1, QType.CONTROL0, QType.CONTROL0, QType.TARGET)
-    cu = ControlledM(gate.mat, control)
+    cu = ControlledM(gate.matrix, control)
     expected = np.eye(16, dtype=np.complexfloating)
-    expected[8:10, 8:10] = gate.mat
+    expected[8:10, 8:10] = gate.matrix
     # print()
     # print(formatter.tostr(expected))
     u = cu.inflate()

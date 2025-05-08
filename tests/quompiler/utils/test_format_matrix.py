@@ -81,7 +81,7 @@ def test_1darray():
 
 
 def test_gate_mat():
-    m = -1j * UnivGate.H.mat
+    m = -1j * UnivGate.H.matrix
     d = formatter.nformat(m[0, 0])
     print()
     print(d)

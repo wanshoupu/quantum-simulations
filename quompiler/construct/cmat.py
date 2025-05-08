@@ -11,14 +11,13 @@ import numpy as np
 from numpy.typing import NDArray
 
 from quompiler.construct.qontroller import Qontroller, QSpace
-from quompiler.construct.types import QType
+from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import mesh_product
 
 
 class ControlledM:
     """
-    TODO rename to CtrlM or ControlledM
     Represent a controlled unitary operation with a control sequence and an n-qubit unitary matrix.
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """

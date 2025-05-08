@@ -89,10 +89,10 @@ def test_cnot_decompose_random():
     [UnivGate.T, (np.power(1j, 1 / 4), np.pi / 8, 0, np.pi / 8)],
 ])
 def test_euler_decompose(gate: UnivGate, expected: tuple):
-    coms = euler_decompose(gate.mat)
+    coms = euler_decompose(gate.matrix)
     a, b, c, d = coms
-    actual = a * UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c) @ UnivGate.Z.rmat(d)
-    assert np.allclose(actual, gate.mat), f'Decomposition altered\n{formatter.tostr(actual)}!=\n{formatter.tostr(gate.mat)}'
+    actual = a * UnivGate.Z.rotationM(b) @ UnivGate.Y.rotationM(c) @ UnivGate.Z.rotationM(d)
+    assert np.allclose(actual, gate.matrix), f'Decomposition altered\n{formatter.tostr(actual)}!=\n{formatter.tostr(gate.matrix)}'
     assert np.allclose(coms, expected), f'for gate={gate.name}, {formatter.tostr(coms)} != {formatter.tostr(expected)}'
 
 
@@ -101,7 +101,7 @@ def test_euler_decompose_random():
         # print(f'Test {_}th round')
         expected = random_unitary(2)
         a, b, c, d = euler_decompose(expected)
-        actual = a * UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c) @ UnivGate.Z.rmat(d)
+        actual = a * UnivGate.Z.rotationM(b) @ UnivGate.Y.rotationM(c) @ UnivGate.Z.rotationM(d)
         assert np.allclose(actual, expected)
 
 

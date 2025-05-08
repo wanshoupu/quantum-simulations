@@ -1,6 +1,9 @@
+from typing import Union
+
 from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode
+from quompiler.construct.cmat import ControlledM
 from quompiler.utils.mat_utils import validm2l
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
@@ -13,7 +16,7 @@ def quompile(u: NDArray) -> Bytecode:
     return _quompile(um)
 
 
-def _quompile(u: UnitaryM) -> Bytecode:
+def _quompile(u: Union[UnitaryM, ControlledM]) -> Bytecode:
     coms = _decompose(u)
     if len(coms) == 1:
         return Bytecode(coms[0])

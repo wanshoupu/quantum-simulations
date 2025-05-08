@@ -112,16 +112,16 @@ def control_decompose(cu: ControlledM) -> list[ControlledM]:
     assert cu.issinglet()
     a, b, c, d = euler_decompose(cu.unitary.matrix)
     phase = a * np.eye(2)
-    A = UnivGate.Z.rmat(b) @ UnivGate.Y.rmat(c / 2)
-    B = UnivGate.Y.rmat(-c / 2) @ UnivGate.Z.rmat(-(d + b) / 2)
-    C = UnivGate.Z.rmat((d - b) / 2)
+    A = UnivGate.Z.rotationM(b) @ UnivGate.Y.rotationM(c / 2)
+    B = UnivGate.Y.rotationM(-c / 2) @ UnivGate.Z.rotationM(-(d + b) / 2)
+    C = UnivGate.Z.rotationM((d - b) / 2)
     target = cu.target_qids()
 
     result = [ControlledM(phase, cu.controller, cu.qspace),
               ControlledM(A, [QType.TARGET], target),
-              ControlledM(UnivGate.X.mat, cu.controller, cu.qspace),
+              ControlledM(UnivGate.X.matrix, cu.controller, cu.qspace),
               ControlledM(B, [QType.TARGET], target),
-              ControlledM(UnivGate.X.mat, cu.controller, cu.qspace),
+              ControlledM(UnivGate.X.matrix, cu.controller, cu.qspace),
               ControlledM(C, [QType.TARGET], target)]
     return result
 
@@ -142,7 +142,7 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[i
     if not m.is2l():
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
     code = gray_code(*m.core)
-    xmat = UnivGate.X.mat
+    xmat = UnivGate.X.matrix
     components = [ControlledM(xmat, core2control(n, core), qspace, aspace) for core in zip(code, code[1:-1])]
     if code[-2] < code[-1]:
         #  the final swap preserves the original ordering of the core matrix
