@@ -60,7 +60,7 @@ def test_univ_gate_get_by_name(name, expected):
 def test_univ_gate_rmat(name):
     g = UnivGate[name]
     theta = np.pi * 2
-    u = g.rotationM(theta)
+    u = g.rotation(theta)
     formatter = MatrixFormatter(precision=2)
     assert np.allclose(u, -np.eye(2)), f'\nexp(-{formatter.nformat(theta)}i{g.name}/2=\n{formatter.tostr(u)}'
 

@@ -15,7 +15,7 @@ from quompiler.construct.types import QType, UnivGate
 
 class ControlledStdGate:
     """
-    Represent a controlled standard gate operation, a single-qubit unitary matrix in one of the UnivGate along with the control from another qubit.
+    Represent a controlled standard gate operation, namely, a single-qubit unitary matrix in one of the UnivGate along with a number of control sequence.
     """
 
     def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None):
@@ -38,6 +38,9 @@ class ControlledStdGate:
 
     def isid(self) -> bool:
         return self.gate == UnivGate.I
+
+    def is_ctrl_singlet(self) -> bool:
+        return 1 == len(self.controlledM.control_qids())
 
     def __matmul__(self, other: 'ControlledStdGate') -> ControlledGate:
         return self.controlledM @ other.controlledM

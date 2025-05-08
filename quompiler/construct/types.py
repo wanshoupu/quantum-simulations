@@ -21,11 +21,22 @@ class UnivGate(Enum):
 
     @staticmethod
     def get(m: NDArray) -> Optional['UnivGate']:
+        """
+        Attempt to match to a universal gate.
+        :param m:
+        :return: the matching universal gate. None if no universal gate matches.
+        """
         for g in UnivGate:
             if m.shape == g.matrix.shape and np.allclose(m, g.matrix):
                 return g
+        return None
 
-    def rotationM(self, theta):
+    def rotation(self, theta) -> NDArray:
+        """
+        Calculate the rotation matrix corresponding to the given angle.
+        :param theta: the angle in radians.
+        :return: the rotation matrix corresponding to the given angle along the axis.
+        """
         return expm(-.5j * theta * self.matrix)
 
 

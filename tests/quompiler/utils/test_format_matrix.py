@@ -2,7 +2,6 @@ import numpy as np
 
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from tests.quompiler.construct.test_cmat import formatter
 
 
 def test_intify_int():

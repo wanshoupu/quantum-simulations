@@ -1,6 +1,6 @@
 import numpy as np
 
-from quompiler.construct.fmat import FactoredM
+from quompiler.construct.factor import FactoredM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import mykron, inter_product, mesh_product
 from quompiler.utils.mgen import random_unitary

@@ -91,7 +91,7 @@ def test_cnot_decompose_random():
 def test_euler_decompose(gate: UnivGate, expected: tuple):
     coms = euler_decompose(gate.matrix)
     a, b, c, d = coms
-    actual = a * UnivGate.Z.rotationM(b) @ UnivGate.Y.rotationM(c) @ UnivGate.Z.rotationM(d)
+    actual = a * UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c) @ UnivGate.Z.rotation(d)
     assert np.allclose(actual, gate.matrix), f'Decomposition altered\n{formatter.tostr(actual)}!=\n{formatter.tostr(gate.matrix)}'
     assert np.allclose(coms, expected), f'for gate={gate.name}, {formatter.tostr(coms)} != {formatter.tostr(expected)}'
 
@@ -101,11 +101,11 @@ def test_euler_decompose_random():
         # print(f'Test {_}th round')
         expected = random_unitary(2)
         a, b, c, d = euler_decompose(expected)
-        actual = a * UnivGate.Z.rotationM(b) @ UnivGate.Y.rotationM(c) @ UnivGate.Z.rotationM(d)
+        actual = a * UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c) @ UnivGate.Z.rotation(d)
         assert np.allclose(actual, expected)
 
 
-def test_control_decompose_identity():
+def test_std_decompose_identity():
     for _ in range(10):
         # print(f'Test {_}th round')
         n = random.randint(1, 5)
@@ -120,7 +120,7 @@ def test_control_decompose_identity():
         assert np.allclose(actual, np.eye(2))
 
 
-def test_control_decompose_uncontrolled_equality():
+def test_std_decompose_uncontrolled_equality():
     expected = random_unitary(2)
     cu = ControlledGate(expected, [QType.TARGET])
 
@@ -130,23 +130,7 @@ def test_control_decompose_uncontrolled_equality():
     assert np.allclose(actual, expected)
 
 
-def test_control_decompose_controlled_equality_1_target():
-    u = random_unitary(2)
-    controls = [QType.CONTROL1, QType.TARGET]
-    # random.shuffle(controls)
-    cu = ControlledGate(u, controls)
-
-    # execute
-    result = std_decompose(cu)
-    actual = reduce(lambda a, b: a @ b, result)
-    print('actual:')
-    print(formatter.tostr(actual.inflate()))
-    print('expected:')
-    print(formatter.tostr(cu.inflate()))
-    assert np.allclose(actual.inflate(), cu.inflate())
-
-
-def test_control_decompose_controlled_equality_C1T():
+def test_std_decompose_controlled_equality_1_target():
     u = random_unitary(2)
     controls = [QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
@@ -162,7 +146,23 @@ def test_control_decompose_controlled_equality_C1T():
     assert np.allclose(actual.inflate(), cu.inflate())
 
 
-def test_control_decompose_controlled_equality_C0T():
+def test_std_decompose_controlled_equality_C1T():
+    u = random_unitary(2)
+    controls = [QType.CONTROL1, QType.TARGET]
+    # random.shuffle(controls)
+    cu = ControlledGate(u, controls)
+
+    # execute
+    result = std_decompose(cu)
+    actual = reduce(lambda a, b: a @ b, result)
+    # print('actual:')
+    # print(formatter.tostr(actual.inflate()))
+    # print('expected:')
+    # print(formatter.tostr(cu.inflate()))
+    assert np.allclose(actual.inflate(), cu.inflate())
+
+
+def test_std_decompose_controlled_equality_C0T():
     u = random_unitary(2)
     controls = [QType.CONTROL0, QType.TARGET]
     # random.shuffle(controls)
@@ -178,7 +178,7 @@ def test_control_decompose_controlled_equality_C0T():
     assert np.allclose(actual.inflate(), cu.inflate())
 
 
-def test_control_decompose_controlled_equality_C0TC1():
+def test_std_decompose_controlled_equality_C0TC1():
     u = random_unitary(2)
     controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
     # random.shuffle(controls)
@@ -194,7 +194,7 @@ def test_control_decompose_controlled_equality_C0TC1():
     assert np.allclose(actual.inflate(), cu.inflate())
 
 
-def test_control_decompose_noop_control():
+def test_std_decompose_noop_control():
     # Verify that ABC = I
     u = random_unitary(2)
     controls = random_control(3, 1)
@@ -206,7 +206,7 @@ def test_control_decompose_noop_control():
     assert np.allclose(actual.inflate(), cu.inflate())
 
 
-def test_control_decompose_custom_qspace():
+def test_std_decompose_custom_qspace():
     u = random_unitary(2)
     n = 3
     offset = 500
@@ -224,7 +224,7 @@ def test_control_decompose_custom_qspace():
         assert tuple(r.qspace) == (offset + target,)
 
 
-def test_control_decompose_random():
+def test_std_decompose_random():
     for _ in range(10):
         u = random_unitary(2)
         n = random.randint(1, 5)

@@ -117,9 +117,9 @@ def std_decompose(cu: ControlledGate) -> list[ControlledGate]:
     assert cu.issinglet()
     a, b, c, d = euler_decompose(cu.unitary.matrix)
     phase = a * np.eye(2)
-    A = UnivGate.Z.rotationM(b) @ UnivGate.Y.rotationM(c / 2)
-    B = UnivGate.Y.rotationM(-c / 2) @ UnivGate.Z.rotationM(-(d + b) / 2)
-    C = UnivGate.Z.rotationM((d - b) / 2)
+    A = UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c / 2)
+    B = UnivGate.Y.rotation(-c / 2) @ UnivGate.Z.rotation(-(d + b) / 2)
+    C = UnivGate.Z.rotation((d - b) / 2)
     target = cu.target_qids()
 
     result = [ControlledGate(phase, cu.controller, cu.qspace),
