@@ -6,7 +6,7 @@ This module differs from scipy.sparse in that we provide convenience specificall
 from typing import Sequence
 
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 from quompiler.utils.mat_utils import coreindexes, validm, idindexes
 

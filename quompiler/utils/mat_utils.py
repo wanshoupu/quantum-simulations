@@ -1,7 +1,7 @@
 from typing import Tuple
 
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 
 def idindexes(m: NDArray) -> Tuple[int, ...]:
