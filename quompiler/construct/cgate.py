@@ -84,13 +84,12 @@ class CtrlGate:
         return new
 
     @classmethod
-    def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None) -> 'CtrlGate':
+    def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None) -> 'CtrlGate':
         """
         Convert a UnitaryM to ControlledGate based on organically grown control sequence.
         This can potentially expand the order of matrix to a number that is power of 2.
         :param u:
         :param qspace:
-        :param aspace:
         :return:
         """
         if qspace is None:
