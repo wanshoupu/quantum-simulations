@@ -28,8 +28,6 @@ class QuimbBuilder(CircuitBuilder):
             # self.circuit.apply_gate(self.counter,'H', 0)
             self.circuit.apply_gate(custom_gate, self.qubits)
 
-        # if isinstance(m, CUnitary):
-
     @override
     def finish(self) -> qtn.circuit.Circuit:
         pass

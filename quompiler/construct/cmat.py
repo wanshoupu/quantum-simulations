@@ -69,8 +69,8 @@ class ControlledM:
 
     def issinglet(self) -> bool:
         """
-        Check if this CUnitary only operates on a single-qubit
-        :return: True if this CUnitary only operates on a single-qubit. False otherwise.
+        Check if this ControlledM only operates on a single-qubit
+        :return: True if this ControlledM only operates on a single-qubit. False otherwise.
         """
         return len(self.target_qids()) == 1
 
@@ -99,7 +99,7 @@ class ControlledM:
     @classmethod
     def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None) -> 'ControlledM':
         """
-        Convert a UnitaryM to CUnitary based on organically grown control sequence.
+        Convert a UnitaryM to ControlledM based on organically grown control sequence.
         This can potentially expand the order of matrix to a number that is power of 2.
         :param u:
         :param qspace:
@@ -132,11 +132,11 @@ class ControlledM:
 
     def sorted(self):
         """
-        Create a sorted version of this CUnitary.
-        Sorting the CUnitary means to sort the qspace in ascending order.
+        Create a sorted version of this ControlledM.
+        Sorting the ControlledM means to sort the qspace in ascending order.
         Unless the qspace was originally sorted in this order, this necessarily incurs changes in other parts such as control sequence.
         This latter will in turn change the core indexes in the field `unitary`.
-        :return: A sorted version of this CUnitary whose qspace is in ascending order. If this is already sorted, return self.
+        :return: A sorted version of this ControlledM whose qspace is in ascending order. If this is already sorted, return self.
         """
         if self.qspace.is_sorted():
             return self
@@ -144,7 +144,7 @@ class ControlledM:
         # prepare the controls
         sorting = np.argsort(self.qspace.qids)
         controls = [self.controller.controls[i] for i in sorting]
-        # create the sorted CUnitary
+        # create the sorted ControlledM
         return ControlledM(self.unitary.matrix, controls, sorted(self.qspace.qids))
 
     def control_qids(self) -> list[int]:
@@ -158,7 +158,7 @@ class ControlledM:
         """
         Expand into the super qspace by adding necessary dimensions.
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.
-        :return: a CUnitary
+        :return: a ControlledM
         """
         if not isinstance(qspace, QSpace):
             qspace = QSpace(qspace)

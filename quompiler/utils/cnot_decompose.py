@@ -132,7 +132,7 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[i
     :param m: UnitaryM to be decomposed
     :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
     :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
-    :return: a tuple of CUnitary.
+    :return: a tuple of ControlledM objects.
     """
     if m.dimension & (m.dimension - 1):
         raise ValueError(f'The dimension of the unitary matrix is not power of 2: {m.dimension}')

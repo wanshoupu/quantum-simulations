@@ -34,7 +34,7 @@ def random_UnitaryM(dim, indexes) -> UnitaryM:
     return UnitaryM(dim, indexes, u)
 
 
-def random_CUnitary(controls: tuple[QType]) -> UnitaryM:
+def random_ControlledM(controls: tuple[QType]) -> UnitaryM:
     core = controls.count(QType.TARGET)
     u = unitary_group.rvs(core)
     return ControlledM(u, controls)

@@ -26,8 +26,6 @@ class QiskitBuilder(CircuitBuilder):
             custom_gate = UnitaryGate(m.matrix)
             self.circuit.append(custom_gate, self.qubits)
 
-        # if isinstance(m, CUnitary):
-
     @override
     def finish(self) -> QuantumCircuit:
         pass

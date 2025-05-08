@@ -32,7 +32,7 @@ def test_create_builder():
     # print(formatter.tostr(u))
 
 
-def test_builder_standard_cunitary():
+def test_builder_standard_controlledm():
     for gate in UnivGate:
         print(gate)
         n = random.randint(1, 4)
@@ -50,7 +50,7 @@ def test_builder_standard_cunitary():
         assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
 
-def test_builder_random_cunitary():
+def test_builder_random_controlledm():
     for _ in range(10):
         print(f'\nTest round #{_} ...')
         n = random.randint(1, 4)
