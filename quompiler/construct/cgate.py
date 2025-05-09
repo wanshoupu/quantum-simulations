@@ -5,7 +5,8 @@ from typing import Union, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from quompiler.construct.qontroller import Qontroller, QSpace
+from quompiler.construct.qontroller import Qontroller
+from quompiler.construct.qspace import QSpace
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import mesh_product
