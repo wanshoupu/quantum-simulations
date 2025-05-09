@@ -1,45 +1,67 @@
-from typing import Union
+from typing import Sequence
 
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Ancilla
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate, QType
+from quompiler.utils.solovay import sk_approx
 
 
-def toffoli_decompose(ctrlGate: CtrlStdGate) -> list[Union[UnivGate, CtrlStdGate]]:
-    pass
-
-
-def ctrl_decompose(ctrlGate: CtrlGate) -> list[Union[UnivGate, CtrlStdGate]]:
-    return [ctrlGate]
-
-
-def std_decompose(cu: CtrlGate) -> list[Union[UnivGate, CtrlStdGate]]:
+def ctrl_decompose(gate: CtrlGate, aspace: Sequence[Ancilla] = None) -> list[CtrlGate]:
     """
-    Given a controlled unitary matrix, decompose it into controlled standard gate operations `ControlledGate`.
-    :param cu: controlled unitary matrix as input
-    :return: a list of controlled standard gate operations
+    Given a single-qubit CtrlGate, decompose its control sequences into no more than 2.
+    :param gate: controlled unitary matrix as input
+    :param aspace: ancilla qubit space (optional).
+    :return: a list of CtrlGate objects.
     """
-    assert cu.issinglet()
-    a, b, c, d = euler_decompose(cu.unitary.matrix)
+    if len(gate.control_qids()) == 1:
+        pass
+    if len(gate.control_qids()) == 2:
+        pass
+    return [gate]
+
+
+def std_decompose(gate: CtrlGate) -> list[CtrlStdGate]:
+    """
+    Given a single-qubit unitary matrix, decompose it into CtrlStdGate with or without controls.
+    :param gate: controlled unitary matrix as input
+    :return: a list of CtrlStdGate objects.
+    """
+    seq = sk_approx(gate.inflate())
+    return [CtrlStdGate(g, gate.controller, gate.qspace) for g in seq]
+
+
+def euler_decompose(cg: CtrlGate) -> list[CtrlGate]:
+    """
+    Given a controlled unitary matrix, decompose it into Euler rotations and phase shift, e.g.,
+    U = a @ Rz(b) @ Ry(c) @ Rz(d)
+    A = Rz(b) @ Ry(c/2)
+    B = Ry(-c/2) @ Ry(-(d+d)/2)
+    C = Rz((d-b)/2)
+    :param cg: controlled unitary matrix as input.
+    :return: a list of Euler gates that's equivalent to the controlled unitary matrix.
+    """
+    assert cg.issinglet()
+    a, b, c, d = euler_param(cg.unitary.matrix)
     phase = a * np.eye(2)
     A = UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c / 2)
     B = UnivGate.Y.rotation(-c / 2) @ UnivGate.Z.rotation(-(d + b) / 2)
     C = UnivGate.Z.rotation((d - b) / 2)
-    target = cu.target_qids()
+    target = cg.target_qids()
 
-    result = [*ctrl_decompose(CtrlGate(phase, cu.controller, cu.qspace)),
-              *ctrl_decompose(CtrlGate(A, [QType.TARGET], target)),
-              *ctrl_decompose(CtrlGate(UnivGate.X.matrix, cu.controller, cu.qspace)),
-              *ctrl_decompose(CtrlGate(B, [QType.TARGET], target)),
-              *ctrl_decompose(CtrlGate(UnivGate.X.matrix, cu.controller, cu.qspace)),
-              *ctrl_decompose(CtrlGate(C, [QType.TARGET], target))]
+    result = [CtrlGate(phase, cg.controller, cg.qspace),
+              CtrlGate(A, [QType.TARGET], target),
+              CtrlGate(UnivGate.X.matrix, cg.controller, cg.qspace),
+              CtrlGate(B, [QType.TARGET], target),
+              CtrlGate(UnivGate.X.matrix, cg.controller, cg.qspace),
+              CtrlGate(C, [QType.TARGET], target)]
     return result
 
 
-def euler_decompose(u: NDArray) -> tuple[complex, float, float, float]:
+def euler_param(u: NDArray) -> tuple[complex, float, float, float]:
     """
     Given a U(2) matrix, decompose it into Euler angles + an overall scalar factor.
     :param u: U(2) matrix as input

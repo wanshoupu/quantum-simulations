@@ -9,17 +9,6 @@ from quompiler.construct.qspace import QSpace, Qubit
 from quompiler.construct.types import QType, UnivGate
 
 
-class StdGate:
-    """
-    Represent a single-qubit standard gate operation with no control.
-    See also: :class:`cgate.ControlledGate`
-    """
-
-    def __init__(self, gate: UnivGate, qubit: Qubit) -> None:
-        self.cu = gate
-        self.qubit = qubit
-
-
 class CtrlStdGate:
     """
     Represent a controlled standard gate operation, namely,
