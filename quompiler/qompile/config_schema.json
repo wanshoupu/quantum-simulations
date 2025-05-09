@@ -1,0 +1,57 @@
+{
+  "type": "object",
+  "properties": {
+    "source": {
+      "type": "string"
+    },
+    "output": {
+      "type": "string",
+      "default": "a.out"
+    },
+    "optimization": {
+      "type": "string",
+      "enum": [
+        "O0",
+        "O1",
+        "O2",
+        "O3"
+      ]
+    },
+    "debug": {
+      "type": "boolean"
+    },
+    "warnings": {
+      "type": "object",
+      "properties": {
+        "all": {
+          "type": "boolean"
+        },
+        "as_errors": {
+          "type": "boolean"
+        }
+      }
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "x86",
+        "arm",
+        "wasm"
+      ]
+    },
+    "emit": {
+      "type": "string",
+      "enum": [
+        "asm",
+        "obj",
+        "ir"
+      ]
+    },
+    "dump_ir": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "source"
+  ]
+}

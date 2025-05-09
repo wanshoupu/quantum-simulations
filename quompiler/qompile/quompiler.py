@@ -2,6 +2,7 @@
 This module provide the compilation functionalities.
 If needed, it may make distinctions between target qubits and ancilla qubits.
 """
+from enum import Enum
 from typing import Union
 
 from numpy.typing import NDArray
@@ -12,6 +13,15 @@ from quompiler.utils.mat_utils import validm2l
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
+
+
+class QompilerFlags(Enum):
+    pass
+
+
+class Quompiler:
+    def __init__(self, flags):
+        self.flags = flags
 
 
 def quompile(u: NDArray) -> Bytecode:
