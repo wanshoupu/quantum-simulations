@@ -8,7 +8,7 @@ from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
-from quompiler.qompile.configure import DeviceConfig, CompilerConfig
+from quompiler.qompile.configure import DeviceConfig, QompilerConfig
 from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_control, random_unitary, cyclic_matrix
@@ -76,7 +76,7 @@ def test_compile_cyclic_4_everything():
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
     device = DeviceConfig(dimension=dim)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute

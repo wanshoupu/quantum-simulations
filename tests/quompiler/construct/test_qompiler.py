@@ -3,7 +3,7 @@ from functools import reduce
 
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
-from quompiler.qompile.configure import DeviceConfig, CompilerConfig
+from quompiler.qompile.configure import DeviceConfig, QompilerConfig
 from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
@@ -17,7 +17,7 @@ def test_compile_identity_matrix():
     dim = 1 << n
     u = np.eye(dim)
     device = DeviceConfig(dimension=dim)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute
@@ -32,7 +32,7 @@ def test_compile_sing_qubit_circuit():
     dim = 1 << n
     u = random_unitary(dim)
     device = DeviceConfig(dimension=dim)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute
@@ -46,7 +46,7 @@ def test_compile_sing_qubit_circuit():
 def test_compile_cyclic_8():
     u = cyclic_matrix(8, 1)
     device = DeviceConfig(dimension=8)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute
@@ -62,7 +62,7 @@ def test_compile_cyclic_8():
 def test_compile_cyclic_4():
     u = cyclic_matrix(4, 1)
     device = DeviceConfig(dimension=4)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute
@@ -83,7 +83,7 @@ def test_interp_random_unitary():
         dim = 1 << n
         u = random_unitary(dim)
         device = DeviceConfig(dimension=dim)
-        config = CompilerConfig(source='foo', device=device)
+        config = QompilerConfig(source='foo', device=device)
         interp = CircuitInterp(config)
 
         # execute
