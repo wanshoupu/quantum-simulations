@@ -16,7 +16,7 @@ if __name__ == '__main__':
     bc = quompile(u)
 
     builder = CirqBuilder(n)
-    CircuitInterp(builder).interpret(u)
+    CircuitInterp(CompilerConfig).interpret(u)
     circuit = builder.finish(optimized=True)
     print(circuit)
     moments = circuit.moments

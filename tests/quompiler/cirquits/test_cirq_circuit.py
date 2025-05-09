@@ -6,9 +6,10 @@ import numpy as np
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.unitary import UnitaryM
-from quompiler.qompile.quompiler import quompile
 from quompiler.construct.types import UnivGate, QType
+from quompiler.construct.unitary import UnitaryM
+from quompiler.qompile.configure import DeviceConfig, CompilerConfig
+from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_control, random_unitary, cyclic_matrix
 
@@ -72,8 +73,14 @@ def test_builder_random_controlledm():
 
 def test_compile_cyclic_4_everything():
     n = 2
-    u = cyclic_matrix(1 << 2, 1)
-    bc = quompile(u)
+    dim = 1 << n
+    u = cyclic_matrix(dim, 1)
+    device = DeviceConfig(dimension=dim)
+    config = CompilerConfig(source='foo', device=device)
+    interp = CircuitInterp(config)
+
+    # execute
+    bc = interp.quompile(u)
     # print(bc)
     assert 6 == len([a for a in BytecodeIter(bc)])
     # we need to revert the order bc the last element appears first in the circuit
@@ -86,7 +93,7 @@ def test_compile_cyclic_4_everything():
     for cu in leaves:
         cirqC.build_gate(cu)
     circuit = cirqC.finish()
-    print(circuit)
+    # print(circuit)
     v = circuit.unitary(cirqC.qubits)
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 

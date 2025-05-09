@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.qompile.configure import CompilerConfig, DeviceConfig
 from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
@@ -14,29 +15,36 @@ formatter = MatrixFormatter(precision=2)
 def test_interp_identity_matrix():
     n = random.randint(1, 8)
     dim = 1 << n
-    u = np.eye(dim)
+    expected = np.eye(dim)
 
-    builder = CirqBuilder(n)
-    CircuitInterp(builder).interpret(u)
-    circuit = builder.finish()
-    c = circuit.unitary(circuit.all_qubits())
-    assert np.allclose(c, 1), f'circuit != input:\ncircuit=\n{c},\ninput=\n{u}'
+    device = DeviceConfig(dimension=dim)
+    config = CompilerConfig(source='foo', device=device)
+    interp = CircuitInterp(config)
+    interp.interpret(expected)
+    circuit = interp.finish()
+    qubits = circuit.all_qubits()
+    actual = circuit.unitary(qubits)
+    assert np.allclose(actual, 1), f'circuit != input:\ncircuit=\n{actual},\ninput=\n{expected}'
     assert circuit.to_text_diagram() == ''
 
 
 def test_interp_sing_qubit_circuit():
     n = 1
     dim = 1 << n
-    u = random_unitary(dim)
+    expected = random_unitary(dim)
 
-    builder = CirqBuilder(n)
-    CircuitInterp(builder).interpret(u)
-    circuit = builder.finish()
-    # print()
-    # print(formatter.tostr(c))
-    c = circuit.unitary(circuit.all_qubits())
-    assert np.allclose(u, c), f'circuit != input:\ncircuit=\n{c},\ninput=\n{u}'
+    device = DeviceConfig(dimension=dim)
+    config = CompilerConfig(source='foo', device=device)
+    interp = CircuitInterp(config)
+
+    # execute
+    interp.interpret(expected)
+    circuit = interp.finish()
+
+    # verify
     qbs = circuit.all_qubits()
+    actual = circuit.unitary(qbs)
+    assert np.allclose(actual, expected), f'actual != expected:\nactual=\n{actual},\nexpected=\n{expected}'
     # print(qbs)
     assert len(qbs) == n
     assert len(circuit.moments) == 1
@@ -49,17 +57,21 @@ def test_interp_sing_qubit_circuit():
 ])
 def test_interp_cyclic_matrix(n, k, expected_moments):
     dim = 1 << n
-    u = cyclic_matrix(dim, k)
+    expected = cyclic_matrix(dim, k)
 
-    builder = CirqBuilder(n)
-    CircuitInterp(builder).interpret(u)
-    circuit = builder.finish()
+    device = DeviceConfig(dimension=dim)
+    config = CompilerConfig(source='foo', device=device)
+    interp = CircuitInterp(config)
 
-    qbs = sorted(circuit.all_qubits())
+    # execute
+    interp.interpret(expected)
+    circuit = interp.finish()
+
+    # verify
+    qbs = interp.all_qubits()
+    actual = circuit.unitary(qbs)
     assert len(qbs) == n
-
-    c = circuit.unitary(qbs)
-    assert np.allclose(u, c), f'circuit != input:\ncircuit=\n{formatter.tostr(c)},\ninput=\n{formatter.tostr(u)}'
+    assert np.allclose(actual, expected), f'actual != expected:\nactual=\n{actual},\nexpected=\n{expected}'
     assert len(circuit.moments) == expected_moments
 
 
@@ -70,11 +82,16 @@ def test_interp_random_unitary():
         dim = 1 << n
         expected = random_unitary(dim)
 
+        device = DeviceConfig(dimension=dim)
+        config = CompilerConfig(source='foo', device=device)
+        interp = CircuitInterp(config)
+
         # execute
-        builder = CirqBuilder(n)
-        CircuitInterp(builder).interpret(expected)
-        circuit = builder.finish()
-        qbs = circuit.all_qubits()
+        interp.interpret(expected)
+        circuit = interp.finish()
+
+        # verify
+        qbs = interp.all_qubits()
+        actual = circuit.unitary(qbs)
         assert len(qbs) == n
-        actual = circuit.unitary(builder.qubits)
         assert np.allclose(actual, expected), f'actual != expected:\nactual=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'

@@ -10,6 +10,6 @@ if __name__ == '__main__':
     u = cyclic_matrix(dim, 1)
     print(formatter.tostr(u))
     builder = CirqBuilder(n)
-    CircuitInterp(builder).interpret(u)
+    CircuitInterp(CompilerConfig).interpret(u)
     circuit = builder.finish()
     print(circuit)

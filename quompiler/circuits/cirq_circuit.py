@@ -6,6 +6,7 @@ from typing_extensions import override
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
 
@@ -37,15 +38,16 @@ class CirqBuilder(CircuitBuilder):
         self.circuit = cirq.Circuit()
 
     @override
-    def get_univ_gate(self, m: Union[UnitaryM, CtrlGate]) -> Optional[EigenGate]:
-        if isinstance(m, CtrlGate):
-            univ_gate = UnivGate.get(m.unitary.matrix)
+    def get_univ_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Optional[EigenGate]:
+        if isinstance(m, CtrlGate) or isinstance(m, CtrlStdGate):
+            matrix = m.gate.matrix if isinstance(m, CtrlStdGate) else m.unitary.matrix
+            univ_gate = UnivGate.get(matrix)
             if univ_gate:
                 return CirqBuilder.__UNIV_GATES[univ_gate]
         return None
 
     @override
-    def build_gate(self, m: Union[UnitaryM, CtrlGate]):
+    def build_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]):
         if isinstance(m, CtrlGate):
             # TODO add gate approximation
             gate = self.get_univ_gate(m) or cirq.MatrixGate(m.unitary.matrix)
@@ -64,3 +66,7 @@ class CirqBuilder(CircuitBuilder):
         if optimized:
             self.circuit = optimize(self.circuit)
         return self.circuit
+
+    @override
+    def all_qubits(self) -> list:
+        return sorted(self.circuit.all_qubits())
