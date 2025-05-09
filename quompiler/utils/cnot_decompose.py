@@ -78,12 +78,11 @@ from quompiler.construct.types import UnivGate
 from quompiler.utils.gray import gray_code
 
 
-def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None, aspace: Sequence[int] = None) -> Tuple[CtrlGate, ...]:
+def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None) -> Tuple[CtrlGate, ...]:
     """
     Decompose an arbitrary unitary matrix into single-qubit operations in universal gates.
     :param m: UnitaryM to be decomposed
     :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
-    :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
     :return: a tuple of ControlledGate objects.
     """
     if m.dimension & (m.dimension - 1):

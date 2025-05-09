@@ -4,24 +4,36 @@ from typing import Union, Sequence
 from numpy.typing import NDArray
 
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.qontroller import Qontroller, QSpace
+from quompiler.construct.qontroller import Qontroller
+from quompiler.construct.qspace import QSpace, Qubit
 from quompiler.construct.types import QType, UnivGate
+
+
+class StdGate:
+    """
+    Represent a single-qubit standard gate operation with no control.
+    See also: :class:`cgate.ControlledGate`
+    """
+
+    def __init__(self, gate: UnivGate, qubit: Qubit) -> None:
+        self.cu = gate
+        self.qubit = qubit
 
 
 class CtrlStdGate:
     """
-    Represent a controlled standard gate operation, namely, a single-qubit unitary matrix in one of the UnivGate along with a number of control sequence.
-    See also: :class:`cgate.ControlledGate`
+    Represent a controlled standard gate operation, namely,
+    a single-qubit unitary matrix in one of the UnivGate along with a control sequence.
+    See also: :class:`cgate.CtrlGate`
     """
 
-    def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None, aspace: Sequence[int] = None):
+    def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param gate: the core matrix.
         :param control: the control sequence or a Qontroller.
         Dimension of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
-        :param aspace: the ancilla qubits to be used for side computation; provided in a list of integer ids. If not provided, will assume the id in the range(n) in the ancilla space.
         """
         self.controlledM: CtrlGate = CtrlGate(gate.matrix, control, qspace)
         self.gate: UnivGate = gate

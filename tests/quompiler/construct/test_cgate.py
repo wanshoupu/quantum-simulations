@@ -5,7 +5,8 @@ import pytest
 from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.qontroller import Qontroller, QSpace
+from quompiler.construct.qontroller import Qontroller
+from quompiler.construct.qspace import QSpace
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter

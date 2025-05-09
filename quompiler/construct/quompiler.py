@@ -1,3 +1,7 @@
+"""
+This module provide the compilation functionalities.
+If needed, it may make distinctions between target qubits and ancilla qubits.
+"""
 from typing import Union
 
 from numpy.typing import NDArray
