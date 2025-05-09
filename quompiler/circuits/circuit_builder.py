@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Union
 
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
 
@@ -16,7 +17,7 @@ class CircuitBuilder(ABC):
         pass
 
     @abstractmethod
-    def build_gate(self, m: UnitaryM):
+    def build_gate(self, m: Union[UnitaryM, CtrlGate]) -> None:
         """
         Build a unitary gate out of the matrix m
         :param m: UnitaryM possibly with control bits
@@ -34,14 +35,14 @@ class CircuitBuilder(ABC):
         pass
 
     @abstractmethod
-    def get_univ_gate(self, m: UnitaryM) -> Optional[UnivGate]:
+    def get_univ_gate(self, m: Union[UnitaryM, CtrlGate]) -> Optional[UnivGate]:
         """
         Subclass return a universal gate out of a set, which is to be used as the building blocks.
         :return: The universal gate, if any, for the input m. Return None if not found.
         """
         pass
 
-    def build_group(self, m: UnitaryM):
+    def build_group(self, m: Union[UnitaryM, CtrlGate]):
         """
         This method allows builder to group multiple gates together to represent, e.g., a hierarchy.
         Overriding this is optional for subclasses.

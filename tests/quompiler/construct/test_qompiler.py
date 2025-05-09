@@ -3,7 +3,7 @@ from functools import reduce
 
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.quompiler import quompile
+from quompiler.qompile.quompiler import quompile
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 import numpy as np

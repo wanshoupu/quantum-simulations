@@ -1,7 +1,7 @@
 import argparse
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
-from quompiler.circuits.interpreter import CircuitInterp
+from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.construct.quompiler import quompile
 from quompiler.utils.mgen import random_unitary
 

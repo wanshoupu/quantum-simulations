@@ -2,21 +2,17 @@
 This module provide the compilation functionalities.
 If needed, it may make distinctions between target qubits and ancilla qubits.
 """
-from enum import Enum
 from typing import Union
 
 from numpy.typing import NDArray
 
-from quompiler.construct.bytecode import Bytecode
+from quompiler.circuits.circuit_builder import CircuitBuilder
+from quompiler.construct.bytecode import Bytecode, ReverseBytecodeIter
 from quompiler.construct.cgate import CtrlGate
-from quompiler.utils.mat_utils import validm2l
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
-
-
-class QompilerFlags(Enum):
-    pass
+from quompiler.utils.mat_utils import validm2l
 
 
 class Quompiler:
@@ -42,6 +38,29 @@ def _quompile(u: Union[UnitaryM, CtrlGate]) -> Bytecode:
 
 
 def _decompose(u: UnitaryM):
-    if validm2l(u.matrix):
+    if isinstance(u, UnitaryM):
+        mat = u.matrix
+    elif isinstance(u, CtrlGate):
+        return [u]
+    else:
+        raise TypeError("Unsupported unitary matrix")
+    if validm2l(mat):
         return cnot_decompose(u)
     return mat2l_decompose(u)
+
+
+class CircuitInterp:
+
+    def __init__(self, builder: CircuitBuilder):
+        self.builder = builder
+
+    def interpret(self, u: NDArray):
+        component = quompile(u)
+        for c in ReverseBytecodeIter(component):
+            m = c.data
+            if isinstance(m, CtrlGate):
+                # TODO for now draw single-qubit + controlled single-qubit as gate.
+                # TO BE breakdown further to elementary gates only
+                self.builder.build_gate(m)
+            elif isinstance(m, UnitaryM):
+                self.builder.build_group(m)

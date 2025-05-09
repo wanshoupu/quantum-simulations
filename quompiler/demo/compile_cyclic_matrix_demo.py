@@ -1,5 +1,5 @@
 from quompiler.circuits.cirq_circuit import CirqBuilder
-from quompiler.circuits.interpreter import CircuitInterp
+from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
 

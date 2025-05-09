@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import cirq
 from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
@@ -37,16 +37,18 @@ class CirqBuilder(CircuitBuilder):
         self.circuit = cirq.Circuit()
 
     @override
-    def get_univ_gate(self, m: UnitaryM) -> Optional[EigenGate]:
-        univ_gate = UnivGate.get(m.matrix)
-        if univ_gate:
-            return CirqBuilder.__UNIV_GATES[univ_gate]
+    def get_univ_gate(self, m: Union[UnitaryM, CtrlGate]) -> Optional[EigenGate]:
+        if isinstance(m, CtrlGate):
+            univ_gate = UnivGate.get(m.unitary.matrix)
+            if univ_gate:
+                return CirqBuilder.__UNIV_GATES[univ_gate]
+        return None
 
     @override
-    def build_gate(self, m: UnitaryM):
+    def build_gate(self, m: Union[UnitaryM, CtrlGate]):
         if isinstance(m, CtrlGate):
             # TODO add gate approximation
-            gate = self.get_univ_gate(m) or cirq.MatrixGate(m.matrix)
+            gate = self.get_univ_gate(m) or cirq.MatrixGate(m.unitary.matrix)
             target = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c is QType.TARGET]
             control = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c in QType.CONTROL0 | QType.CONTROL1]
             control_values = [c.base[0] for c in m.controller.controls if c in QType.CONTROL0 | QType.CONTROL1]

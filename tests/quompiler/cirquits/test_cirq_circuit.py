@@ -7,7 +7,7 @@ from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.construct.quompiler import quompile
+from quompiler.qompile.quompiler import quompile
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_control, random_unitary, cyclic_matrix
