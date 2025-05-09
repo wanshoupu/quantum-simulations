@@ -10,7 +10,7 @@ from quompiler.construct.bytecode import Bytecode, ReverseBytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.qompile.configure import CompilerConfig, QompilePlatform
+from quompiler.qompile.configure import QompilerConfig, QompilePlatform
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
 from quompiler.utils.mat_utils import validm2l
@@ -18,7 +18,7 @@ from quompiler.utils.mat_utils import validm2l
 
 class CircuitInterp:
 
-    def __init__(self, config: CompilerConfig):
+    def __init__(self, config: QompilerConfig):
         dim = config.device.dimension
         self.builder = QompilePlatform[config.target](dim)
 
@@ -59,8 +59,8 @@ class CircuitInterp:
             return cnot_decompose(u)
         return mat2l_decompose(u)
 
-    def finish(self) -> object:
-        return self.builder.finish()
+    def finish(self, optimized=False) -> object:
+        return self.builder.finish(optimized=optimized)
 
     def all_qubits(self):
         return self.builder.all_qubits()

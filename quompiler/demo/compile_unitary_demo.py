@@ -1,8 +1,9 @@
 import argparse
+import os
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.qompile.configure import QompilerConfig
 from quompiler.qompile.quompiler import CircuitInterp
-from quompiler.construct.quompiler import quompile
 from quompiler.utils.mgen import random_unitary
 
 if __name__ == '__main__':
@@ -13,11 +14,13 @@ if __name__ == '__main__':
     n = int(args.input)
     dim = 1 << n
     u = random_unitary(dim)
-    bc = quompile(u)
 
     builder = CirqBuilder(n)
-    CircuitInterp(CompilerConfig).interpret(u)
-    circuit = builder.finish(optimized=True)
+    cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
+    config = QompilerConfig.from_file(cfile)
+    interp = CircuitInterp(config)
+    interp.interpret(u)
+    circuit = interp.finish(optimized=True)
     print(circuit)
     moments = circuit.moments
     # for m in moments:

@@ -3,8 +3,7 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.circuits.cirq_circuit import CirqBuilder
-from quompiler.qompile.configure import CompilerConfig, DeviceConfig
+from quompiler.qompile.configure import QompilerConfig, DeviceConfig
 from quompiler.qompile.quompiler import CircuitInterp
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
@@ -18,7 +17,7 @@ def test_interp_identity_matrix():
     expected = np.eye(dim)
 
     device = DeviceConfig(dimension=dim)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
     interp.interpret(expected)
     circuit = interp.finish()
@@ -34,7 +33,7 @@ def test_interp_sing_qubit_circuit():
     expected = random_unitary(dim)
 
     device = DeviceConfig(dimension=dim)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute
@@ -60,7 +59,7 @@ def test_interp_cyclic_matrix(n, k, expected_moments):
     expected = cyclic_matrix(dim, k)
 
     device = DeviceConfig(dimension=dim)
-    config = CompilerConfig(source='foo', device=device)
+    config = QompilerConfig(source='foo', device=device)
     interp = CircuitInterp(config)
 
     # execute
@@ -83,7 +82,7 @@ def test_interp_random_unitary():
         expected = random_unitary(dim)
 
         device = DeviceConfig(dimension=dim)
-        config = CompilerConfig(source='foo', device=device)
+        config = QompilerConfig(source='foo', device=device)
         interp = CircuitInterp(config)
 
         # execute

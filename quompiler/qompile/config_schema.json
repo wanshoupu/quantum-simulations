@@ -31,12 +31,23 @@
         }
       }
     },
+    "device": {
+      "type": "object",
+      "properties": {
+        "dimension": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dimension"
+      ]
+    },
     "target": {
       "type": "string",
       "enum": [
-        "x86",
-        "arm",
-        "wasm"
+        "CIRQ",
+        "QISKIT",
+        "QUIMB"
       ]
     },
     "emit": {
@@ -52,6 +63,7 @@
     }
   },
   "required": [
-    "source"
+    "source",
+    "device"
   ]
 }

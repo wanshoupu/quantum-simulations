@@ -1,7 +1,10 @@
+import json
+import os
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Dict, Type
-import json
+from typing import Dict
+
+from jsonschema import validate, ValidationError
 
 from quompiler.circuits.circuit_builder import CircuitBuilder
 from quompiler.circuits.cirq_circuit import CirqBuilder
@@ -32,13 +35,13 @@ def qompile_platform_decoder(dct: dict):
 
 
 @dataclass
-class CompilerWarnings:
+class QompilerWarnings:
     all: bool = False
     as_errors: bool = False
 
     @staticmethod
-    def from_dict(data: Dict) -> "CompilerWarnings":
-        return CompilerWarnings(
+    def from_dict(data: Dict) -> "QompilerWarnings":
+        return QompilerWarnings(
             all=data.get("all", False),
             as_errors=data.get("as_errors", False)
         )
@@ -62,28 +65,29 @@ class DeviceConfig:
 
 
 @dataclass
-class CompilerConfig:
+class QompilerConfig:
     source: str
     output: str = "a.out"
     optimization: str = "O0"
     debug: bool = False
-    warnings: CompilerWarnings = field(default_factory=CompilerWarnings)
+    warnings: QompilerWarnings = field(default_factory=QompilerWarnings)
     target: str = "CIRQ"
     device: DeviceConfig = field(default_factory=DeviceConfig)
     emit: str = "obj"
     dump_ir: bool = False
 
     @staticmethod
-    def from_dict(data: Dict) -> "CompilerConfig":
-        return CompilerConfig(
+    def from_dict(data: Dict) -> "QompilerConfig":
+        return QompilerConfig(
             source=data["source"],
             output=data.get("output", "a.out"),
             optimization=data.get("optimization", "O0"),
             debug=data.get("debug", False),
-            warnings=CompilerWarnings.from_dict(data.get("warnings", {})),
+            warnings=QompilerWarnings.from_dict(data.get("warnings", {})),
             target=data.get("target", "CIRQ"),
             emit=data.get("emit", "obj"),
-            dump_ir=data.get("dump_ir", False)
+            dump_ir=data.get("dump_ir", False),
+            device=DeviceConfig.from_dict(data.get("device", {"dimension": 0})),
         )
 
     def to_dict(self) -> Dict:
@@ -95,5 +99,17 @@ class CompilerConfig:
         return json.dumps(self.to_dict(), indent=2)
 
     @staticmethod
-    def from_json(json_str: str) -> "CompilerConfig":
-        return CompilerConfig.from_dict(json.loads(json_str))
+    def from_file(json_file: str) -> "QompilerConfig":
+        data = json.load(open(json_file))
+        validate_config(data)
+        return QompilerConfig.from_dict(data)
+
+
+def validate_config(config_data: Dict):
+    schema_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "config_schema.json"))
+    assert os.path.exists(schema_file)
+    schema = json.load(open(schema_file))
+    try:
+        validate(instance=config_data, schema=schema)
+    except ValidationError as e:
+        raise ValueError(f"Invalid configuration: {e.message}")

@@ -1,0 +1,16 @@
+{
+  "source": "main.c",
+  "device": {
+    "dimension": 8
+  },
+  "output": "main.o",
+  "optimization": "O2",
+  "debug": true,
+  "warnings": {
+    "all": true,
+    "as_errors": false
+  },
+  "target": "CIRQ",
+  "emit": "obj",
+  "dump_ir": false
+}

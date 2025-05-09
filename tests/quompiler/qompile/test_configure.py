@@ -1,10 +1,11 @@
 import json
+import os.path
 
 import pytest
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.circuits.qiskit_circuit import QiskitBuilder
-from quompiler.qompile.configure import QompilePlatform, QompilePlatformEncoder, qompile_platform_decoder
+from quompiler.qompile.configure import QompilePlatform, QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig
 
 
 def test_QompilePlatform_instantiation():
@@ -34,3 +35,18 @@ def test_QompilePlatform_serde(name, expected):
     # verify
     actual = platform_obj["platform"]
     assert actual == expected
+
+
+def test_QompilerConfig_from_file():
+    fpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "test_compiler_config.json"))
+    assert os.path.exists(fpath)
+
+    # execute
+    config = QompilerConfig.from_file(fpath)
+
+    # verify
+    assert config is not None
+    assert isinstance(config, QompilerConfig)
+    assert config.device is not None
+    assert isinstance(config.device, DeviceConfig)
+    assert config.device.dimension == 8
