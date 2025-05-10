@@ -9,7 +9,7 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.qompile.configure import DeviceConfig, QompilerConfig
-from quompiler.qompile.quompiler import CircuitInterp
+from quompiler.qompile.quompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l, random_control, random_unitary, cyclic_matrix
 
@@ -77,10 +77,10 @@ def test_compile_cyclic_4_everything():
     u = cyclic_matrix(dim, 1)
     device = DeviceConfig(dimension=dim)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
-    bc = interp.quompile(u)
+    bc = interp.compile(u)
     # print(bc)
     assert 6 == len([a for a in BytecodeIter(bc)])
     # we need to revert the order bc the last element appears first in the circuit

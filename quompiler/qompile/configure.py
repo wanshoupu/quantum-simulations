@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass, field, asdict
-from enum import Enum
+from enum import Enum, IntFlag, IntEnum
 from typing import Dict
 
 from jsonschema import validate, ValidationError
@@ -10,6 +10,17 @@ from quompiler.circuits.circuit_builder import CircuitBuilder
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.circuits.qiskit_circuit import QiskitBuilder
 from quompiler.circuits.quimb_circuit import QuimbBuilder
+from quompiler.construct.qspace import Ancilla
+
+
+class EmitType(IntEnum):
+    UNITARY = 1  # any n-order unitary matrix
+    TWO_LEVEL = 2  # 2-level unitary matrix + control sequence
+    SINGLET = 3,  # unitary matrix on a single target qubit + control sequence
+    TOFFOLI = 4,  # no more than two qubits in the control sequence
+    ONE_CTRL = 5,  # no more than a single qubit in the control sequence
+    UNIV_GATE = 6,  # any of the one-letter universal gates
+    CLIFFORD_T = 7,  # Clifford + T gates only
 
 
 class QompilePlatform(Enum):
@@ -53,11 +64,17 @@ class QompilerWarnings:
 @dataclass
 class DeviceConfig:
     dimension: int
+    aspace: list[Ancilla]
 
     @staticmethod
     def from_dict(data: Dict) -> "DeviceConfig":
+        # qspace is the main space for computational qubits
+        qspace = data.get("qspace", 100)
+        # aspace is the space for ancilla qubits. The two are non-overlapping
+        aspace = data.get("aspace", qspace + 100)
         return DeviceConfig(
             dimension=data.get("dimension", 0),
+            aspace=[Ancilla(i) for i in range(aspace)],
         )
 
     def to_dict(self) -> Dict:
@@ -67,14 +84,16 @@ class DeviceConfig:
 @dataclass
 class QompilerConfig:
     source: str
-    output: str = "a.out"
-    optimization: str = "O0"
-    debug: bool = False
-    warnings: QompilerWarnings = field(default_factory=QompilerWarnings)
-    target: str = "CIRQ"
-    device: DeviceConfig = field(default_factory=DeviceConfig)
-    emit: str = "obj"
-    dump_ir: bool = False
+    output: str
+    optimization: str
+    debug: bool
+    warnings: QompilerWarnings
+    target: str
+    device: DeviceConfig
+    emit: str
+    dump_ir: bool
+    rtol: float
+    atol: float
 
     @staticmethod
     def from_dict(data: Dict) -> "QompilerConfig":
@@ -85,9 +104,11 @@ class QompilerConfig:
             debug=data.get("debug", False),
             warnings=QompilerWarnings.from_dict(data.get("warnings", {})),
             target=data.get("target", "CIRQ"),
-            emit=data.get("emit", "obj"),
+            emit=data.get("emit", "SINGLET"),
             dump_ir=data.get("dump_ir", False),
             device=DeviceConfig.from_dict(data.get("device", {"dimension": 0})),
+            rtol=float(data.get("rtol", "1.e-5")),
+            atol=float(data.get("atol", "1.e-8")),
         )
 
     def to_dict(self) -> Dict:

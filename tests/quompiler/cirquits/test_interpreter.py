@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from quompiler.qompile.configure import QompilerConfig, DeviceConfig
-from quompiler.qompile.quompiler import CircuitInterp
+from quompiler.qompile.quompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 
@@ -18,7 +18,7 @@ def test_interp_identity_matrix():
 
     device = DeviceConfig(dimension=dim)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
     interp.interpret(expected)
     circuit = interp.finish()
     qubits = circuit.all_qubits()
@@ -34,7 +34,7 @@ def test_interp_sing_qubit_circuit():
 
     device = DeviceConfig(dimension=dim)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
     interp.interpret(expected)
@@ -60,7 +60,7 @@ def test_interp_cyclic_matrix(n, k, expected_moments):
 
     device = DeviceConfig(dimension=dim)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
     interp.interpret(expected)
@@ -83,7 +83,7 @@ def test_interp_random_unitary():
 
         device = DeviceConfig(dimension=dim)
         config = QompilerConfig(source='foo', device=device)
-        interp = CircuitInterp(config)
+        interp = Qompiler(config)
 
         # execute
         interp.interpret(expected)

@@ -3,7 +3,7 @@ import os
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.qompile.configure import QompilerConfig
-from quompiler.qompile.quompiler import CircuitInterp
+from quompiler.qompile.quompiler import Qompiler
 from quompiler.utils.mgen import random_unitary
 
 if __name__ == '__main__':
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     builder = CirqBuilder(n)
     cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
     config = QompilerConfig.from_file(cfile)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
     interp.interpret(u)
     circuit = interp.finish(optimized=True)
     print(circuit)

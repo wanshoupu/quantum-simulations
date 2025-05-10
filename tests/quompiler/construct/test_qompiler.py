@@ -4,7 +4,7 @@ from functools import reduce
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.qompile.configure import DeviceConfig, QompilerConfig
-from quompiler.qompile.quompiler import CircuitInterp
+from quompiler.qompile.quompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 import numpy as np
@@ -18,10 +18,10 @@ def test_compile_identity_matrix():
     u = np.eye(dim)
     device = DeviceConfig(dimension=dim)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
-    bc = interp.quompile(u)
+    bc = interp.compile(u)
     assert bc is not None
     assert np.array_equal(bc.data.matrix, np.eye(bc.data.matrix.shape[0]))
     assert bc.children == []
@@ -33,10 +33,10 @@ def test_compile_sing_qubit_circuit():
     u = random_unitary(dim)
     device = DeviceConfig(dimension=dim)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
-    bc = interp.quompile(u)
+    bc = interp.compile(u)
     # print(bc)
     assert bc is not None
     assert 1 == len([a for a in BytecodeIter(bc)])
@@ -47,10 +47,10 @@ def test_compile_cyclic_8():
     u = cyclic_matrix(8, 1)
     device = DeviceConfig(dimension=8)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
-    bc = interp.quompile(u)
+    bc = interp.compile(u)
     # print(bc)
     assert bc is not None
     assert 18 == len([a for a in BytecodeIter(bc)])
@@ -63,10 +63,10 @@ def test_compile_cyclic_4():
     u = cyclic_matrix(4, 1)
     device = DeviceConfig(dimension=4)
     config = QompilerConfig(source='foo', device=device)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
-    bc = interp.quompile(u)
+    bc = interp.compile(u)
     # print(bc)
     assert bc is not None
     assert 6 == len([a for a in BytecodeIter(bc)])
@@ -84,10 +84,10 @@ def test_interp_random_unitary():
         u = random_unitary(dim)
         device = DeviceConfig(dimension=dim)
         config = QompilerConfig(source='foo', device=device)
-        interp = CircuitInterp(config)
+        interp = Qompiler(config)
 
         # execute
-        bc = interp.quompile(u)
+        bc = interp.compile(u)
         leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, CtrlGate)]
         v = reduce(lambda a, b: a @ b, leaves)
         assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'

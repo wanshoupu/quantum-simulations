@@ -10,9 +10,10 @@ from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.solovay import sk_approx
 
 
-def ctrl_decompose(gate: CtrlGate, aspace: Sequence[Ancilla] = None) -> list[CtrlGate]:
+def ctrl_decompose(gate: CtrlGate, clength=1, aspace: Sequence[Ancilla] = None) -> list[CtrlGate]:
     """
     Given a single-qubit CtrlGate, decompose its control sequences into no more than 2.
+    :param clength: maximum length of control sequence after the decomposition. 0 < clength. Default to 1
     :param gate: controlled unitary matrix as input
     :param aspace: ancilla qubit space (optional).
     :return: a list of CtrlGate objects.
@@ -24,13 +25,16 @@ def ctrl_decompose(gate: CtrlGate, aspace: Sequence[Ancilla] = None) -> list[Ctr
     return [gate]
 
 
-def std_decompose(gate: CtrlGate) -> list[CtrlStdGate]:
+def std_decompose(gate: CtrlGate, univ: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlStdGate]:
     """
     Given a single-qubit unitary matrix, decompose it into CtrlStdGate with or without controls.
-    :param gate: controlled unitary matrix as input
+    :param gate: controlled unitary matrix as input.
+    :param univ: The set of universal gates to be used for the decomposition.
+    :param rtol: optional, if provided, will be used as the relative tolerance parameter.
+    :param atol: optional, if provided, will be used as the absolute tolerance parameter.
     :return: a list of CtrlStdGate objects.
     """
-    seq = sk_approx(gate.inflate())
+    seq = sk_approx(gate.inflate(), rtol=rtol, atol=atol)
     return [CtrlStdGate(g, gate.controller, gate.qspace) for g in seq]
 
 

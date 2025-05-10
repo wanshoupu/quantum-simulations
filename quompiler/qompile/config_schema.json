@@ -53,9 +53,11 @@
     "emit": {
       "type": "string",
       "enum": [
-        "asm",
-        "obj",
-        "ir"
+        "CLIFFORD_T",
+        "UNIV_GATE",
+        "SINGLET",
+        "TWO_LEVEL",
+        "NDARRAY"
       ]
     },
     "dump_ir": {

@@ -1,7 +1,7 @@
 import os
 
 from quompiler.qompile.configure import DeviceConfig, QompilerConfig
-from quompiler.qompile.quompiler import CircuitInterp
+from quompiler.qompile.quompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
 
@@ -13,7 +13,7 @@ if __name__ == '__main__':
     print(formatter.tostr(u))
     cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
     config = QompilerConfig.from_file(cfile)
-    interp = CircuitInterp(config)
+    interp = Qompiler(config)
 
     # execute
     interp.interpret(u)

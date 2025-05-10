@@ -5,7 +5,7 @@ import pytest
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.circuits.qiskit_circuit import QiskitBuilder
-from quompiler.qompile.configure import QompilePlatform, QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig
+from quompiler.qompile.configure import QompilePlatform, QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig, EmitType
 
 
 def test_QompilePlatform_instantiation():
@@ -50,3 +50,9 @@ def test_QompilerConfig_from_file():
     assert config.device is not None
     assert isinstance(config.device, DeviceConfig)
     assert config.device.dimension == 8
+
+
+def test_EmitType_comparison():
+    lesser = EmitType.TWO_LEVEL
+    larger = EmitType.UNIV_GATE
+    assert lesser < larger
