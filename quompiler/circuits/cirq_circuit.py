@@ -9,6 +9,7 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
+from quompiler.qompile.configure import DeviceConfig
 
 
 def optimize(circuit: Circuit):
@@ -33,8 +34,11 @@ class CirqBuilder(CircuitBuilder):
         UnivGate.Z: cirq.Z,
     }
 
-    def __init__(self, dimension: int):
-        self.qubits = cirq.LineQubit.range(dimension)
+    @override
+    def __init__(self, deviceConfig: DeviceConfig):
+        self.qspace = cirq.LineQubit.range(*deviceConfig.qrange)
+        self.aspace = cirq.LineQubit.range(*deviceConfig.arange)
+
         self.circuit = cirq.Circuit()
 
     @override

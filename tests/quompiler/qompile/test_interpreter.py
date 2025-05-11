@@ -7,17 +7,17 @@ from quompiler.qompile.configure import QompilerConfig, DeviceConfig
 from quompiler.qompile.quompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
+from tests.quompiler.qompile.mock_fixtures import mock_config
 
 formatter = MatrixFormatter(precision=2)
 
 
-def test_interp_identity_matrix():
+def test_interp_identity_matrix(mocker):
     n = random.randint(1, 8)
     dim = 1 << n
     expected = np.eye(dim)
 
-    device = DeviceConfig(dimension=dim)
-    config = QompilerConfig(source='foo', device=device)
+    config = mock_config(mocker, dim)
     interp = Qompiler(config)
     interp.interpret(expected)
     circuit = interp.finish()
@@ -27,13 +27,11 @@ def test_interp_identity_matrix():
     assert circuit.to_text_diagram() == ''
 
 
-def test_interp_sing_qubit_circuit():
+def test_interp_sing_qubit_circuit(mocker):
     n = 1
     dim = 1 << n
     expected = random_unitary(dim)
-
-    device = DeviceConfig(dimension=dim)
-    config = QompilerConfig(source='foo', device=device)
+    config = mock_config(mocker, dim)
     interp = Qompiler(config)
 
     # execute
@@ -54,12 +52,11 @@ def test_interp_sing_qubit_circuit():
     (3, 1, 14),
     (3, 2, 11),
 ])
-def test_interp_cyclic_matrix(n, k, expected_moments):
+def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
     dim = 1 << n
     expected = cyclic_matrix(dim, k)
 
-    device = DeviceConfig(dimension=dim)
-    config = QompilerConfig(source='foo', device=device)
+    config = mock_config(mocker, dim)
     interp = Qompiler(config)
 
     # execute

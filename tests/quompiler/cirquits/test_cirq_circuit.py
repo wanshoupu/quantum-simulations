@@ -20,7 +20,7 @@ def test_create_builder():
     n = 3
     dim = 1 << n
     array = random_UnitaryM_2l(dim, 3, 4)
-    cirqC = CirqBuilder(n)
+    cirqC = CirqBuilder()
     cirqC.build_gate(array)
     phase = CtrlGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
@@ -40,7 +40,7 @@ def test_builder_standard_controlledm():
         control = random_control(n, 1)
         print(f'n={n}, control={control}')
         cu = CtrlGate(gate.matrix, control)
-        cirqC = CirqBuilder(n)
+        cirqC = CirqBuilder()
 
         # execution
         cirqC.build_gate(cu)
@@ -60,7 +60,7 @@ def test_builder_random_controlledm():
         core = 1 << control.count(QType.TARGET)
         m = random_unitary(core)
         cu = CtrlGate(m, control)
-        cirqC = CirqBuilder(n)
+        cirqC = CirqBuilder()
 
         # execution
         cirqC.build_gate(cu)
@@ -87,7 +87,7 @@ def test_compile_cyclic_4_everything():
     leaves = [a.data for a in BytecodeIter(bc) if isinstance(a.data, CtrlGate)][::-1]
     assert len(leaves) == 4
 
-    cirqC = CirqBuilder(n)
+    cirqC = CirqBuilder()
 
     # execution
     for cu in leaves:
@@ -119,7 +119,7 @@ def test_builder_custom_gate():
     expected = UnitaryM(dim, [dim - 2, dim - 1], random_unitary(2))
 
     # execute
-    builder = CirqBuilder(n)
+    builder = CirqBuilder()
     builder.build_gate(expected)
     circuit = builder.finish()
 

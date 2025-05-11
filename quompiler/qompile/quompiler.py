@@ -2,31 +2,60 @@
 This module provide the compilation functionalities.
 If needed, it may make distinctions between target qubits and ancilla qubits.
 """
-from typing import Union, Sequence
+from typing import Union
 
 from numpy.typing import NDArray
 
+from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.circuits.qiskit_circuit import QiskitBuilder
+from quompiler.circuits.quimb_circuit import QuimbBuilder
 from quompiler.construct.bytecode import Bytecode, ReverseBytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Ancilla
 from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.construct.types import UnivGate
+from quompiler.construct.types import UnivGate, EmitType, QompilePlatform
 from quompiler.construct.unitary import UnitaryM
-from quompiler.qompile.configure import QompilerConfig, QompilePlatform, EmitType
+from quompiler.qompile.configure import QompilerConfig
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
-from quompiler.utils.mat_utils import validm2l
 from quompiler.utils.std_decompose import ctrl_decompose, std_decompose
+
+
+def granularity(obj: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> EmitType:
+    """
+    Given an input obj, determine the granularity level if we are to return it as is.
+    The granularity is provided in terms of EmitType (see quompiler.construct.types.EmitType).
+    :param obj: input object of one of the types
+    :return: EmitType denoting the granularity
+    """
+    if isinstance(obj, CtrlStdGate):
+        if obj.gate in UnivGate.cliffordt():
+            return EmitType.CLIFFORD_T
+        return EmitType.UNIV_GATE
+
+    if isinstance(obj, CtrlGate):
+        if len(obj.control_qids()) == 1:
+            return EmitType.ONE_CTRL
+        if len(obj.control_qids()) == 2:
+            return EmitType.TWO_CTRL
+        if obj.issinglet():
+            return EmitType.SINGLET
+        return EmitType.MULTI_TARGET
+
+    if isinstance(obj, UnitaryM):
+        if obj.is2l():
+            return EmitType.TWO_LEVEL
+        return EmitType.UNITARY
+    return EmitType.INVALID
 
 
 class Qompiler:
 
     def __init__(self, config: QompilerConfig):
         self.config = config
-        dim = config.device.dimension
-        self.builder = QompilePlatform[config.target](dim)
+        self.builder = self.create_builder(QompilePlatform[config.target])
         self.emit = EmitType[config.emit]
-        self.aspace = config.device.aspace
+        self.aspace = [Ancilla(i) for i in range(*config.device.arange)]
 
     def interpret(self, u: NDArray):
         component = self.compile(u)
@@ -42,42 +71,44 @@ class Qompiler:
     def compile(self, u: NDArray) -> Bytecode:
         s = u.shape
         um = UnitaryM(s[0], tuple(range(s[0])), u)
-        return self._compile(um)
-
-    def _compile(self, u: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Bytecode:
-        if isinstance(u, UnitaryM):
-            coms = self._decompose_unitary(u)
-        elif isinstance(u, CtrlGate):
-            coms = self._decompose_ctrgate(u)
-        else:
-            coms = [u]
-        # creates Bytecode
-        if len(coms) == 1:
-            return Bytecode(coms[0])
-        root = Bytecode(u)
-        for c in coms:
-            child = self._compile(c)
-            root.append(child)
+        root = Bytecode(um)
+        self._decompose(root)
         return root
 
-    def _decompose_unitary(self, u: UnitaryM) -> Sequence[Union[CtrlGate, UnitaryM]]:
-        if EmitType.UNITARY < self.emit:
-            return mat2l_decompose(u)
+    def _decompose(self, root: Bytecode) -> None:
+        g = granularity(root.data)
+        if self.emit <= g:  # noop
+            return
 
-        if EmitType.TWO_LEVEL < self.emit and u.is2l():
-            return cnot_decompose(u)
-
-        return [u]
-
-    def _decompose(self, u: Union[UnitaryM, CtrlGate, CtrlStdGate]):
-
+        u = root.data
         if isinstance(u, UnitaryM):
-            mat = u.matrix
+            if g < EmitType.TWO_LEVEL:
+                coms = mat2l_decompose(u)
+            else:  # g < EmitType.SINGLET
+                coms = cnot_decompose(u)
+        elif isinstance(u, CtrlGate):
+            if g < EmitType.UNIV_GATE:
+                coms = std_decompose(u, list(UnivGate), self.config.rtol, self.config.atol)
+            elif g < EmitType.ONE_CTRL:
+                coms = ctrl_decompose(u, clength=1, aspace=self.aspace)
+            elif g < EmitType.TWO_CTRL:
+                coms = ctrl_decompose(u, clength=2, aspace=self.aspace)
+            elif g < EmitType.MULTI_TARGET:  # this should be impossible
+                coms = ctrl_decompose(u, clength=2, aspace=self.aspace)
+            else:
+                coms = std_decompose(u, UnivGate.cliffordt(), self.config.rtol, self.config.atol)
+        elif isinstance(u, CtrlStdGate):
+            if g < EmitType.CLIFFORD_T:
+                coms = std_decompose(u, UnivGate.cliffordt(), self.config.rtol, self.config.atol)
+            else:  # already at the finest granularity, CLIFFORD_T
+                coms = [u]
         else:
-            raise TypeError("Unsupported unitary matrix")
-        if validm2l(mat):
-            return cnot_decompose(u)
-        return mat2l_decompose(u)
+            raise ValueError(f"Unrecognized gate of type {type(g)}")
+        # decompose is noop
+        if len(coms) == 1:
+            return
+        for c in coms:
+            root.append(Bytecode(c))
 
     def finish(self, optimized=False) -> object:
         return self.builder.finish(optimized=optimized)
@@ -85,12 +116,11 @@ class Qompiler:
     def all_qubits(self):
         return self.builder.all_qubits()
 
-    def _decompose_ctrgate(self, gate: CtrlGate) -> Sequence[Union[CtrlGate, CtrlStdGate]]:
-        if EmitType.TOFFOLI < self.emit and 1 < len(gate.control_qids()):
-            clength = 2 if self.emit == EmitType.TOFFOLI else 1
-            return ctrl_decompose(gate, clength=clength, aspace=self.config.device.aspace)
-
-        if EmitType.UNIV_GATE <= self.emit:
-            ugs = list(UnivGate) if self.emit == EmitType.UNIV_GATE else [UnivGate.X, UnivGate.H, UnivGate.S, UnivGate.T]
-            return std_decompose(gate, ugs, rtol=self.config.rtol, atol=self.config.atol)
-        return [gate]
+    def create_builder(self, platform: QompilePlatform):
+        if platform == QompilePlatform.CIRQ:
+            return CirqBuilder(self.config.device)
+        if platform == QompilePlatform.QISKIT:
+            return QiskitBuilder(self.config.device)
+        if platform == QompilePlatform.QUIMB:
+            return QuimbBuilder(self.config.device)
+        raise NotImplementedError(f"Unsupported platform: {platform}")

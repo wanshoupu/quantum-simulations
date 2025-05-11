@@ -40,19 +40,13 @@ class QompilerWarnings:
 @dataclass
 class DeviceConfig:
     """
-    :param dimension:
-    :param qspace: is the main space for computational qubits
     :param aspace: is the space for ancilla qubits. The two are non-overlapping
     """
-    dimension: int
-    qrange: list[int]
     arange: list[int]
 
     @staticmethod
     def from_dict(data: Dict) -> "DeviceConfig":
         return DeviceConfig(
-            dimension=data.get("dimension", 0),
-            qrange=data.get("arange", [0, 100]),
             arange=data.get("arange", [100, 200]),
         )
 

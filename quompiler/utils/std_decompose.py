@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -25,11 +25,11 @@ def ctrl_decompose(gate: CtrlGate, clength=1, aspace: Sequence[Ancilla] = None) 
     return [gate]
 
 
-def std_decompose(gate: CtrlGate, univ: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlStdGate]:
+def std_decompose(gate: Union[CtrlStdGate, CtrlGate], univset: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlStdGate]:
     """
     Given a single-qubit unitary matrix, decompose it into CtrlStdGate with or without controls.
     :param gate: controlled unitary matrix as input.
-    :param univ: The set of universal gates to be used for the decomposition.
+    :param univset: The set of universal gates to be used for the decomposition.
     :param rtol: optional, if provided, will be used as the relative tolerance parameter.
     :param atol: optional, if provided, will be used as the absolute tolerance parameter.
     :return: a list of CtrlStdGate objects.

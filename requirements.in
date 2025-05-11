@@ -11,3 +11,4 @@ qiskit
 physics-tenpy
 quimb
 pytest
+pytest-mock

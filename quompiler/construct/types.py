@@ -39,6 +39,10 @@ class UnivGate(Enum):
         """
         return expm(-.5j * theta * self.matrix)
 
+    @staticmethod
+    def cliffordt():
+        return [UnivGate.X, UnivGate.H, UnivGate.S, UnivGate.T]
+
 
 class QType(IntFlag):
     """
@@ -70,6 +74,7 @@ class EmitType(IntEnum):
 
     The granularity is provided in terms as follows:
     """
+    INVALID = 0
     UNITARY = 0x12  # any n-order UnitaryM with more than 2 non-identity rows/cols
     TWO_LEVEL = 0x16  # any UnitaryM with no more than 2 non-identity rows/cols
     MULTI_TARGET = 0x22,  # CtrlGate and with more than one qubit in target

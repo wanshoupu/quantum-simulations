@@ -8,13 +8,14 @@ from typing_extensions import override
 from quompiler.circuits.circuit_builder import CircuitBuilder
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
+from quompiler.qompile.configure import DeviceConfig
 from quompiler.utils.mat_utils import validm2l
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
 
 
 class QiskitBuilder(CircuitBuilder):
-    def __init__(self, dimension: int):
+    def __init__(self, deviceConfig: DeviceConfig):
         self.qubits = []
         self.circuit = qiskit.QuantumCircuit()
 

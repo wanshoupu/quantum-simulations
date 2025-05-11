@@ -9,15 +9,16 @@ from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 import numpy as np
 
+from tests.quompiler.qompile.mock_fixtures import mock_config
+
 formatter = MatrixFormatter(precision=2)
 
 
-def test_compile_identity_matrix():
+def test_compile_identity_matrix(mocker):
     n = 3
     dim = 1 << n
     u = np.eye(dim)
-    device = DeviceConfig(dimension=dim)
-    config = QompilerConfig(source='foo', device=device)
+    config = mock_config(mocker, dim)
     interp = Qompiler(config)
 
     # execute
@@ -27,12 +28,11 @@ def test_compile_identity_matrix():
     assert bc.children == []
 
 
-def test_compile_sing_qubit_circuit():
+def test_compile_sing_qubit_circuit(mocker):
     n = 1
     dim = 1 << n
     u = random_unitary(dim)
-    device = DeviceConfig(dimension=dim)
-    config = QompilerConfig(source='foo', device=device)
+    config = mock_config(mocker, dim)
     interp = Qompiler(config)
 
     # execute

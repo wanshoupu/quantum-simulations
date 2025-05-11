@@ -270,6 +270,10 @@ pyquil==3.5.4
 pyrsistent==0.20.0
     # via jsonschema
 pytest==8.3.5
+    # via
+    #   -r requirements.in
+    #   pytest-mock
+pytest-mock==3.14.0
     # via -r requirements.in
 python-dateutil==2.9.0.post0
     # via

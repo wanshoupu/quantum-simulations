@@ -5,15 +5,16 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
+from quompiler.qompile.configure import DeviceConfig
 
 
 class CircuitBuilder(ABC):
 
     @abstractmethod
-    def __init__(self, dimension: int):
+    def __init__(self, deviceConfig: DeviceConfig):
         """
         Create a circuit builder of a linear array of qubits.
-        :param dimension: the total number of qubits.
+        :param deviceConfig: the device configuration.
         """
         pass
 

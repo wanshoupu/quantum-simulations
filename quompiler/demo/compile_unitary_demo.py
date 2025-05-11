@@ -15,7 +15,7 @@ if __name__ == '__main__':
     dim = 1 << n
     u = random_unitary(dim)
 
-    builder = CirqBuilder(n)
+    builder = CirqBuilder()
     cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
     config = QompilerConfig.from_file(cfile)
     interp = Qompiler(config)
