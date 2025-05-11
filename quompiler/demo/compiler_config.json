@@ -11,6 +11,6 @@
     "as_errors": false
   },
   "target": "CIRQ",
-  "emit": "obj",
+  "emit": "SINGLET",
   "dump_ir": false
 }

@@ -36,6 +36,15 @@
       "properties": {
         "dimension": {
           "type": "integer"
+        },
+        "arange": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
         }
       },
       "required": [
@@ -53,12 +62,23 @@
     "emit": {
       "type": "string",
       "enum": [
-        "CLIFFORD_T",
-        "UNIV_GATE",
-        "SINGLET",
+        "UNITARY",
         "TWO_LEVEL",
-        "NDARRAY"
+        "SINGLET",
+        "MULTI_TARGET",
+        "TWO_CTRL",
+        "ONE_CTRL",
+        "UNIV_GATE",
+        "CLIFFORD_T"
       ]
+    },
+    "rtol": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "atol": {
+      "type": "number",
+      "exclusiveMinimum": 0
     },
     "dump_ir": {
       "type": "boolean"

@@ -3,19 +3,13 @@ import os.path
 
 import pytest
 
-from quompiler.circuits.cirq_circuit import CirqBuilder
-from quompiler.circuits.qiskit_circuit import QiskitBuilder
-from quompiler.qompile.configure import QompilePlatform, QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig, EmitType
-
-
-def test_QompilePlatform_instantiation():
-    builder = QompilePlatform.CIRQ(dimension=3)
-    assert builder is not None
+from quompiler.construct.types import EmitType, QompilePlatform
+from quompiler.qompile.configure import QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig
 
 
 @pytest.mark.parametrize("name, builder", [
-    ['CIRQ', CirqBuilder],
-    ['QISKIT', QiskitBuilder],
+    ['CIRQ', 'CirqBuilder'],
+    ['QISKIT', 'QiskitBuilder'],
 ])
 def test_QompilePlatform_get_by_name(name, builder):
     t = QompilePlatform[name]

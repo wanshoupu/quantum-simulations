@@ -1,7 +1,11 @@
 {
   "source": "main.c",
   "device": {
-    "dimension": 8
+    "dimension": 8,
+    "aspace": [
+      10,
+      20
+    ]
   },
   "output": "main.o",
   "optimization": "O2",
@@ -11,6 +15,8 @@
     "as_errors": false
   },
   "target": "QUIMB",
-  "emit": "obj",
+  "emit": "UNIV_GATE",
+  "rtol": 1e-5,
+  "atol": 1e-5,
   "dump_ir": false
 }

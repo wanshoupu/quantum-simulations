@@ -1,35 +1,11 @@
 import json
 import os
-from dataclasses import dataclass, field, asdict
-from enum import Enum, IntFlag, IntEnum
+from dataclasses import dataclass, asdict
 from typing import Dict
 
-from jsonschema import validate, ValidationError
+from jsonschema import validate
 
-from quompiler.circuits.circuit_builder import CircuitBuilder
-from quompiler.circuits.cirq_circuit import CirqBuilder
-from quompiler.circuits.qiskit_circuit import QiskitBuilder
-from quompiler.circuits.quimb_circuit import QuimbBuilder
-from quompiler.construct.qspace import Ancilla
-
-
-class EmitType(IntEnum):
-    UNITARY = 1  # any n-order unitary matrix
-    TWO_LEVEL = 2  # 2-level unitary matrix + control sequence
-    SINGLET = 3,  # unitary matrix on a single target qubit + control sequence
-    TOFFOLI = 4,  # no more than two qubits in the control sequence
-    ONE_CTRL = 5,  # no more than a single qubit in the control sequence
-    UNIV_GATE = 6,  # any of the one-letter universal gates
-    CLIFFORD_T = 7,  # Clifford + T gates only
-
-
-class QompilePlatform(Enum):
-    CIRQ = CirqBuilder
-    QISKIT = QiskitBuilder
-    QUIMB = QuimbBuilder
-
-    def __call__(self, dimension: int) -> CircuitBuilder:
-        return self.value(dimension)
+from quompiler.construct.types import QompilePlatform
 
 
 class QompilePlatformEncoder(json.JSONEncoder):
@@ -63,18 +39,21 @@ class QompilerWarnings:
 
 @dataclass
 class DeviceConfig:
+    """
+    :param dimension:
+    :param qspace: is the main space for computational qubits
+    :param aspace: is the space for ancilla qubits. The two are non-overlapping
+    """
     dimension: int
-    aspace: list[Ancilla]
+    qrange: list[int]
+    arange: list[int]
 
     @staticmethod
     def from_dict(data: Dict) -> "DeviceConfig":
-        # qspace is the main space for computational qubits
-        qspace = data.get("qspace", 100)
-        # aspace is the space for ancilla qubits. The two are non-overlapping
-        aspace = data.get("aspace", qspace + 100)
         return DeviceConfig(
             dimension=data.get("dimension", 0),
-            aspace=[Ancilla(i) for i in range(aspace)],
+            qrange=data.get("arange", [0, 100]),
+            arange=data.get("arange", [100, 200]),
         )
 
     def to_dict(self) -> Dict:
@@ -92,11 +71,13 @@ class QompilerConfig:
     device: DeviceConfig
     emit: str
     dump_ir: bool
+    gates: list[str]
     rtol: float
     atol: float
 
     @staticmethod
     def from_dict(data: Dict) -> "QompilerConfig":
+        validate_config(data)
         return QompilerConfig(
             source=data["source"],
             output=data.get("output", "a.out"),
@@ -107,6 +88,7 @@ class QompilerConfig:
             emit=data.get("emit", "SINGLET"),
             dump_ir=data.get("dump_ir", False),
             device=DeviceConfig.from_dict(data.get("device", {"dimension": 0})),
+            gates=data.get("gates", "IXYZHST".split()),
             rtol=float(data.get("rtol", "1.e-5")),
             atol=float(data.get("atol", "1.e-8")),
         )
@@ -122,15 +104,11 @@ class QompilerConfig:
     @staticmethod
     def from_file(json_file: str) -> "QompilerConfig":
         data = json.load(open(json_file))
-        validate_config(data)
         return QompilerConfig.from_dict(data)
 
 
-def validate_config(config_data: Dict):
+def validate_config(data: Dict):
     schema_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "config_schema.json"))
     assert os.path.exists(schema_file)
     schema = json.load(open(schema_file))
-    try:
-        validate(instance=config_data, schema=schema)
-    except ValidationError as e:
-        raise ValueError(f"Invalid configuration: {e.message}")
+    validate(instance=data, schema=schema)

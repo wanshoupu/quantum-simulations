@@ -1,4 +1,4 @@
-from enum import Enum, IntFlag
+from enum import Enum, IntFlag, IntEnum
 from typing import Optional
 
 import numpy as np
@@ -62,3 +62,31 @@ class QType(IntFlag):
         if self.name:
             return self.name
         return repr(int(self))
+
+
+class EmitType(IntEnum):
+    """
+    This enum specifies the granularity level of unitary operator.
+
+    The granularity is provided in terms as follows:
+    """
+    UNITARY = 0x12  # any n-order UnitaryM with more than 2 non-identity rows/cols
+    TWO_LEVEL = 0x16  # any UnitaryM with no more than 2 non-identity rows/cols
+    MULTI_TARGET = 0x22,  # CtrlGate and with more than one qubit in target
+    SINGLET = 0x26,  # CtrlGate and with no more than one qubit in target
+    TWO_CTRL = 0x2a,  # CtrlGate and with no more than two qubit in control sequence
+    ONE_CTRL = 0x2c,  # CtrlGate and with no more than one qubit in control sequence
+    UNIV_GATE = 0x32,  # any CtrlStdGate
+    CLIFFORD_T = 0x38,  # CtrlStdGate and the gate is among Clifford + T gates, namely, {X, H, S, T}
+
+    def __repr__(self):
+        return self.name
+
+
+class QompilePlatform(Enum):
+    CIRQ = 'CirqBuilder'
+    QISKIT = 'QiskitBuilder'
+    QUIMB = 'QuimbBuilder'
+
+    def __repr__(self):
+        return self.name
