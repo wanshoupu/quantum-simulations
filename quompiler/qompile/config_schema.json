@@ -62,12 +62,12 @@
     "emit": {
       "type": "string",
       "enum": [
+        "INVALID",
         "UNITARY",
         "TWO_LEVEL",
         "SINGLET",
         "MULTI_TARGET",
-        "TWO_CTRL",
-        "ONE_CTRL",
+        "MULTI_CTRL",
         "UNIV_GATE",
         "CLIFFORD_T"
       ]

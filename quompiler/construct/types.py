@@ -75,13 +75,12 @@ class EmitType(IntEnum):
     The granularity is provided in terms as follows:
     """
     INVALID = 0
-    UNITARY = 0x12  # any n-order UnitaryM with more than 2 non-identity rows/cols
+    UNITARY = 0x12  # any n-order UnitaryM
     TWO_LEVEL = 0x16  # any UnitaryM with no more than 2 non-identity rows/cols
     MULTI_TARGET = 0x22,  # CtrlGate and with more than one qubit in target
-    SINGLET = 0x26,  # CtrlGate and with no more than one qubit in target
-    TWO_CTRL = 0x2a,  # CtrlGate and with no more than two qubit in control sequence
-    ONE_CTRL = 0x2c,  # CtrlGate and with no more than one qubit in control sequence
-    UNIV_GATE = 0x32,  # any CtrlStdGate
+    SINGLET = 0x26,  # CtrlGate and with one-qubit target
+    MULTI_CTRL = 0x2a,  # CtrlGate with single target and multiple qubits in control sequence
+    UNIV_GATE = 0x32,  # any CtrlStdGate with any UnivGate as the operator
     CLIFFORD_T = 0x38,  # CtrlStdGate and the gate is among Clifford + T gates, namely, {X, H, S, T}
 
     def __repr__(self):
