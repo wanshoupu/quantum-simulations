@@ -193,6 +193,22 @@ def test_sorted_8x8():
     assert np.allclose(actual, expected)
 
 
+def test_sorted_by_ctrl():
+    n = random.randint(1, 4)
+    t = random.randint(1, n)
+    m = random_unitary(1 << t)
+    controls = random_control(n, t)
+    qids = np.random.choice(100, size=n, replace=False)
+    cu = CtrlGate(m, controls, qids)
+
+    # execute
+    sorting = np.argsort(cu.controller)
+    sorted_cu = cu.sorted(sorting=sorting)
+    assert sorted_cu.controller[:t] == [QType.TARGET] * t
+    ctrls = sorted_cu.controller[t:]
+    assert all(c in QType(0x110) for c in ctrls)
+
+
 def test_expand():
     m = random_unitary(2)
     controls = (QType.TARGET, QType.CONTROL1)
