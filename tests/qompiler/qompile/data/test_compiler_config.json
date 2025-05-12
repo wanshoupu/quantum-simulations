@@ -1,22 +1,18 @@
 {
-  "source": "main.c",
-  "device": {
-    "dimension": 8,
-    "aspace": [
-      10,
-      20
-    ]
-  },
-  "output": "main.o",
-  "optimization": "O2",
+  "source": "main.qasm",
+  "output": "program.out",
+  "optimization": "O3",
   "debug": true,
   "warnings": {
     "all": true,
     "as_errors": false
   },
-  "target": "QUIMB",
-  "emit": "UNIV_GATE",
+  "device": {
+    "ancilla_offset": 100
+  },
+  "target": "CIRQ",
+  "emit": "SINGLET",
   "rtol": 1e-5,
-  "atol": 1e-5,
-  "dump_ir": false
+  "atol": 1e-8,
+  "dump_ir": true
 }

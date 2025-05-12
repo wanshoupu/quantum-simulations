@@ -34,21 +34,12 @@
     "device": {
       "type": "object",
       "properties": {
-        "dimension": {
+        "ancilla_offset": {
           "type": "integer"
-        },
-        "arange": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "exclusiveMinimum": 0
-          },
-          "minItems": 2,
-          "maxItems": 2
         }
       },
       "required": [
-        "dimension"
+        "ancilla_offset"
       ]
     },
     "target": {

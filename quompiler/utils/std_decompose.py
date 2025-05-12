@@ -7,21 +7,48 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Ancilla
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate, QType
+from quompiler.qompile.device import QDevice
 from quompiler.utils.solovay import sk_approx
 
 
-def ctrl_decompose(gate: CtrlGate, clength=1, aspace: Sequence[Ancilla] = None) -> list[CtrlGate]:
+def toffoli(ctrs: Sequence[QType], qubits: Sequence[int]) -> list[CtrlStdGate]:
+    return [CtrlStdGate(UnivGate.X, ctrs, qubits)]
+
+
+def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]:
     """
     Given a single-qubit CtrlGate, decompose its control sequences into no more than 2.
-    :param clength: maximum length of control sequence after the decomposition. 0 < clength. Default to 1
+    :param clength: maximum length of control sequence after the decomposition. 0<clength<=2. Default to 1
     :param gate: controlled unitary matrix as input
-    :param aspace: ancilla qubit space (optional).
+    :param device: a quantum device in charge of computational and/or ancilla qubit allocations.
     :return: a list of CtrlGate objects.
     """
-    if len(gate.control_qids()) == 1:
-        pass
-    if len(gate.control_qids()) == 2:
-        pass
+    assert 1 <= clength <= 2
+
+    # sort by controls
+    gate = gate.sorted(np.argsort(list(gate.controller)))
+    ctrl_seq = list(gate.controller)
+    qspace = gate.qspace()
+    assert len(ctrl_seq) == len(qspace)
+    if len(ctrl_seq) <= clength:
+        return [gate]
+    an = len(ctrl_seq) - 1
+    aspace = device.alloc_ancilla(an)
+    prev_ctrl = [ctrl_seq[0]]
+    prev_qubit = [qspace[0]]
+    coms = []
+    for i in range(1, len(ctrl_seq)):
+        cnot_qubits = [prev_qubit, qspace[i], aspace[i - 1]]
+        cnot_ctrl = [prev_ctrl, ctrl_seq[i], QType.CONTROL1]
+        prev_ctrl = cnot_ctrl[-1]
+        prev_qubit = cnot_qubits[-1]
+
+        if clength == 1:
+            coms.append(CtrlStdGate(UnivGate.X, cnot_ctrl, cnot_qubits))
+        else:  # clength == 2
+            toff = toffoli(cnot_ctrl, cnot_qubits)
+            coms.extend(toff)
+    core = CtrlGate(gate.unitary.matrix,[])
     return [gate]
 
 

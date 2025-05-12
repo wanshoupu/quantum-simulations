@@ -1,16 +1,19 @@
 {
-  "source": "main.c",
-  "device": {
-    "dimension": 8
-  },
-  "output": "main.o",
-  "optimization": "O2",
+  "source": "main.qasm",
+  "output": "program.out",
+  "optimization": "O3",
   "debug": true,
   "warnings": {
     "all": true,
-    "as_errors": false
+    "as_errors": true
+  },
+  "device": {
+    "qrange": [1, 4],
+    "arange": [2, 5]
   },
   "target": "CIRQ",
   "emit": "SINGLET",
-  "dump_ir": false
+  "rtol": 1e-6,
+  "atol": 1e-9,
+  "dump_ir": true
 }

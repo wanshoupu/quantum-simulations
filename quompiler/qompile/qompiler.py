@@ -11,11 +11,11 @@ from quompiler.circuits.qiskit_circuit import QiskitBuilder
 from quompiler.circuits.quimb_circuit import QuimbBuilder
 from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.qspace import Ancilla
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import QompilePlatform, EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.qompile.configure import QompilerConfig
+from quompiler.qompile.device import QDevice
 from quompiler.utils.granularity import granularity
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.mat2l_decompose import mat2l_decompose
@@ -27,8 +27,8 @@ class Qompiler:
     def __init__(self, config: QompilerConfig):
         self.config = config
         self.builder = self.create_builder(QompilePlatform[config.target])
+        self.device = QDevice(config.device)
         self.emit = EmitType[config.emit]
-        self.aspace = [Ancilla(i) for i in range(*config.device.arange)]
 
     def interpret(self, u: NDArray):
         component = self.compile(u)
@@ -46,18 +46,18 @@ class Qompiler:
 
     def _decompose(self, data: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Bytecode:
         root = Bytecode(data)
-        g = granularity(data)
-        if self.emit <= g:  # noop
+        grain = granularity(data)
+        if self.emit <= grain:  # noop
             return root
 
         if isinstance(data, UnitaryM):
-            constituents = self._decompose_unitary(g, data)
+            constituents = self._decompose_unitary(grain, data)
         elif isinstance(data, CtrlGate):
-            constituents = self._decompose_ctrl(g, data)
+            constituents = self._decompose_ctrl(grain, data)
         elif isinstance(data, CtrlStdGate):
             constituents = self._decompose_std(data)
         else:
-            raise ValueError(f"Unrecognized gate of type {type(g)}")
+            raise ValueError(f"Unrecognized gate of type {type(grain)}")
         # decompose is noop
         if len(constituents) == 1 and constituents[0] == data:
             return root
@@ -65,24 +65,24 @@ class Qompiler:
             root.append(self._decompose(c))
         return root
 
-    def _decompose_std(self, u):
+    def _decompose_std(self, gate: Union[CtrlGate, CtrlStdGate]) -> list[CtrlStdGate]:
         std_gates = UnivGate.cliffordt() if self.emit == EmitType.CLIFFORD_T else list(UnivGate)
-        constituents = std_decompose(u, std_gates, self.config.rtol, self.config.atol)
+        constituents = std_decompose(gate, std_gates, self.config.rtol, self.config.atol)
         return constituents
 
-    def _decompose_ctrl(self, grain, gate):
+    def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> list[Union[CtrlGate, CtrlStdGate]]:
         # EmitType.MULTI_TARGET is disabled atm
         # if g < EmitType.MULTI_TARGET:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
         if grain < EmitType.CTRL_PRUNED:
-            result = ctrl_decompose(gate, clength=1, aspace=self.aspace)
+            result = ctrl_decompose(gate, self.device, clength=1)
         else:
             result = self._decompose_std(gate)
         return result
 
     @staticmethod
-    def _decompose_unitary(g, u):
-        if g < EmitType.TWO_LEVEL:
+    def _decompose_unitary(grain: EmitType, u: UnitaryM) -> list[Union[UnitaryM, CtrlGate]]:
+        if grain < EmitType.TWO_LEVEL:
             result = mat2l_decompose(u)
         else:
             assert u.is2l()

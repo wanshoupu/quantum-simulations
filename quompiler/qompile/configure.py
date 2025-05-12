@@ -40,14 +40,15 @@ class QompilerWarnings:
 @dataclass
 class DeviceConfig:
     """
-    :param aspace: is the space for ancilla qubits. The two are non-overlapping
+    :param ancilla_offset: is the space offset for ancilla qubits so that
+    computational qubits are in the range [0, offset] and ancilla qubits are [offset, inf].
     """
-    arange: list[int]
+    ancilla_offset: int
 
     @staticmethod
     def from_dict(data: Dict) -> "DeviceConfig":
         return DeviceConfig(
-            arange=data.get("arange", [100, 200]),
+            ancilla_offset=data.get("ancilla_offset", 1),
         )
 
     def to_dict(self) -> Dict:
@@ -81,7 +82,7 @@ class QompilerConfig:
             target=data.get("target", "CIRQ"),
             emit=data.get("emit", "SINGLET"),
             dump_ir=data.get("dump_ir", False),
-            device=DeviceConfig.from_dict(data.get("device", {"dimension": 0})),
+            device=DeviceConfig.from_dict(data.get("device")),
             gates=data.get("gates", "IXYZHST".split()),
             rtol=float(data.get("rtol", "1.e-5")),
             atol=float(data.get("atol", "1.e-8")),
