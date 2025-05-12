@@ -80,6 +80,9 @@ class QSpace:
     def __getitem__(self, index: int):
         return self.qids[index]
 
+    def __iter__(self):
+        return iter(self.qids)
+
     def map_all(self, indexes: Sequence[int]) -> list[int]:
         """
         Convenient method built on top of self.map

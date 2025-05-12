@@ -97,6 +97,9 @@ class Qontroller:
         rfactors = list(map(lambda a: 1 << int(a), cumsum[np.array(self.controls) == QType.IDLER]))
         return rfactors
 
+    def is_sorted(self) -> bool:
+        return all(self.controls[i - 1] < self.controls[i] for i in range(1, len(self.controls)))
+
 
 def core2control(bitlength: int, core: Sequence) -> Tuple[QType, ...]:
     """
