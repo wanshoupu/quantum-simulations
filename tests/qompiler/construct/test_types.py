@@ -77,10 +77,10 @@ def test_qtype_empty_state():
 
 
 @pytest.mark.parametrize("eid, qtype", [
-    [1, QType.IDLER],
-    [2, QType.TARGET],
-    [4, QType.CONTROL0],
-    [8, QType.CONTROL1],
+    [1, QType.TARGET],
+    [2, QType.CONTROL0],
+    [4, QType.CONTROL1],
+    [8, QType.IDLER],
 ])
 def test_qtype_id(eid, qtype):
     singleton = QType(value=eid)
@@ -88,11 +88,11 @@ def test_qtype_id(eid, qtype):
 
 
 @pytest.mark.parametrize("tid, qtypes", [
-    [0b11, [QType.IDLER, QType.TARGET]],
-    [0b101, [QType.IDLER, QType.CONTROL0]],
-    [0b110, [QType.TARGET, QType.CONTROL0]],
-    [0b111, [QType.CONTROL0, QType.IDLER, QType.TARGET]],
-    [0b1100, [QType.CONTROL1, QType.CONTROL0]],
+    [0b1001, [QType.IDLER, QType.TARGET]],
+    [0b1010, [QType.IDLER, QType.CONTROL0]],
+    [0b11, [QType.TARGET, QType.CONTROL0]],
+    [0b1011, [QType.CONTROL0, QType.IDLER, QType.TARGET]],
+    [0b110, [QType.CONTROL1, QType.CONTROL0]],
 ])
 def test_qtype_combinations(tid, qtypes):
     combo = QType(value=tid)

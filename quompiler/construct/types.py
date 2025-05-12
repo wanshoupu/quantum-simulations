@@ -51,10 +51,10 @@ class QType(IntFlag):
     EXTENSION = IDLER | TARGET, is the extended matrix combining IDLER bits and TARGET bits
     CONTROL = CONTROL0 | CONTROL1, is the control bits
     """
-    IDLER = (1, (0, 1))  # the non-interactive bystander. they are neither target nor control.
-    TARGET = (2, (0, 1))  # target qubit
-    CONTROL0 = (4, (0,))  # control qubit with activation value 0 (type 0 control)
-    CONTROL1 = (8, (1,))  # control qubit with value activation 1 (type 1 control)
+    TARGET = (1, (0, 1))  # target qubit
+    CONTROL0 = (2, (0,))  # control qubit with activation value 0 (type 0 control)
+    CONTROL1 = (4, (1,))  # control qubit with value activation 1 (type 1 control)
+    IDLER = (8, (0, 1))  # the non-interactive bystander. they are neither target nor control.
 
     def __new__(cls, value, base):
         obj = int.__new__(cls, value)
