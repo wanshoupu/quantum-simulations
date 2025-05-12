@@ -37,12 +37,12 @@ def granularity(obj: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> EmitType:
         if not obj.issinglet():
             return EmitType.MULTI_TARGET
         if 1 < len(obj.control_qids()):
-            return EmitType.MULTI_CTRL
+            return EmitType.CTRL_PRUNED
         return EmitType.SINGLET
 
     if isinstance(obj, CtrlStdGate):
         if 1 < len(obj.control_qids()):
-            return EmitType.MULTI_CTRL
+            return EmitType.CTRL_PRUNED
         if obj.gate in UnivGate.cliffordt():
             return EmitType.CLIFFORD_T
         return EmitType.UNIV_GATE
@@ -104,7 +104,7 @@ class Qompiler:
         # EmitType.MULTI_TARGET is disabled atm
         # if g < EmitType.MULTI_TARGET:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
-        if grain < EmitType.MULTI_CTRL:
+        if grain < EmitType.CTRL_PRUNED:
             result = ctrl_decompose(gate, clength=1, aspace=self.aspace)
         else:
             result = self._decompose_std(gate)

@@ -67,7 +67,7 @@
         "TWO_LEVEL",
         "SINGLET",
         "MULTI_TARGET",
-        "MULTI_CTRL",
+        "CTRL_PRUNED",
         "UNIV_GATE",
         "CLIFFORD_T"
       ]

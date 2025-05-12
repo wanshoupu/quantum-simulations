@@ -46,18 +46,18 @@ def test_granularity_multi_ctrl():
     ctrl = random_control(n, 1)
     u = random_CtrlGate(ctrl)
     grain = granularity(u)
-    assert grain == EmitType.MULTI_CTRL
+    assert grain == EmitType.CTRL_PRUNED
 
 
-def test_granularity_std_multi_ctrl():
+def test_granularity_std_ctrl_pruned():
     """
-    This test demo that CtrlStdGate are classified as EmitType.MULTI_CTRL
+    This test demo that CtrlStdGate are classified as EmitType.CTRL_PRUNED
     """
     n = 3
     ctrl = random_control(n, 1)
     u = random_CtrlGate(ctrl)
     grain = granularity(u)
-    assert grain == EmitType.MULTI_CTRL
+    assert grain == EmitType.CTRL_PRUNED
 
 
 def test_granularity_std_univ_gate():
