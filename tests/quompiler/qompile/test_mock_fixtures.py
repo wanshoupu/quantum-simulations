@@ -2,8 +2,10 @@ from tests.quompiler.qompile.mock_fixtures import mock_config
 
 
 def test_mock_config(mocker):
-    config = mock_config(mocker, 3, emit="SINGLET")
+    aspace = 5
+    emit = "SINGLET"
+    config = mock_config(mocker, emit=emit, aspace=aspace)
     assert config.target == "CIRQ"
-    assert config.emit == "SINGLET"
+    assert config.emit == emit
     device = config.device
-    assert device.arange == [100, 200]
+    assert device.arange[0] == aspace

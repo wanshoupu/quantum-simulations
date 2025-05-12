@@ -1,20 +1,18 @@
 from quompiler.qompile.configure import QompilerConfig
 
 
-def mock_device(mocker, dim: int):
+def mock_device(mocker, aspace):
     device_cls = mocker.patch("quompiler.qompile.configure.DeviceConfig")
     result = device_cls.return_value
-    result.dimension = dim
-    result.qrange = [0, 100]
-    result.arange = [100, 200]
+    result.arange = [aspace, 200]
     return result
 
 
-def mock_config(mocker, dim: int, emit: str = "CLIFFORD_T") -> QompilerConfig:
+def mock_config(mocker, emit: str = "CLIFFORD_T", aspace=1) -> QompilerConfig:
     config_cls = mocker.patch("quompiler.qompile.configure.QompilerConfig")
 
     result = config_cls.return_value
-    result.device = mock_device(mocker, dim)
+    result.device = mock_device(mocker, aspace)
     result.target = "CIRQ"
     result.emit = emit
 
