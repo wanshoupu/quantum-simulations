@@ -1,7 +1,7 @@
 import os
 
 from quompiler.qompile.configure import DeviceConfig, QompilerConfig
-from quompiler.qompile.quompiler import Qompiler
+from quompiler.qompile.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
 

@@ -1,4 +1,4 @@
-from quompiler.construct.bytecode import Bytecode, BytecodeIter, ReverseBytecodeIter
+from quompiler.construct.bytecode import Bytecode, BytecodeIter, BytecodeRevIter
 from quompiler.utils.mgen import random_UnitaryM_2l
 
 
@@ -27,5 +27,5 @@ def test_reverse_iter():
     rm = lambda: random_UnitaryM_2l(4, 0, 1)
     children = [Bytecode(rm()), Bytecode(rm())]
     bc = Bytecode(rm(), children)
-    nodes = [n for n in ReverseBytecodeIter(bc) if not n.children]
+    nodes = [n for n in BytecodeRevIter(bc) if not n.children]
     assert all(a == b for a, b in zip(nodes, children[::-1]))

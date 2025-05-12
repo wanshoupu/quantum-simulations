@@ -1,15 +1,14 @@
 import random
 from functools import reduce
 
-from quompiler.construct.bytecode import BytecodeIter, Bytecode
-from quompiler.construct.cgate import CtrlGate
-from quompiler.qompile.configure import DeviceConfig, QompilerConfig
-from quompiler.qompile.quompiler import Qompiler
-from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import cyclic_matrix, random_unitary
 import numpy as np
 
-from tests.quompiler.qompile.mock_fixtures import mock_config
+from quompiler.construct.bytecode import BytecodeIter, Bytecode
+from quompiler.construct.cgate import CtrlGate
+from quompiler.qompile.qompiler import Qompiler
+from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mgen import cyclic_matrix, random_unitary
+from tests.qompiler.qompile.mock_fixtures import mock_config
 
 formatter = MatrixFormatter(precision=2)
 

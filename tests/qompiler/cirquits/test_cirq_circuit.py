@@ -7,10 +7,10 @@ from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
-from quompiler.qompile.quompiler import Qompiler
+from quompiler.qompile.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_control, random_unitary, cyclic_matrix
-from tests.quompiler.qompile.mock_fixtures import mock_config
+from tests.qompiler.qompile.mock_fixtures import mock_config
 
 formatter = MatrixFormatter(precision=2)
 

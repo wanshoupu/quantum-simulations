@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 
 from quompiler.qompile.configure import QompilerConfig, DeviceConfig
-from quompiler.qompile.quompiler import Qompiler
+from quompiler.qompile.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
-from tests.quompiler.qompile.mock_fixtures import mock_config
+from tests.qompiler.qompile.mock_fixtures import mock_config
 
 formatter = MatrixFormatter(precision=2)
 

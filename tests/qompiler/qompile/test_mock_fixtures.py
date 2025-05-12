@@ -1,4 +1,4 @@
-from tests.quompiler.qompile.mock_fixtures import mock_config
+from tests.qompiler.qompile.mock_fixtures import mock_config
 
 
 def test_mock_config(mocker):

@@ -3,7 +3,7 @@ import os
 
 from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.qompile.configure import QompilerConfig
-from quompiler.qompile.quompiler import Qompiler
+from quompiler.qompile.qompiler import Qompiler
 from quompiler.utils.mgen import random_unitary
 
 if __name__ == '__main__':

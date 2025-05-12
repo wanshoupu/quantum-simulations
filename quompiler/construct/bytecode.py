@@ -46,7 +46,7 @@ class BytecodeIter:
         return node
 
 
-class ReverseBytecodeIter:
+class BytecodeRevIter:
     """
     This iterator is a visitor design for class Bytecode.
 

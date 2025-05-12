@@ -1,6 +1,6 @@
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import EmitType, UnivGate
-from quompiler.qompile.quompiler import granularity
+from quompiler.utils.granularity import granularity
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM, random_indexes, random_CtrlGate, random_control, random_unitary
 
