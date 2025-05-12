@@ -137,6 +137,9 @@ class CtrlGate:
         # create the sorted ControlledGate
         return CtrlGate(self.unitary.matrix, controls, sorted(self.qspace.qids))
 
+    def qids(self) -> list[int]:
+        return self.qspace.qids
+
     def control_qids(self) -> list[int]:
         target = self.target_qids()
         return [qid for qid in self.qspace.qids if qid not in target]

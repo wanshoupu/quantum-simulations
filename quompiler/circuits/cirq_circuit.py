@@ -36,7 +36,11 @@ class CirqBuilder(CircuitBuilder):
 
     @override
     def __init__(self, deviceConfig: DeviceConfig):
-        self.aspace = cirq.LineQubit.range(*deviceConfig.arange)
+        a, b = deviceConfig.arange
+
+        self.max_qid = a
+        self.qspace = cirq.LineQubit.range(a)
+        self.aspace = cirq.LineQubit.range(a, b)
 
         self.circuit = cirq.Circuit()
 
@@ -52,17 +56,19 @@ class CirqBuilder(CircuitBuilder):
     @override
     def build_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]):
         if isinstance(m, CtrlGate):
-            # TODO add gate approximation
             gate = self.get_univ_gate(m) or cirq.MatrixGate(m.unitary.matrix)
-            target = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c is QType.TARGET]
-            control = [self.qubits[i] for i, c in enumerate(m.controller.controls) if c in QType.CONTROL0 | QType.CONTROL1]
-            control_values = [c.base[0] for c in m.controller.controls if c in QType.CONTROL0 | QType.CONTROL1]
-            self.circuit.append(gate(*target).controlled_by(*control, control_values=control_values))
+            qids = m.qids()
+            if self.max_qid <= len(qids):
+                raise MemoryError("not enough qubits")
+            controller = m.controller
+            self._append_gate(controller, gate, qids)
             return
 
-        # TODO add KronUnitaryM gate
-        custom_gate = cirq.MatrixGate(m.inflate())
-        self.circuit.append(custom_gate(*self.qubits))
+    def _append_gate(self, controller, gate, qids):
+        target = [self.qspace[qids[i]] for i, c in enumerate(controller) if c is QType.TARGET]
+        control = [self.qspace[qids[i]] for i, c in enumerate(controller) if c in QType.CONTROL0 | QType.CONTROL1]
+        control_values = [c.base[0] for c in controller if c in QType.CONTROL0 | QType.CONTROL1]
+        self.circuit.append(gate(*target).controlled_by(*control, control_values=control_values))
 
     @override
     def finish(self, optimized=False) -> cirq.Circuit:

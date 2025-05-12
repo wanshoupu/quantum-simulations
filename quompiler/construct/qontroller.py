@@ -36,6 +36,9 @@ class Qontroller:
     def __getitem__(self, index: int):
         return self.controls[index]
 
+    def __iter__(self):
+        return iter(self.controls)
+
     def __repr__(self):
         return repr(self.controls)
 

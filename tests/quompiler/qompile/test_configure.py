@@ -43,7 +43,6 @@ def test_QompilerConfig_from_file():
     assert isinstance(config, QompilerConfig)
     assert config.device is not None
     assert isinstance(config.device, DeviceConfig)
-    assert config.device.dimension == 8
 
 
 def test_EmitType_comparison():

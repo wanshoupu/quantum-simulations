@@ -17,7 +17,7 @@ def test_interp_identity_matrix(mocker):
     dim = 1 << n
     expected = np.eye(dim)
 
-    config = mock_config(mocker, dim)
+    config = mock_config(mocker)
     interp = Qompiler(config)
     interp.interpret(expected)
     circuit = interp.finish()
@@ -31,7 +31,7 @@ def test_interp_sing_qubit_circuit(mocker):
     n = 1
     dim = 1 << n
     expected = random_unitary(dim)
-    config = mock_config(mocker, dim)
+    config = mock_config(mocker, emit="SINGLET", aspace=100)
     interp = Qompiler(config)
 
     # execute
@@ -56,7 +56,7 @@ def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
     dim = 1 << n
     expected = cyclic_matrix(dim, k)
 
-    config = mock_config(mocker, dim)
+    config = mock_config(mocker, emit="SINGLET", aspace=100)
     interp = Qompiler(config)
 
     # execute
@@ -71,15 +71,14 @@ def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
     assert len(circuit.moments) == expected_moments
 
 
-def test_interp_random_unitary():
+def test_interp_random_unitary(mocker):
     for _ in range(10):
         print(f'Test {_}th round')
         n = random.randint(1, 4)
         dim = 1 << n
         expected = random_unitary(dim)
 
-        device = DeviceConfig(dimension=dim)
-        config = QompilerConfig(source='foo', device=device)
+        config = mock_config(mocker, emit="SINGLET", aspace=100)
         interp = Qompiler(config)
 
         # execute
