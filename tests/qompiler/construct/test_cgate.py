@@ -168,10 +168,12 @@ def test_sorted_noop():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qids = list(range(3))
     expected = CtrlGate(m, controls, qids)
-    # print()
-    # print(formatter.tostr(expected.inflate()))
+    print('expected\n')
+    print(formatter.tostr(expected.inflate()))
     actual = expected.sorted()
-    assert actual == expected
+    print('actual\n')
+    print(formatter.tostr(actual.inflate()))
+    assert np.allclose(actual.inflate(), expected.inflate())
 
 
 def test_sorted_8x8():

@@ -63,10 +63,7 @@ class CtrlStdGate:
         result = UnivGate.get(cm.unitary.matrix)
         return CtrlStdGate(result, cm.controller, cm.qspace)
 
-    def is_sorted(self) -> bool:
-        return self.controlledM.is_sorted()
-
-    def sorted(self) -> 'CtrlStdGate':
+    def sorted(self, sorting: Sequence[int] = None) -> 'CtrlStdGate':
         """
         Create a sorted version of this ControlledGate.
         Sorting the ControlledGate means to sort the qspace in ascending order.
@@ -74,10 +71,8 @@ class CtrlStdGate:
         This latter will in turn change the core indexes in the field `unitary`.
         :return: A sorted version of this ControlledGate whose qspace is in ascending order. If this is already sorted, return self.
         """
-        if self.controlledM.is_sorted():
-            return self
-        controlledM: CtrlGate = self.controlledM.sorted()
-        return CtrlStdGate(self.gate, controlledM.controller, controlledM.qspace)
+        sorted_gate: CtrlGate = self.controlledM.sorted(sorting)
+        return CtrlStdGate(self.gate, sorted_gate.controller, sorted_gate.qspace)
 
     def control_qids(self) -> list[int]:
         return self.controlledM.control_qids()

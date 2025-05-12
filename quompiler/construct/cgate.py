@@ -46,7 +46,7 @@ class CtrlGate:
 
     def inflate(self) -> NDArray:
         res = self.unitary.inflate()
-        if self.is_sorted():
+        if self.qspace.is_sorted():
             return res
         indexes = self.qspace.map_all(range(res.shape[0]))
         return res[np.ix_(indexes, indexes)]
@@ -117,25 +117,23 @@ class CtrlGate:
         m[np.ix_(indxs, indxs)] = u.matrix
         return CtrlGate(m, controller, qspace=qspace)
 
-    def is_sorted(self) -> bool:
-        return self.qspace.is_sorted()
-
-    def sorted(self):
+    def sorted(self, sorting: Sequence[int] = None) -> 'CtrlGate':
         """
         Create a sorted version of this ControlledGate.
         Sorting the ControlledGate means to sort the qspace in ascending order.
         Unless the qspace was originally sorted in this order, this necessarily incurs changes in other parts such as control sequence.
         This latter will in turn change the core indexes in the field `unitary`.
+        :param sorting: optional sorting sequence. If not provided, will sort by qspace
         :return: A sorted version of this ControlledGate whose qspace is in ascending order. If this is already sorted, return self.
         """
-        if self.is_sorted():
-            return self
-
-        # prepare the controls
-        sorting = np.argsort(self.qspace.qids)
-        controls = [self.controller.controls[i] for i in sorting]
+        if sorting is None:
+            sorting = np.argsort(self.qspace.qids)
+        else:
+            assert self.controller.length == len(sorting) == len(set(sorting))
+        controls = [self.controller[i] for i in sorting]
         # create the sorted ControlledGate
-        return CtrlGate(self.unitary.matrix, controls, sorted(self.qspace.qids))
+        qspace = [self.qspace[i] for i in sorting]
+        return CtrlGate(self.unitary.matrix, controls, qspace)
 
     def qids(self) -> list[int]:
         return self.qspace.qids
