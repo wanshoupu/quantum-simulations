@@ -1,7 +1,6 @@
 import argparse
 import os
 
-from quompiler.circuits.cirq_circuit import CirqBuilder
 from quompiler.qompile.configure import QompilerConfig
 from quompiler.qompile.qompiler import Qompiler
 from quompiler.utils.mgen import random_unitary
@@ -15,7 +14,6 @@ if __name__ == '__main__':
     dim = 1 << n
     u = random_unitary(dim)
 
-    builder = CirqBuilder()
     cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
     config = QompilerConfig.from_file(cfile)
     interp = Qompiler(config)
