@@ -36,16 +36,16 @@ def granularity(obj: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> EmitType:
     if isinstance(obj, CtrlGate):
         if not obj.issinglet():
             return EmitType.MULTI_TARGET
-        if 1 < len(obj.control_qids()):
+        if len(obj.control_qids()) < 2:
             return EmitType.CTRL_PRUNED
         return EmitType.SINGLET
 
     if isinstance(obj, CtrlStdGate):
         if 1 < len(obj.control_qids()):
-            return EmitType.CTRL_PRUNED
+            return EmitType.SINGLET
         if obj.gate in UnivGate.cliffordt():
             return EmitType.CLIFFORD_T
-        return EmitType.UNIV_GATE
+        return EmitType.CTRL_PRUNED
 
     return EmitType.INVALID
 
