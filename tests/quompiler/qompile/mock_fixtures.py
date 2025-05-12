@@ -8,7 +8,7 @@ def mock_device(mocker, aspace):
     return result
 
 
-def mock_config(mocker, emit: str = "CLIFFORD_T", aspace=1) -> QompilerConfig:
+def mock_config(mocker, emit: str = "SINGLET", aspace=1) -> QompilerConfig:
     config_cls = mocker.patch("quompiler.qompile.configure.QompilerConfig")
 
     result = config_cls.return_value

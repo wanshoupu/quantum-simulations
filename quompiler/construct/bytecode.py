@@ -20,6 +20,9 @@ class Bytecode:
     def append(self, child: 'Bytecode'):
         self.children.append(child)
 
+    def is_leaf(self) -> bool:
+        return len(self.children) == 0
+
 
 class BytecodeIter:
     """

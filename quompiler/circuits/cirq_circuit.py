@@ -36,7 +36,6 @@ class CirqBuilder(CircuitBuilder):
 
     @override
     def __init__(self, deviceConfig: DeviceConfig):
-        self.qspace = cirq.LineQubit.range(*deviceConfig.qrange)
         self.aspace = cirq.LineQubit.range(*deviceConfig.arange)
 
         self.circuit = cirq.Circuit()

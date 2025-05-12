@@ -28,24 +28,25 @@ def granularity(obj: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> EmitType:
     :param obj: input object of one of the types
     :return: EmitType denoting the granularity
     """
-    if isinstance(obj, CtrlStdGate):
-        if obj.gate in UnivGate.cliffordt():
-            return EmitType.CLIFFORD_T
-        return EmitType.UNIV_GATE
-
-    if isinstance(obj, CtrlGate):
-        if len(obj.control_qids()) == 1:
-            return EmitType.ONE_CTRL
-        if len(obj.control_qids()) == 2:
-            return EmitType.TWO_CTRL
-        if obj.issinglet():
-            return EmitType.SINGLET
-        return EmitType.MULTI_TARGET
-
     if isinstance(obj, UnitaryM):
         if obj.is2l():
             return EmitType.TWO_LEVEL
         return EmitType.UNITARY
+
+    if isinstance(obj, CtrlGate):
+        if not obj.issinglet():
+            return EmitType.MULTI_TARGET
+        if 1 < len(obj.control_qids()):
+            return EmitType.MULTI_CTRL
+        return EmitType.SINGLET
+
+    if isinstance(obj, CtrlStdGate):
+        if 1 < len(obj.control_qids()):
+            return EmitType.MULTI_CTRL
+        if obj.gate in UnivGate.cliffordt():
+            return EmitType.CLIFFORD_T
+        return EmitType.UNIV_GATE
+
     return EmitType.INVALID
 
 
@@ -71,44 +72,52 @@ class Qompiler:
     def compile(self, u: NDArray) -> Bytecode:
         s = u.shape
         um = UnitaryM(s[0], tuple(range(s[0])), u)
-        root = Bytecode(um)
-        self._decompose(root)
-        return root
+        return self._decompose(um)
 
-    def _decompose(self, root: Bytecode) -> None:
-        g = granularity(root.data)
+    def _decompose(self, data: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Bytecode:
+        root = Bytecode(data)
+        g = granularity(data)
         if self.emit <= g:  # noop
-            return
+            return root
 
-        u = root.data
-        if isinstance(u, UnitaryM):
-            if g < EmitType.TWO_LEVEL:
-                coms = mat2l_decompose(u)
-            else:  # g < EmitType.SINGLET
-                coms = cnot_decompose(u)
-        elif isinstance(u, CtrlGate):
-            if g < EmitType.UNIV_GATE:
-                coms = std_decompose(u, list(UnivGate), self.config.rtol, self.config.atol)
-            elif g < EmitType.ONE_CTRL:
-                coms = ctrl_decompose(u, clength=1, aspace=self.aspace)
-            elif g < EmitType.TWO_CTRL:
-                coms = ctrl_decompose(u, clength=2, aspace=self.aspace)
-            elif g < EmitType.MULTI_TARGET:  # this should be impossible
-                coms = ctrl_decompose(u, clength=2, aspace=self.aspace)
-            else:
-                coms = std_decompose(u, UnivGate.cliffordt(), self.config.rtol, self.config.atol)
-        elif isinstance(u, CtrlStdGate):
-            if g < EmitType.CLIFFORD_T:
-                coms = std_decompose(u, UnivGate.cliffordt(), self.config.rtol, self.config.atol)
-            else:  # already at the finest granularity, CLIFFORD_T
-                coms = [u]
+        if isinstance(data, UnitaryM):
+            constituents = self._decompose_unitary(g, data)
+        elif isinstance(data, CtrlGate):
+            constituents = self._decompose_ctrl(g, data)
+        elif isinstance(data, CtrlStdGate):
+            constituents = self._decompose_std(data)
         else:
             raise ValueError(f"Unrecognized gate of type {type(g)}")
         # decompose is noop
-        if len(coms) == 1:
-            return
-        for c in coms:
-            root.append(Bytecode(c))
+        if len(constituents) == 1 and constituents[0] == data:
+            return root
+        for c in constituents:
+            root.append(self._decompose(c))
+        return root
+
+    def _decompose_std(self, u):
+        std_gates = UnivGate.cliffordt() if self.emit == EmitType.CLIFFORD_T else list(UnivGate)
+        constituents = std_decompose(u, std_gates, self.config.rtol, self.config.atol)
+        return constituents
+
+    def _decompose_ctrl(self, grain, gate):
+        # EmitType.MULTI_TARGET is disabled atm
+        # if g < EmitType.MULTI_TARGET:
+        #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
+        if grain < EmitType.MULTI_CTRL:
+            result = ctrl_decompose(gate, clength=1, aspace=self.aspace)
+        else:
+            result = self._decompose_std(gate)
+        return result
+
+    @staticmethod
+    def _decompose_unitary(g, u):
+        if g < EmitType.TWO_LEVEL:
+            result = mat2l_decompose(u)
+        else:
+            assert u.is2l()
+            result = cnot_decompose(u)
+        return result
 
     def finish(self, optimized=False) -> object:
         return self.builder.finish(optimized=optimized)
