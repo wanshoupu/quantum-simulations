@@ -3,22 +3,19 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.circuits.create_factory import create_factory
-from quompiler.circuits.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
-from tests.qompiler.qompile.mock_fixtures import mock_config
+from tests.qompiler.mock_fixtures import mock_factory_manager
 
 formatter = MatrixFormatter(precision=2)
+man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
 
 
 def test_interp_identity_matrix(mocker):
     n = random.randint(1, 8)
     dim = 1 << n
     expected = np.eye(dim)
-
-    config = mock_config(mocker)
-    factory = create_factory(config)
+    factory = man.create_factory()
     interp = factory.get_qompiler()
     interp.interpret(expected)
     circuit = interp.finish()
@@ -32,8 +29,7 @@ def test_interp_sing_qubit_circuit(mocker):
     n = 1
     dim = 1 << n
     expected = random_unitary(dim)
-    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-    factory = create_factory(config)
+    factory = man.create_factory()
     interp = factory.get_qompiler()
 
     # execute
@@ -58,8 +54,7 @@ def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
     dim = 1 << n
     expected = cyclic_matrix(dim, k)
 
-    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-    factory = create_factory(config)
+    factory = man.create_factory()
     interp = factory.get_qompiler()
 
     # execute
@@ -81,8 +76,7 @@ def test_interp_random_unitary(mocker):
         dim = 1 << n
         expected = random_unitary(dim)
 
-        config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-        factory = create_factory(config)
+        factory = man.create_factory()
         interp = factory.get_qompiler()
 
         # execute

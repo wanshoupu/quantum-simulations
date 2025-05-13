@@ -3,24 +3,22 @@ from functools import reduce
 
 import numpy as np
 
-from quompiler.circuits.qbuilder import CircuitBuilder
-from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.circuits.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
-from tests.qompiler.qompile.mock_fixtures import mock_config
+from tests.qompiler.mock_fixtures import mock_factory_manager
 
 formatter = MatrixFormatter(precision=2)
+man = mock_factory_manager(emit="SINGLET")
 
 
 def test_compile_identity_matrix(mocker):
     n = 3
     dim = 1 << n
     u = np.eye(dim)
-    config = mock_config(mocker)
-    interp = Qompiler(config, CircuitBuilder, QDevice)
+    factory = man.create_factory()
+    interp = factory.get_qompiler()
 
     # execute
     bc = interp.compile(u)
@@ -33,8 +31,8 @@ def test_compile_sing_qubit_circuit(mocker):
     n = 1
     dim = 1 << n
     u = random_unitary(dim)
-    config = mock_config(mocker, emit="SINGLET")
-    interp = Qompiler(config, CircuitBuilder, QDevice)
+    factory = man.create_factory()
+    interp = factory.get_qompiler()
 
     # execute
     bc = interp.compile(u)
@@ -47,9 +45,8 @@ def test_compile_sing_qubit_circuit(mocker):
 
 def test_compile_cyclic_8(mocker):
     u = cyclic_matrix(8, 1)
-    config = mock_config(mocker, emit="SINGLET")
-
-    interp = Qompiler(config, CircuitBuilder, QDevice)
+    factory = man.create_factory()
+    interp = factory.get_qompiler()
 
     # execute
     bc = interp.compile(u)
@@ -64,8 +61,8 @@ def test_compile_cyclic_8(mocker):
 
 def test_compile_cyclic_4(mocker):
     u = cyclic_matrix(4, 1)
-    config = mock_config(mocker, emit="SINGLET")
-    interp = Qompiler(config, CircuitBuilder, QDevice)
+    factory = man.create_factory()
+    interp = factory.get_qompiler()
 
     # execute
     bc = interp.compile(u)
@@ -85,8 +82,8 @@ def test_interp_random_unitary(mocker):
         n = random.randint(1, 4)
         dim = 1 << n
         u = random_unitary(dim)
-        config = mock_config(mocker, emit="SINGLET")
-        interp = Qompiler(config, CircuitBuilder, QDevice)
+        factory = man.create_factory()
+        interp = factory.get_qompiler()
 
         # execute
         bc = interp.compile(u)

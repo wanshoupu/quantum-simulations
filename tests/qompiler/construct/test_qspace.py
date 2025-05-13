@@ -25,7 +25,6 @@ def test_qspace_iter():
     [[10, 0, 7, 1, 8], 0b10101, 0b11100],
 ])
 def test_qspace_map(qids, n, expected):
-    qids = [10, 0, 7, 1, 8]
     qs = QSpace(qids)
     actual = qs.map(n)
     assert actual == expected
