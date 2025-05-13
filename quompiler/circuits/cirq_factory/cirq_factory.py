@@ -24,6 +24,10 @@ class CirqDevice(QDevice):
             self.qubit_lookup[qid] = cirq.NamedQubit(str(qid))
         return self.qubit_lookup[qid]
 
+    @override
+    def reset(self, qubit: Qubit):
+        return
+
 
 class CirqFactory(QFactory):
 

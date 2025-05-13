@@ -3,20 +3,20 @@ import random
 import cirq
 import numpy as np
 
-from quompiler.circuits.create_factory import create_factory
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_control, random_unitary, cyclic_matrix
-from tests.qompiler.qompile.mock_fixtures import mock_config
+from tests.qompiler.mock_fixtures import mock_factory_manager
 
 formatter = MatrixFormatter(precision=2)
 
+man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
+
 
 def test_create_builder(mocker):
-    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-    factory = create_factory(config)
+    factory = man.create_factory()
     cirqC = factory.get_builder()
     phase = CtrlGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
@@ -36,8 +36,8 @@ def test_builder_standard_ctrlgate(mocker):
         control = random_control(n, 1)
         print(f'n={n}, control={control}')
         cu = CtrlGate(gate.matrix, control)
-        config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-        factory = create_factory(config)
+        man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
+        factory = man.create_factory()
         cirqC = factory.get_builder()
 
         # execution
@@ -58,8 +58,7 @@ def test_builder_random_ctrlgate(mocker):
         core = 1 << control.count(QType.TARGET)
         m = random_unitary(core)
         cu = CtrlGate(m, control)
-        config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-        factory = create_factory(config)
+        factory = man.create_factory()
         cirqC = factory.get_builder()
 
         # execution
@@ -75,8 +74,7 @@ def test_compile_cyclic_4_everything(mocker):
     n = 2
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
-    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
-    factory = create_factory(config)
+    factory = man.create_factory()
     interp = factory.get_qompiler()
 
     # execute

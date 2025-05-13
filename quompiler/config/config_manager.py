@@ -33,20 +33,23 @@ class ConfigManager:
     def load_source(self) -> NDArray:
         return load_ndarray(self._source)
 
-    def load_config(self, json_file: str):
+    def load_config(self, data: dict):
+        self._config = merge_dicts(self._config, data)
+
+    def load_config_file(self, json_file: str):
         """
         Loads a configuration from a JSON file.
         :param json_file: a path to the JSON configuration file.
         """
         config = json.load(open(json_file))
-        self._config = merge_dicts(self._config, config)
+        self.load_config(config)
 
     def parse_args(self):
         args = self._parser.parse_args()
         if args.source:
             self._source = args.source
         if args.config:
-            self.load_config(args.config)
+            self.load_config_file(args.config)
         qconfig = self._to_config(args)
         merged = merge_dicts(self._config, qconfig)
         self._config = merged
@@ -103,7 +106,7 @@ def merge_dicts(dict1: dict, dict2: dict) -> dict:
     result = dict1.copy()
     for key, value in dict2.items():
         if key in result and isinstance(result[key], dict):
-            assert isinstance(value, dict)
+            assert isinstance(value, dict), f'{value} should be a dict'
             result[key] = merge_dicts(result[key], value)
         else:
             result[key] = value

@@ -11,22 +11,33 @@ class QDevice(ABC):
 
     def __init__(self, config: DeviceConfig):
         self.CAPACITY = 2 * config.ancilla_offset  # heuristic upper limit of the qspace
-        self.offset = config.ancilla_offset
         self.qoffset = 0
-        self.aoffset = self.offset
+        self.aoffset = config.ancilla_offset
         self.aspace = []
         self.qspace = []
 
+    def alloc_qubit(self, n):
+        if self.qoffset + n > self.CAPACITY:
+            raise EnvironmentError(f'Not enough qubits to allocate ancilla {n} qubits')
+        self.qspace.extend(Qubit(self.qoffset + i) for i in range(n))
+        self.qoffset += n
+        return self.qspace[-n:]
+
     def alloc_ancilla(self, n):
+        if self.qoffset + n > self.CAPACITY:
+            raise EnvironmentError(f'Not enough qubits to allocate ancilla {n} qubits')
+        self.aspace.extend(Ancilla(i) for i in range(self.aoffset, n))
+        self.aoffset += n
         while len(self.aspace) < n:
             self.aoffset += 1
-            self.qspace.append(Ancilla(self.aoffset))
+            self.aspace.append(Ancilla(self.aoffset))
         result = self.aspace[:n]
         for a in result:
             self.reset(a)
         return result
 
-    def reset(self, qubit):
+    @abstractmethod
+    def reset(self, qubit: Qubit):
         pass
 
     @abstractmethod

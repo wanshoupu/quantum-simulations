@@ -7,12 +7,13 @@ from typing import Union
 
 from numpy._typing import NDArray
 
+from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.circuits.qdevice import QDevice
 from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.construct.types import QompilePlatform, EmitType, UnivGate
+from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.granularity import granularity
@@ -22,7 +23,7 @@ from quompiler.utils.std_decompose import std_decompose, ctrl_decompose
 
 class Qompiler:
 
-    def __init__(self, config: QompilerConfig, builder, device):
+    def __init__(self, config: QompilerConfig, builder: CircuitBuilder, device: QDevice):
         self.config = config
         self.builder = builder
         self.device = device

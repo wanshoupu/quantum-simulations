@@ -66,16 +66,29 @@ def test_save(mocker):
     assert mock_open().write.call_count > 0
 
 
-def test_load_config():
+def test_load_config_file():
     man = ConfigManager()
     default = man.create_config()
 
     # execute
-    man.load_config(fpath)
+    man.load_config_file(fpath)
 
     config = man.create_config()
     assert config.target != default.target
     assert config.emit != default.emit
+
+
+def test_load_config():
+    man = ConfigManager()
+    default = man.create_config()
+    data = {
+        "emit": "TWO_LEVEL",
+    }
+    # execute
+    man.load_config(data)
+
+    config = man.create_config()
+    assert "TWO_LEVEL" == config.emit != default.emit
 
 
 def test_override_order(mocker):
@@ -84,7 +97,7 @@ def test_override_order(mocker):
     default = man.create_config()
 
     # 2 json file config
-    man.load_config(fpath)
+    man.load_config_file(fpath)
     file_config = man.create_config()
 
     # 3 cmd line args
