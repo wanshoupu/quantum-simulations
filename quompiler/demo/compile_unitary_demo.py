@@ -1,9 +1,6 @@
 import argparse
-import os
 
-from quompiler.circuits.create_factory import create_factory
-from quompiler.config.construct import QompilerConfig
-from quompiler.circuits.qompiler import Qompiler
+from quompiler.circuits.factory_manager import FactoryManager
 from quompiler.utils.mgen import random_unitary
 
 if __name__ == '__main__':
@@ -15,9 +12,7 @@ if __name__ == '__main__':
     dim = 1 << n
     u = random_unitary(dim)
 
-    cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
-    config = QompilerConfig.from_file(cfile)
-    factory = create_factory(config)
+    factory = FactoryManager().create_factory()
     interp = factory.get_qompiler()
     interp.interpret(u)
     circuit = interp.finish(optimized=True)

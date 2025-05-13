@@ -1,7 +1,4 @@
-import os
-
-from quompiler.circuits.create_factory import create_factory
-from quompiler.config.construct import QompilerConfig
+from quompiler.circuits.factory_manager import FactoryManager
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
 
@@ -11,9 +8,8 @@ if __name__ == '__main__':
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
     print(formatter.tostr(u))
-    cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
-    config = QompilerConfig.from_file(cfile)
-    factory = create_factory(config)
+    fman = FactoryManager()
+    factory = fman.create_factory()
     interp = factory.get_qompiler()
 
     # execute
