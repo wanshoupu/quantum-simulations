@@ -57,6 +57,18 @@ class DeviceConfig:
 
 @dataclass
 class QompilerConfig:
+    """
+    :param source: The source to parse, if any
+    :param output: output file name
+    :param optimization: optimization level. 0=no optimization, 1=basic optimization, 2=moderate optimization, 3=advanced optimization
+    :param debug: Print debug level info if true
+    :param warnings: compiler warnings settings
+    :param target: target quantum computing platform
+    :param device: quantum computing device setting
+    :param emit: specifies the output building blocks the compiler should generate after processing the source
+    :param rtol: relative tolerance allows for proportional error
+    :param atol: absolute tolerance allows for fixed error
+    """
     source: str
     output: str
     optimization: str
@@ -65,25 +77,23 @@ class QompilerConfig:
     target: str
     device: DeviceConfig
     emit: str
-    dump_ir: bool
-    gates: list[str]
     rtol: float
     atol: float
 
     @staticmethod
     def from_dict(data: Dict) -> "QompilerConfig":
         validate_config(data)
+        device = DeviceConfig.from_dict(data.get("device"))
+        warnings = QompilerWarnings.from_dict(data.get("warnings", {}))
         return QompilerConfig(
-            source=data["source"],
-            output=data.get("output", "a.out"),
-            optimization=data.get("optimization", "O0"),
+            source=data.get("source"),
+            output=data.get("output"),
+            optimization=data.get("optimization"),
             debug=data.get("debug", False),
-            warnings=QompilerWarnings.from_dict(data.get("warnings", {})),
-            target=data.get("target", "CIRQ"),
+            warnings=warnings,
+            target=data.get("target"),
             emit=data.get("emit", "SINGLET"),
-            dump_ir=data.get("dump_ir", False),
-            device=DeviceConfig.from_dict(data.get("device")),
-            gates=data.get("gates", "IXYZHST".split()),
+            device=device,
             rtol=float(data.get("rtol", "1.e-5")),
             atol=float(data.get("atol", "1.e-8")),
         )
@@ -95,11 +105,6 @@ class QompilerConfig:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2)
-
-    @staticmethod
-    def from_file(json_file: str) -> "QompilerConfig":
-        data = json.load(open(json_file))
-        return QompilerConfig.from_dict(data)
 
 
 def validate_config(data: Dict):

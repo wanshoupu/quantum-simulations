@@ -37,10 +37,7 @@
         "ancilla_offset": {
           "type": "integer"
         }
-      },
-      "required": [
-        "ancilla_offset"
-      ]
+      }
     },
     "target": {
       "type": "string",
@@ -70,13 +67,6 @@
     "atol": {
       "type": "number",
       "exclusiveMinimum": 0
-    },
-    "dump_ir": {
-      "type": "boolean"
     }
-  },
-  "required": [
-    "source",
-    "device"
-  ]
+  }
 }

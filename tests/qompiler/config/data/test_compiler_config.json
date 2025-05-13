@@ -1,5 +1,4 @@
 {
-  "source": "main.qasm",
   "output": "program.out",
   "optimization": "O3",
   "debug": true,
@@ -8,11 +7,10 @@
     "as_errors": false
   },
   "device": {
-    "ancilla_offset": 100
+    "ancilla_offset": 1000
   },
-  "target": "CIRQ",
-  "emit": "SINGLET",
+  "target": "QUIMB",
+  "emit": "CLIFFORD_T",
   "rtol": 1e-5,
-  "atol": 1e-8,
-  "dump_ir": true
+  "atol": 1e-8
 }

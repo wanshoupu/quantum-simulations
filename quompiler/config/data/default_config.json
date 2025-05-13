@@ -13,6 +13,5 @@
   "target": "CIRQ",
   "emit": "SINGLET",
   "rtol": 1e-6,
-  "atol": 1e-9,
-  "dump_ir": true
+  "atol": 1e-9
 }
