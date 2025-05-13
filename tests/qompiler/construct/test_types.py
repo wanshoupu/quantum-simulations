@@ -4,7 +4,7 @@ from operator import or_
 import numpy as np
 import pytest
 
-from quompiler.construct.types import UnivGate, QType
+from quompiler.construct.types import UnivGate, QType, QompilePlatform, EmitType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary
 
@@ -140,3 +140,18 @@ def test_qtype_equality():
     for qt in (QType.CONTROL0, QType.CONTROL1):
         assert combo != qt
         assert (combo & qt) == qt
+
+
+@pytest.mark.parametrize("name, builder", [
+    ['CIRQ', 'CirqBuilder'],
+    ['QISKIT', 'QiskitBuilder'],
+])
+def test_qompile_platform_get_by_name(name, builder):
+    t = QompilePlatform[name]
+    assert t.value == builder
+
+
+def test_EmitType_comparison():
+    lesser = EmitType.TWO_LEVEL
+    larger = EmitType.UNIV_GATE
+    assert lesser < larger
