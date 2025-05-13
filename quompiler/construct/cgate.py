@@ -6,7 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import QSpace
+from quompiler.construct.qspace import QSpace, Qubit
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import mesh_product
@@ -18,7 +18,7 @@ class CtrlGate:
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """
 
-    def __init__(self, m: NDArray, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[int], QSpace] = None):
+    def __init__(self, m: NDArray, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[Union[int, Qubit]], QSpace] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param m: the core matrix.

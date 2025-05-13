@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, random_control
@@ -146,7 +147,7 @@ def test_custom_qspace():
     # verify
     for i in [1, 3, 5]:
         r = result[i]
-        assert tuple(r.qspace) == (offset + target,)
+        assert tuple(r.qspace) == (Qubit(offset + target),)
 
 
 def test_verify_identity_random():
@@ -177,4 +178,4 @@ def test_verify_qspace_random():
         uncontrolled = [1, 3, 5]
         for i in uncontrolled:
             r = result[i]
-            assert tuple(r.qspace) == (offset + target,)
+            assert tuple(r.qspace) == (Qubit(offset + target),)

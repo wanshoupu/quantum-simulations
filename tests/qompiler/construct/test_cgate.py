@@ -6,7 +6,7 @@ from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import QSpace
+from quompiler.construct.qspace import QSpace, Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -103,7 +103,7 @@ def test_init_qontroller():
 def test_init_qspace_seq():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    qspace = list(range(3))
+    qspace = list(QSpace(range(3)))
     random.shuffle(qspace)
     cu = CtrlGate(m, controls, qspace)
     assert cu.qspace.qids == qspace
@@ -115,15 +115,15 @@ def test_init_qspace_numpy_array():
     controls = random_control(k, t)
     qids = np.random.choice(1 << k, size=k, replace=False)
     cu = CtrlGate(random_unitary(2), controls, qspace=qids)
-    assert cu.qspace.qids == qids.tolist()
+    assert cu.qspace.qids == [Qubit(q) for q in qids]
 
 
 def test_init_qspace_obj():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    qspace = QSpace(list(range(3)))
+    qspace = QSpace(range(3))
     cu = CtrlGate(m, controls, qspace)
-    assert cu.qspace.qids == list(range(3))
+    assert cu.qspace.qids == [Qubit(i) for i in range(3)]
 
 
 def test_univ_Y():
@@ -269,9 +269,9 @@ def test_matmul_identical_qspace_diff_controls():
 
 def test_matmul_verify_qspace():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
-    qid1 = [3, 0]
+    qid1 = [Qubit(3), Qubit(0)]
     a = CtrlGate(random_unitary(4), controls, qspace=qid1)
-    qid2 = [1, 0]
+    qid2 = [Qubit(1), Qubit(0)]
     b = CtrlGate(random_unitary(4), controls, qspace=qid2)
 
     # execute

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Sequence, Dict
+from typing import Sequence, Dict, Union
 from dataclasses import dataclass, field, asdict
 
 import numpy as np
@@ -67,9 +67,9 @@ class QSpace:
      2. map a sequence of unique indexes
     """
 
-    def __init__(self, qids: Sequence[int]):
+    def __init__(self, qids: Sequence[Union[int, Qubit]]):
         assert len(set(qids)) == len(qids)
-        self.qids: list[int] = list(qids)
+        self.qids: list[Qubit] = [q if isinstance(q, Qubit) else Qubit(q) for q in qids]
         self.length = len(qids)
         self.sorting = np.argsort(qids).tolist()
 
