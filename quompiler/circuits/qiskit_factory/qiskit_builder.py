@@ -1,17 +1,18 @@
-from typing import Optional, Union
+from typing import Union, Optional
 
-import qiskit
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import UnitaryGate
 from typing_extensions import override
 
-from quompiler.circuits.circuit_builder import CircuitBuilder
+import qiskit
+
+from quompiler.circuits.qbuilder import CircuitBuilder
+from quompiler.config.construct import DeviceConfig
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.qompile.configure import DeviceConfig
-from quompiler.utils.mat_utils import validm2l
-from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
+from quompiler.construct.unitary import UnitaryM
+from quompiler.utils.mat_utils import validm2l
 
 
 class QiskitBuilder(CircuitBuilder):

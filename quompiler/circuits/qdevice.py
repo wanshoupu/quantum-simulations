@@ -1,8 +1,13 @@
-from quompiler.construct.qspace import Ancilla
-from quompiler.qompile.configure import DeviceConfig
+from abc import ABC, abstractmethod
+
+from quompiler.config.construct import DeviceConfig
+from quompiler.construct.qspace import Ancilla, Qubit
 
 
-class QDevice:
+class QDevice(ABC):
+    """
+    Represent an abstract Quantum Device.
+    """
 
     def __init__(self, config: DeviceConfig):
         self.CAPACITY = 2 * config.ancilla_offset  # heuristic upper limit of the qspace
@@ -22,4 +27,13 @@ class QDevice:
         return result
 
     def reset(self, qubit):
+        pass
+
+    @abstractmethod
+    def map(self, qid: Qubit):
+        """
+        Create the physical qubits for the given qid.
+        :param qid:
+        :return:
+        """
         pass

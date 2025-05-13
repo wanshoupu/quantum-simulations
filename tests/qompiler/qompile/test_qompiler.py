@@ -3,9 +3,11 @@ from functools import reduce
 
 import numpy as np
 
+from quompiler.circuits.qbuilder import CircuitBuilder
+from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.qompile.qompiler import Qompiler
+from quompiler.circuits.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 from tests.qompiler.qompile.mock_fixtures import mock_config
@@ -18,7 +20,7 @@ def test_compile_identity_matrix(mocker):
     dim = 1 << n
     u = np.eye(dim)
     config = mock_config(mocker)
-    interp = Qompiler(config)
+    interp = Qompiler(config, CircuitBuilder, QDevice)
 
     # execute
     bc = interp.compile(u)
@@ -32,7 +34,7 @@ def test_compile_sing_qubit_circuit(mocker):
     dim = 1 << n
     u = random_unitary(dim)
     config = mock_config(mocker, emit="SINGLET")
-    interp = Qompiler(config)
+    interp = Qompiler(config, CircuitBuilder, QDevice)
 
     # execute
     bc = interp.compile(u)
@@ -46,7 +48,8 @@ def test_compile_sing_qubit_circuit(mocker):
 def test_compile_cyclic_8(mocker):
     u = cyclic_matrix(8, 1)
     config = mock_config(mocker, emit="SINGLET")
-    interp = Qompiler(config)
+
+    interp = Qompiler(config, CircuitBuilder, QDevice)
 
     # execute
     bc = interp.compile(u)
@@ -62,7 +65,7 @@ def test_compile_cyclic_8(mocker):
 def test_compile_cyclic_4(mocker):
     u = cyclic_matrix(4, 1)
     config = mock_config(mocker, emit="SINGLET")
-    interp = Qompiler(config)
+    interp = Qompiler(config, CircuitBuilder, QDevice)
 
     # execute
     bc = interp.compile(u)
@@ -83,7 +86,7 @@ def test_interp_random_unitary(mocker):
         dim = 1 << n
         u = random_unitary(dim)
         config = mock_config(mocker, emit="SINGLET")
-        interp = Qompiler(config)
+        interp = Qompiler(config, CircuitBuilder, QDevice)
 
         # execute
         bc = interp.compile(u)

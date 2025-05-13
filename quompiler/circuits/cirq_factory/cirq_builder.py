@@ -1,23 +1,17 @@
-from typing import Optional, Union
+from typing import Union, Optional
 
-import cirq
 from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
 from typing_extensions import override
+import warnings
 
-from quompiler.circuits.circuit_builder import CircuitBuilder
+import cirq
+
+from quompiler.circuits.qbuilder import CircuitBuilder
+from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate, QType
-from quompiler.qompile.configure import DeviceConfig
-
-
-def optimize(circuit: Circuit):
-    circuit = merge_single_qubit_gates_to_phased_x_and_z(circuit)
-    circuit = eject_z(circuit)
-    circuit = drop_negligible_operations(circuit)
-    circuit = drop_empty_moments(circuit)
-    return circuit
+from quompiler.construct.unitary import UnitaryM
 
 
 class CirqBuilder(CircuitBuilder):
@@ -34,17 +28,10 @@ class CirqBuilder(CircuitBuilder):
         UnivGate.Z: cirq.Z,
     }
 
-    @override
-    def __init__(self, deviceConfig: DeviceConfig):
-        a, b = deviceConfig.arange
-
-        self.max_qid = a
-        self.qspace = cirq.LineQubit.range(a)
-        self.aspace = cirq.LineQubit.range(a, b)
-
+    def __init__(self, device: QDevice):
+        self.device = device
         self.circuit = cirq.Circuit()
 
-    @override
     def get_univ_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Optional[EigenGate]:
         if isinstance(m, CtrlGate) or isinstance(m, CtrlStdGate):
             matrix = m.gate.matrix if isinstance(m, CtrlStdGate) else m.unitary.matrix
@@ -53,29 +40,32 @@ class CirqBuilder(CircuitBuilder):
                 return CirqBuilder.__UNIV_GATES[univ_gate]
         return None
 
-    @override
     def build_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]):
         if isinstance(m, CtrlGate):
             gate = self.get_univ_gate(m) or cirq.MatrixGate(m.unitary.matrix)
-            qids = m.qids()
-            if self.max_qid <= len(qids):
-                raise MemoryError("not enough qubits")
-            controller = m.controller
-            self._append_gate(controller, gate, qids)
-            return
+            self._append_gate(m.controller, gate, m.qids())
+        if isinstance(m, CtrlStdGate):
+            self._append_gate(m.controlledM.controller, m.gate, m.controlledM.qids())
+        warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
     def _append_gate(self, controller, gate, qids):
-        target = [self.qspace[qids[i]] for i, c in enumerate(controller) if c is QType.TARGET]
-        control = [self.qspace[qids[i]] for i, c in enumerate(controller) if c in QType.CONTROL0 | QType.CONTROL1]
+        target = [self.device.map(qids[i]) for i, c in enumerate(controller) if c is QType.TARGET]
+        control = [self.device.map(qids[i]) for i, c in enumerate(controller) if c in QType.CONTROL0 | QType.CONTROL1]
         control_values = [c.base[0] for c in controller if c in QType.CONTROL0 | QType.CONTROL1]
         self.circuit.append(gate(*target).controlled_by(*control, control_values=control_values))
 
-    @override
     def finish(self, optimized=False) -> cirq.Circuit:
         if optimized:
             self.circuit = optimize(self.circuit)
         return self.circuit
 
-    @override
     def all_qubits(self) -> list:
         return sorted(self.circuit.all_qubits())
+
+
+def optimize(circuit: Circuit):
+    circuit = merge_single_qubit_gates_to_phased_x_and_z(circuit)
+    circuit = eject_z(circuit)
+    circuit = drop_negligible_operations(circuit)
+    circuit = drop_empty_moments(circuit)
+    return circuit

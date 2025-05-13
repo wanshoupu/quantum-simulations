@@ -1,29 +1,26 @@
-from typing import Optional, Union
+from typing import Union, Optional
 
-import quimb.tensor as qtn
+from quimb import tensor as qtn
 from typing_extensions import override
 
-from quompiler.circuits.circuit_builder import CircuitBuilder
+from quompiler.circuits.qbuilder import CircuitBuilder
+from quompiler.config.construct import DeviceConfig
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.qompile.configure import DeviceConfig
-from quompiler.utils.mat_utils import validm2l
-from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
+from quompiler.construct.unitary import UnitaryM
+from quompiler.utils.mat_utils import validm2l
 
 
 class QuimbBuilder(CircuitBuilder):
-    @override
     def __init__(self, deviceConfig: DeviceConfig):
         self.qubits = []
         self.circuit = qtn.circuit.Circuit(deviceConfig.dimension)
         self.counter = 1
 
-    @override
     def get_univ_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Optional[UnivGate]:
         pass
 
-    @override
     def build_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]):
         self.counter += 1
         if not validm2l(m.matrix):

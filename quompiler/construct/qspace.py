@@ -18,6 +18,9 @@ class Qubit:
     def __repr__(self):
         return f'q{self.qid}'
 
+    def __str__(self):
+        return f'q{self.qid}'
+
     def __eq__(self, __value):
         if not isinstance(__value, Qubit):
             return NotImplemented(f'Comparison is undefined for type {type(__value)}')
@@ -50,6 +53,9 @@ class Ancilla(Qubit):
         super().__init__(qid)
 
     def __repr__(self):
+        return f'a{self.qid}'
+
+    def __str__(self):
         return f'a{self.qid}'
 
 

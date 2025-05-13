@@ -3,11 +3,10 @@ import random
 import cirq
 import numpy as np
 
-from quompiler.circuits.cirq_circuit import CirqBuilder
+from quompiler.circuits.create_factory import create_factory
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
-from quompiler.qompile.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_control, random_unitary, cyclic_matrix
 from tests.qompiler.qompile.mock_fixtures import mock_config
@@ -16,8 +15,9 @@ formatter = MatrixFormatter(precision=2)
 
 
 def test_create_builder(mocker):
-    config = mock_config(mocker, emit="SINGLET", aspace=100)
-    cirqC = CirqBuilder(config.device)
+    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+    factory = create_factory(config)
+    cirqC = factory.get_builder()
     phase = CtrlGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
     # print(formatter.tostr(phase.inflate()))
@@ -36,8 +36,9 @@ def test_builder_standard_ctrlgate(mocker):
         control = random_control(n, 1)
         print(f'n={n}, control={control}')
         cu = CtrlGate(gate.matrix, control)
-        config = mock_config(mocker, emit="SINGLET", aspace=100)
-        cirqC = CirqBuilder(config.device)
+        config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+        factory = create_factory(config)
+        cirqC = factory.get_builder()
 
         # execution
         cirqC.build_gate(cu)
@@ -57,8 +58,9 @@ def test_builder_random_ctrlgate(mocker):
         core = 1 << control.count(QType.TARGET)
         m = random_unitary(core)
         cu = CtrlGate(m, control)
-        config = mock_config(mocker, emit="SINGLET", aspace=100)
-        cirqC = CirqBuilder(config.device)
+        config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+        factory = create_factory(config)
+        cirqC = factory.get_builder()
 
         # execution
         cirqC.build_gate(cu)
@@ -73,8 +75,9 @@ def test_compile_cyclic_4_everything(mocker):
     n = 2
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
-    config = mock_config(mocker, emit="SINGLET", aspace=100)
-    interp = Qompiler(config)
+    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+    factory = create_factory(config)
+    interp = factory.get_qompiler()
 
     # execute
     bc = interp.compile(u)
@@ -84,7 +87,7 @@ def test_compile_cyclic_4_everything(mocker):
     leaves = [a.data for a in BytecodeIter(bc) if isinstance(a.data, CtrlGate)][::-1]
     assert len(leaves) == 4
 
-    cirqC = CirqBuilder(config.device)
+    cirqC = factory.get_builder()
 
     # execution
     for cu in leaves:
@@ -108,4 +111,3 @@ def test_cirq_bug_4_qubits():
 
     # to bypass the cirq bug, always sort circuit.all_qubits().
     assert qubits == sorted(circuit.all_qubits())
-

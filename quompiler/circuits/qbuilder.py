@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Union, Optional
 
+from quompiler.config.construct import DeviceConfig
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.types import UnivGate
-from quompiler.qompile.configure import DeviceConfig
+from quompiler.construct.unitary import UnitaryM
 
 
 class CircuitBuilder(ABC):

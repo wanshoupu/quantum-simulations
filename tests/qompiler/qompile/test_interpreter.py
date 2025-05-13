@@ -3,8 +3,8 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.qompile.configure import QompilerConfig, DeviceConfig
-from quompiler.qompile.qompiler import Qompiler
+from quompiler.circuits.create_factory import create_factory
+from quompiler.circuits.qompiler import Qompiler
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 from tests.qompiler.qompile.mock_fixtures import mock_config
@@ -18,7 +18,8 @@ def test_interp_identity_matrix(mocker):
     expected = np.eye(dim)
 
     config = mock_config(mocker)
-    interp = Qompiler(config)
+    factory = create_factory(config)
+    interp = factory.get_qompiler()
     interp.interpret(expected)
     circuit = interp.finish()
     qubits = circuit.all_qubits()
@@ -31,8 +32,9 @@ def test_interp_sing_qubit_circuit(mocker):
     n = 1
     dim = 1 << n
     expected = random_unitary(dim)
-    config = mock_config(mocker, emit="SINGLET", aspace=100)
-    interp = Qompiler(config)
+    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+    factory = create_factory(config)
+    interp = factory.get_qompiler()
 
     # execute
     interp.interpret(expected)
@@ -56,8 +58,9 @@ def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
     dim = 1 << n
     expected = cyclic_matrix(dim, k)
 
-    config = mock_config(mocker, emit="SINGLET", aspace=100)
-    interp = Qompiler(config)
+    config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+    factory = create_factory(config)
+    interp = factory.get_qompiler()
 
     # execute
     interp.interpret(expected)
@@ -78,8 +81,9 @@ def test_interp_random_unitary(mocker):
         dim = 1 << n
         expected = random_unitary(dim)
 
-        config = mock_config(mocker, emit="SINGLET", aspace=100)
-        interp = Qompiler(config)
+        config = mock_config(mocker, emit="SINGLET", ancilla_offset=100)
+        factory = create_factory(config)
+        interp = factory.get_qompiler()
 
         # execute
         interp.interpret(expected)

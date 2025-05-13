@@ -17,7 +17,8 @@ if __name__ == '__main__':
 
     cfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "compiler_config.json"))
     config = QompilerConfig.from_file(cfile)
-    interp = Qompiler(config)
+    factory = create_factory(config)
+    interp = factory.get_qompiler()
     interp.interpret(u)
     circuit = interp.finish(optimized=True)
     print(circuit)

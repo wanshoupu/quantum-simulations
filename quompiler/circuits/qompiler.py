@@ -2,32 +2,30 @@
 This module provide the compilation functionalities.
 If needed, it may make distinctions between target qubits and ancilla qubits.
 """
+
 from typing import Union
 
 from numpy._typing import NDArray
 
-from quompiler.circuits.cirq_circuit import CirqBuilder
-from quompiler.circuits.qiskit_circuit import QiskitBuilder
-from quompiler.circuits.quimb_circuit import QuimbBuilder
+from quompiler.circuits.qdevice import QDevice
+from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import QompilePlatform, EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.qompile.configure import QompilerConfig
-from quompiler.qompile.device import QDevice
-from quompiler.utils.granularity import granularity
 from quompiler.utils.cnot_decompose import cnot_decompose
+from quompiler.utils.granularity import granularity
 from quompiler.utils.mat2l_decompose import mat2l_decompose
 from quompiler.utils.std_decompose import std_decompose, ctrl_decompose
 
 
 class Qompiler:
 
-    def __init__(self, config: QompilerConfig):
+    def __init__(self, config: QompilerConfig, builder, device):
         self.config = config
-        self.builder = self.create_builder(QompilePlatform[config.target])
-        self.device = QDevice(config.device)
+        self.builder = builder
+        self.device = device
         self.emit = EmitType[config.emit]
 
     def interpret(self, u: NDArray):
@@ -94,12 +92,3 @@ class Qompiler:
 
     def all_qubits(self):
         return self.builder.all_qubits()
-
-    def create_builder(self, platform: QompilePlatform):
-        if platform == QompilePlatform.CIRQ:
-            return CirqBuilder(self.config.device)
-        if platform == QompilePlatform.QISKIT:
-            return QiskitBuilder(self.config.device)
-        if platform == QompilePlatform.QUIMB:
-            return QuimbBuilder(self.config.device)
-        raise NotImplementedError(f"Unsupported platform: {platform}")
