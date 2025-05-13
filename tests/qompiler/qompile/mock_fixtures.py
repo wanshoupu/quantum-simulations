@@ -1,18 +1,18 @@
-from quompiler.qompile.configure import QompilerConfig
+from quompiler.config.construct import QompilerConfig
 
 
-def mock_device(mocker, aspace):
-    device_cls = mocker.patch("quompiler.qompile.configure.DeviceConfig")
+def mock_device(mocker, ancilla_offset):
+    device_cls = mocker.patch("quompiler.config.construct.DeviceConfig")
     result = device_cls.return_value
-    result.arange = [aspace, 200]
+    result.ancilla_offset = ancilla_offset
     return result
 
 
-def mock_config(mocker, emit: str = "SINGLET", aspace=1) -> QompilerConfig:
-    config_cls = mocker.patch("quompiler.qompile.configure.QompilerConfig")
+def mock_config(mocker, emit: str = "SINGLET", ancilla_offset=1) -> QompilerConfig:
+    config_cls = mocker.patch("quompiler.config.construct.QompilerConfig")
 
     result = config_cls.return_value
-    result.device = mock_device(mocker, aspace)
+    result.device = mock_device(mocker, ancilla_offset)
     result.target = "CIRQ"
     result.emit = emit
 
