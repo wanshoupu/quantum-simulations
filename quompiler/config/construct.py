@@ -103,7 +103,7 @@ class QompilerConfig:
 
 
 def validate_config(data: Dict):
-    schema_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "config_schema.json"))
+    schema_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "config_schema.json"))
     assert os.path.exists(schema_file)
     schema = json.load(open(schema_file))
     validate(instance=data, schema=schema)

@@ -1,6 +1,6 @@
 {
-  "source": "main.qasm",
-  "output": "program.out",
+  "source": "",
+  "output": "a.out",
   "optimization": "O3",
   "debug": true,
   "warnings": {
@@ -8,8 +8,7 @@
     "as_errors": true
   },
   "device": {
-    "qrange": [1, 4],
-    "arange": [2, 5]
+    "ancilla_offset": 100
   },
   "target": "CIRQ",
   "emit": "SINGLET",

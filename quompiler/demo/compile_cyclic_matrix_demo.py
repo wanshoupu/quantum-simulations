@@ -1,7 +1,7 @@
 import os
 
-from quompiler.qompile.configure import DeviceConfig, QompilerConfig
-from quompiler.qompile.qompiler import Qompiler
+from quompiler.circuits.create_factory import create_factory
+from quompiler.config.construct import QompilerConfig
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
 
