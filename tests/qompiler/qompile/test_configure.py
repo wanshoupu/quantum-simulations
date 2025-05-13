@@ -4,7 +4,7 @@ import os.path
 import pytest
 
 from quompiler.construct.types import EmitType, QompilePlatform
-from quompiler.qompile.configure import QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig
+from quompiler.config.construct import QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, DeviceConfig
 
 
 @pytest.mark.parametrize("name, builder", [
