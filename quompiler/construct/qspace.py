@@ -89,6 +89,9 @@ class QSpace:
     def __iter__(self):
         return iter(self.qids)
 
+    def __len__(self):
+        return len(self.qids)
+
     def map_all(self, indexes: Sequence[int]) -> list[int]:
         """
         Convenient method built on top of self.map

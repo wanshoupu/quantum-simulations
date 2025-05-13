@@ -147,6 +147,10 @@ def test_qspace_init_random():
         assert sorting == qs.sorting
 
 
+def test_qspace_iter():
+    pass
+
+
 @pytest.mark.parametrize("qids,n,expected", [
     [[10, 0, 7, 1, 8], 0b10101, 0b11100],
 ])

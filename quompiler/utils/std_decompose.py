@@ -1,13 +1,13 @@
+from collections import deque
 from typing import Sequence, Union
 
 import numpy as np
 from numpy.typing import NDArray
 
+from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.qspace import Ancilla
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate, QType
-from quompiler.qompile.device import QDevice
 from quompiler.utils.solovay import sk_approx
 
 
@@ -15,7 +15,7 @@ def toffoli(ctrs: Sequence[QType], qubits: Sequence[int]) -> list[CtrlStdGate]:
     return [CtrlStdGate(UnivGate.X, ctrs, qubits)]
 
 
-def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]:
+def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[Union[CtrlStdGate, CtrlGate]]:
     """
     Given a single-qubit CtrlGate, decompose its control sequences into no more than 2.
     :param clength: maximum length of control sequence after the decomposition. 0<clength<=2. Default to 1
@@ -28,28 +28,37 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
     # sort by controls
     gate = gate.sorted(np.argsort(list(gate.controller)))
     ctrl_seq = list(gate.controller)
-    qspace = gate.qspace()
+    qspace = gate.qspace
     assert len(ctrl_seq) == len(qspace)
-    if len(ctrl_seq) <= clength:
+    # ctrl indexes
+    cindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.CONTROL0 | QType.CONTROL1]
+    if len(cindexes) <= clength:
+        # noop
         return [gate]
-    an = len(ctrl_seq) - 1
-    aspace = device.alloc_ancilla(an)
-    prev_ctrl = [ctrl_seq[0]]
-    prev_qubit = [qspace[0]]
-    coms = []
-    for i in range(1, len(ctrl_seq)):
-        cnot_qubits = [prev_qubit, qspace[i], aspace[i - 1]]
-        cnot_ctrl = [prev_ctrl, ctrl_seq[i], QType.CONTROL1]
-        prev_ctrl = cnot_ctrl[-1]
-        prev_qubit = cnot_qubits[-1]
+    # alloc ancilla
+    aspace = device.alloc_ancilla(len(cindexes) - 1)
+    left_coms = []
+    right_coms = []
+    for i, ancilla in enumerate(aspace):
+        if i == 0:
+            actrl = ctrl_seq[cindexes[0]], ctrl_seq[cindexes[1]], QType.TARGET
+            aqubit = qspace[cindexes[0]], qspace[cindexes[1]], ancilla
+        else:
+            actrl = ctrl_seq[cindexes[i + 1]], QType.CONTROL1, QType.TARGET
+            aqubit = qspace[cindexes[0]], aspace[i - 1], ancilla
 
         if clength == 1:
-            coms.append(CtrlStdGate(UnivGate.X, cnot_ctrl, cnot_qubits))
+            toffs = toffoli(actrl, aqubit)
+            left_coms.extend(toffs)
+            right_coms.extend(toffs[::-1])
         else:  # clength == 2
-            toff = toffoli(cnot_ctrl, cnot_qubits)
-            coms.extend(toff)
-    core = CtrlGate(gate.unitary.matrix,[])
-    return [gate]
+            left_coms.append(CtrlStdGate(UnivGate.X, actrl, aqubit))
+    # target indexes
+    tindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.TARGET]
+    core_ctrl = [QType.TARGET] * len(tindexes) + [QType.CONTROL1]
+    core_qspace = [qspace[tindexes[i]] for i in tindexes] + [aspace[-1]]
+    core = CtrlGate(gate.unitary.matrix, core_ctrl, core_qspace)
+    return left_coms + [core] + right_coms[::-1]
 
 
 def std_decompose(gate: Union[CtrlStdGate, CtrlGate], univset: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlStdGate]:

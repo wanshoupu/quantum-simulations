@@ -39,6 +39,9 @@ class Qontroller:
     def __iter__(self):
         return iter(self.controls)
 
+    def __len__(self):
+        return len(self.controls)
+
     def __repr__(self):
         return repr(self.controls)
 
