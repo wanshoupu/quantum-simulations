@@ -43,9 +43,9 @@ class CirqBuilder(CircuitBuilder):
     def build_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]):
         if isinstance(m, CtrlGate):
             gate = self.get_univ_gate(m) or cirq.MatrixGate(m.unitary.matrix)
-            self._append_gate(m.controller, gate, m.qids())
+            self._append_gate(m._controller, gate, m.qids())
         if isinstance(m, CtrlStdGate):
-            self._append_gate(m.controlledM.controller, m.gate, m.controlledM.qids())
+            self._append_gate(m.get_controller(), m.gate, m.get_qubits())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
     def _append_gate(self, controller, gate, qids):

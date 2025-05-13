@@ -97,7 +97,7 @@ def test_init_qontroller():
     m = random_unitary(2)
     controller = Qontroller((QType.CONTROL1, QType.CONTROL1, QType.TARGET))
     cu = CtrlGate(m, controller)
-    assert cu.controller == controller
+    assert cu._controller == controller
 
 
 def test_init_qspace_seq():
@@ -202,10 +202,10 @@ def test_sorted_by_ctrl():
     cu = CtrlGate(m, controls, qids)
 
     # execute
-    sorting = np.argsort(cu.controller)
+    sorting = np.argsort(cu._controller)
     sorted_cu = cu.sorted(sorting=sorting)
-    assert sorted_cu.controller[:t] == [QType.TARGET] * t
-    ctrls = sorted_cu.controller[t:]
+    assert sorted_cu._controller[:t] == [QType.TARGET] * t
+    ctrls = sorted_cu._controller[t:]
     assert all(c in QType(0x110) for c in ctrls)
 
 

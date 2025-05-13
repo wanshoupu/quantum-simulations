@@ -26,13 +26,13 @@ class CtrlGate:
         Dimension of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
-        self.controller = control if isinstance(control, Qontroller) else Qontroller(control)
-        core = self.controller.core()
+        self._controller = control if isinstance(control, Qontroller) else Qontroller(control)
+        core = self._controller.core()
         assert m.shape[0] == len(core)
-        dim = 1 << self.controller.length
+        dim = 1 << self._controller.length
         self.unitary = UnitaryM(dim, core, m)
         if qspace is None:
-            self.qspace = QSpace(list(range(self.controller.length)))
+            self.qspace = QSpace(list(range(self._controller.length)))
         elif isinstance(qspace, QSpace):
             self.qspace = qspace
         else:
@@ -42,7 +42,7 @@ class CtrlGate:
             self.qspace = QSpace(qspace)
 
     def __repr__(self):
-        return f'{repr(self.unitary)},controls={repr(self.controller.controls)},qspace={self.qspace}'
+        return f'{repr(self.unitary)},controls={repr(self._controller.controls)},qspace={self.qspace}'
 
     def inflate(self) -> NDArray:
         res = self.unitary.inflate()
@@ -75,12 +75,12 @@ class CtrlGate:
         return self.expand(univ) @ other.expand(univ)
 
     def __copy__(self):
-        return CtrlGate(self.unitary.matrix, self.controller.controls, self.qspace)
+        return CtrlGate(self.unitary.matrix, self._controller.controls, self.qspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
-        new = CtrlGate(copy.deepcopy(self.unitary.matrix, memodict), copy.deepcopy(self.controller.controls, memodict), copy.deepcopy(self.qspace, memodict))
+        new = CtrlGate(copy.deepcopy(self.unitary.matrix, memodict), copy.deepcopy(self._controller.controls, memodict), copy.deepcopy(self.qspace, memodict))
         memodict[self] = new
         return new
 
@@ -129,8 +129,8 @@ class CtrlGate:
         if sorting is None:
             sorting = np.argsort(self.qspace.qids)
         else:
-            assert self.controller.length == len(sorting) == len(set(sorting))
-        controls = [self.controller[i] for i in sorting]
+            assert self._controller.length == len(sorting) == len(set(sorting))
+        controls = [self._controller[i] for i in sorting]
         # create the sorted ControlledGate
         qspace = [self.qspace[i] for i in sorting]
         return CtrlGate(self.unitary.matrix, controls, qspace)
@@ -143,7 +143,7 @@ class CtrlGate:
         return [qid for qid in self.qspace.qids if qid not in target]
 
     def target_qids(self) -> list[int]:
-        return [qid for i, qid in enumerate(self.qspace.qids) if self.controller.controls[i] == QType.TARGET]
+        return [qid for i, qid in enumerate(self.qspace.qids) if self._controller.controls[i] == QType.TARGET]
 
     def expand(self, qspace: Union[QSpace, Sequence[int]]) -> 'CtrlGate':
         """
@@ -165,7 +165,7 @@ class CtrlGate:
         controls = [QType.TARGET] * qspace.length
         for i, qid in enumerate(scu.qspace.qids):
             j = qspace.qids.index(qid)
-            controls[j] = scu.controller.controls[i]
+            controls[j] = scu._controller.controls[i]
         return CtrlGate(mat, controls, qspace)
 
     @staticmethod

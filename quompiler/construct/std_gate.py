@@ -24,44 +24,50 @@ class CtrlStdGate:
         Dimension of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
-        self.controlledM: CtrlGate = CtrlGate(gate.matrix, control, qspace)
+        self._ctrlgate: CtrlGate = CtrlGate(gate.matrix, control, qspace)
         self.gate: UnivGate = gate
 
+    def get_controller(self):
+        return self._ctrlgate._controller
+
+    def get_qubits(self):
+        return self._ctrlgate.qids()
+
     def __repr__(self):
-        return f'{repr(self.gate)},{repr(self.controlledM)}'
+        return f'{repr(self.gate)},{repr(self._ctrlgate)}'
 
     def inflate(self) -> NDArray:
-        return self.controlledM.inflate()
+        return self._ctrlgate.inflate()
 
     def isid(self) -> bool:
         return self.gate == UnivGate.I
 
     def is_ctrl_singlet(self) -> bool:
-        return 1 == len(self.controlledM.control_qids())
+        return 1 == len(self._ctrlgate.control_qids())
 
     def __matmul__(self, other: 'CtrlStdGate') -> CtrlGate:
-        return self.controlledM @ other.controlledM
+        return self._ctrlgate @ other._ctrlgate
 
     def __copy__(self):
-        return CtrlStdGate(self.gate, self.controlledM.controller, self.controlledM.qspace)
+        return CtrlStdGate(self.gate, self._ctrlgate._controller, self._ctrlgate.qspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
         gate: UnivGate = copy.deepcopy(self.gate, memodict),
-        controlledM: CtrlGate = copy.deepcopy(self.controlledM, memodict),
-        new = CtrlStdGate(gate, controlledM.controller, controlledM.qspace)
+        controlledM: CtrlGate = copy.deepcopy(self._ctrlgate, memodict),
+        new = CtrlStdGate(gate, controlledM._controller, controlledM.qspace)
         memodict[self] = new
         return new
 
-    def to_controlledM(self) -> CtrlGate:
-        return self.controlledM
+    def to_ctrlgate(self) -> CtrlGate:
+        return self._ctrlgate
 
     @classmethod
     def convert(cls, cm: CtrlGate) -> 'CtrlStdGate':
         assert cm.is_std()
         result = UnivGate.get(cm.unitary.matrix)
-        return CtrlStdGate(result, cm.controller, cm.qspace)
+        return CtrlStdGate(result, cm._controller, cm.qspace)
 
     def sorted(self, sorting: Sequence[int] = None) -> 'CtrlStdGate':
         """
@@ -71,14 +77,14 @@ class CtrlStdGate:
         This latter will in turn change the core indexes in the field `unitary`.
         :return: A sorted version of this ControlledGate whose qspace is in ascending order. If this is already sorted, return self.
         """
-        sorted_gate: CtrlGate = self.controlledM.sorted(sorting)
-        return CtrlStdGate(self.gate, sorted_gate.controller, sorted_gate.qspace)
+        sorted_gate: CtrlGate = self._ctrlgate.sorted(sorting)
+        return CtrlStdGate(self.gate, sorted_gate._controller, sorted_gate.qspace)
 
     def control_qids(self) -> list[int]:
-        return self.controlledM.control_qids()
+        return self._ctrlgate.control_qids()
 
     def target_qids(self) -> list[int]:
-        return self.controlledM.target_qids()
+        return self._ctrlgate.target_qids()
 
     def expand(self, qspace: Union[QSpace, Sequence[int]]) -> CtrlGate:
         """
@@ -86,4 +92,4 @@ class CtrlStdGate:
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.
         :return: a ControlledGate
         """
-        return self.to_controlledM().expand(qspace)
+        return self.to_ctrlgate().expand(qspace)

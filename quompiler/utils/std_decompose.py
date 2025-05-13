@@ -26,8 +26,8 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[Union[Ctr
     assert 1 <= clength <= 2
 
     # sort by controls
-    gate = gate.sorted(np.argsort(list(gate.controller)))
-    ctrl_seq = list(gate.controller)
+    gate = gate.sorted(np.argsort(list(gate._controller)))
+    ctrl_seq = list(gate._controller)
     qspace = gate.qspace
     assert len(ctrl_seq) == len(qspace)
     # ctrl indexes
@@ -71,7 +71,7 @@ def std_decompose(gate: Union[CtrlStdGate, CtrlGate], univset: Sequence[UnivGate
     :return: a list of CtrlStdGate objects.
     """
     seq = sk_approx(gate.inflate(), rtol=rtol, atol=atol)
-    return [CtrlStdGate(g, gate.controller, gate.qspace) for g in seq]
+    return [CtrlStdGate(g, gate._controller, gate.qspace) for g in seq]
 
 
 def euler_decompose(cg: CtrlGate) -> list[CtrlGate]:
@@ -92,11 +92,11 @@ def euler_decompose(cg: CtrlGate) -> list[CtrlGate]:
     C = UnivGate.Z.rotation((d - b) / 2)
     target = cg.target_qids()
 
-    result = [CtrlGate(phase, cg.controller, cg.qspace),
+    result = [CtrlGate(phase, cg._controller, cg.qspace),
               CtrlGate(A, [QType.TARGET], target),
-              CtrlGate(UnivGate.X.matrix, cg.controller, cg.qspace),
+              CtrlGate(UnivGate.X.matrix, cg._controller, cg.qspace),
               CtrlGate(B, [QType.TARGET], target),
-              CtrlGate(UnivGate.X.matrix, cg.controller, cg.qspace),
+              CtrlGate(UnivGate.X.matrix, cg._controller, cg.qspace),
               CtrlGate(C, [QType.TARGET], target)]
     return result
 
