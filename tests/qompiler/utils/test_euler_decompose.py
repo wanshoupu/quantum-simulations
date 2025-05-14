@@ -136,7 +136,7 @@ def test_custom_qspace():
     u = random_unitary(2)
     n = 3
     offset = 500
-    qspace = list(range(offset, offset + n))
+    qspace = [Qubit(i) for i in range(offset, offset + n)]
     controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
     target = controls.index(QType.TARGET)
     cu = CtrlGate(u, controls, qspace)
@@ -164,7 +164,7 @@ def test_verify_qspace_random():
         u = random_unitary(2)
         n = random.randint(1, 5)
         offset = random.randrange(500)
-        qspace = list(range(offset, offset + n))
+        qspace = [Qubit(i) for i in range(offset, offset + n)]
         controls = random_control(n, 1)
         target = controls.index(QType.TARGET)
         cu = CtrlGate(u, controls, qspace)

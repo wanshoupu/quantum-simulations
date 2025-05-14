@@ -309,7 +309,7 @@ def test_extend_random_ctrls():
         # print()
         # print(formatter.tostr(cu.inflate()))
         new_ctrls = random_control(2, 0)
-        new_qubits = [Qubit(q) for q in random.sample(range(k), 2)]
+        new_qubits = [Qubit(k + 1 + q) for q in random.sample(range(k), 2)]
 
         # execute
         ex = cu.extend(new_qubits, new_ctrls)

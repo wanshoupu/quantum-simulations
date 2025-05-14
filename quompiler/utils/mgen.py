@@ -57,7 +57,7 @@ def random_control(k, t=None) -> tuple[QType, ...]:
     if t is None:
         return random.choices([QType.CONTROL1, QType.CONTROL0, QType.TARGET], k=k)
 
-    assert 0 < t <= k
+    assert 0 <= t <= k
     result = random.choices([QType.CONTROL1, QType.CONTROL0], k=k)
     for i in random.sample(range(k), t):
         result[i] = QType.TARGET
