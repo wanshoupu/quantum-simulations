@@ -6,12 +6,12 @@ from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import QSpace, Qubit
+from quompiler.construct.qspace import Qubit, QSpace
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import inter_product
-from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control
+from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate
 
 formatter = MatrixFormatter(precision=2)
 
@@ -103,7 +103,7 @@ def test_init_qontroller():
 def test_init_qspace_seq():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    qspace = list(QSpace(range(3)))
+    qspace = [Qubit(i) for i in range(3)]
     random.shuffle(qspace)
     cu = CtrlGate(m, controls, qspace)
     assert cu.qspace.qids == qspace
@@ -114,14 +114,14 @@ def test_init_qspace_numpy_array():
     t = random.randint(1, k)
     controls = random_control(k, t)
     qids = np.random.choice(1 << k, size=k, replace=False)
-    cu = CtrlGate(random_unitary(2), controls, qspace=qids)
+    cu = CtrlGate(random_unitary(2), controls, qspace=[Qubit(q) for q in qids])
     assert cu.qspace.qids == [Qubit(q) for q in qids]
 
 
 def test_init_qspace_obj():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    qspace = QSpace(range(3))
+    qspace = [Qubit(i) for i in range(3)]
     cu = CtrlGate(m, controls, qspace)
     assert cu.qspace.qids == [Qubit(i) for i in range(3)]
 
@@ -153,20 +153,24 @@ def test_UnivGate_Z():
 def test_sorted_4x4():
     m = random_unitary(2)
     controls = (QType.TARGET, QType.CONTROL1)
-    qids = [3, 0]
+    qids = [Qubit(3), Qubit(0)]
     cu = CtrlGate(m, controls, qids)
     # print()
     # print(formatter.tostr(cu.inflate()))
     assert tuple(cu.unitary.core) == (1, 3), f'Core indexes is unexpected {cu.unitary.core}'
-    sorted_cu = cu.sorted()
-    assert tuple(sorted_cu.unitary.core) == (2, 3), f'Core indexes is unexpected {sorted_cu.unitary.core}'
-    assert np.allclose(sorted_cu.inflate(), cu.inflate())
+    actual = cu.sorted()
+    assert tuple(actual.unitary.core) == (2, 3), f'Core indexes is unexpected {actual.unitary.core}'
+
+    qspace = QSpace(qids)
+    indexes = qspace.map_all(range(cu.order()))
+    expected = cu.inflate()[np.ix_(indexes, indexes)]
+    assert np.allclose(actual.inflate(), expected)
 
 
 def test_sorted_noop():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    qids = list(range(3))
+    qids = [Qubit(i) for i in range(3)]
     expected = CtrlGate(m, controls, qids)
     print('expected\n')
     print(formatter.tostr(expected.inflate()))
@@ -179,9 +183,8 @@ def test_sorted_noop():
 def test_sorted_8x8():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
-    qids = [2, 0, 1]
+    qids = [Qubit(2), Qubit(0), Qubit(1)]
     cu = CtrlGate(m, controls, qids)
-    expected = cu.inflate()
     # print()
     # print(formatter.tostr(expected))
 
@@ -190,6 +193,10 @@ def test_sorted_8x8():
 
     assert tuple(sorted_cu.unitary.core) == (5, 7), f'Core indexes is unexpected {sorted_cu.unitary.core}'
     actual = sorted_cu.inflate()
+
+    qspace = QSpace(qids)
+    indexes = qspace.map_all(range(cu.order()))
+    expected = cu.inflate()[np.ix_(indexes, indexes)]
     assert np.allclose(actual, expected)
 
 
@@ -212,9 +219,9 @@ def test_sorted_by_ctrl():
 def test_expand():
     m = random_unitary(2)
     controls = (QType.TARGET, QType.CONTROL1)
-    qids = [1, 0]
+    qids = [Qubit(1), Qubit(0)]
     cu = CtrlGate(m, controls, qids)
-    univ = list(range(3))
+    univ = [Qubit(i) for i in range(3)]
     ex = cu.expand(univ)
     # print()
     # print(formatter.tostr(ex.inflate()))
@@ -231,14 +238,87 @@ def test_expand_random():
         m = random_unitary(1 << t)
         controls = random_control(k, t)
         qids = random.sample(range(n), k)
-        cu = CtrlGate(m, controls, qids)
-        univ = list(range(n))
+        cu = CtrlGate(m, controls, [Qubit(q) for q in qids])
+        univ = [Qubit(i) for i in range(n)]
 
         # execute
         ex = cu.expand(univ)
         assert ex
         # print()
         # print(formatter.tostr(ex.inflate()))
+
+
+def test_extend_invalid_qubit():
+    k = random.randint(2, 5)
+    t = random.randint(1, k)
+    cu = random_ctrlgate(k, t)
+    qs = cu.qids()
+    # execute
+    with pytest.raises(AssertionError):
+        cu.extend([Qubit(qs[0].qid), Qubit(qs[1].qid)])
+
+
+def test_extend_invalid_ctrls():
+    k = random.randint(2, 5)
+    t = random.randint(1, k)
+    cu = random_ctrlgate(k, t)
+    new_qubits = [Qubit(i) for i in range(2)]
+    new_ctrls = [QType.TARGET] * 2
+
+    # execute
+    with pytest.raises(AssertionError):
+        cu.extend(new_qubits, new_ctrls)
+
+
+def test_extend_default_ctrls():
+    k = 3
+    t = 1
+    cu = random_ctrlgate(k, t)
+    # print(cu._controller)
+    # print('cu\n')
+    # print(formatter.tostr(cu.inflate()))
+
+    # execute
+    actual = cu.extend([Qubit(k + 1)])
+    # print('actual\n')
+    # print(formatter.tostr(actual.inflate()))
+
+    ctrls = list(actual._controller)[cu._controller.length:]
+    assert ctrls == [QType.CONTROL1] * len(ctrls)
+    expected = cu.inflate()
+    for ctrl in ctrls:
+        expected = extend_helper(expected, ctrl.base[0])
+    # print('expected\n')
+    # print(formatter.tostr(expected))
+    assert np.allclose(actual.inflate(), expected)
+
+
+def extend_helper(mat, offset=1):
+    length = mat.shape[0]
+    indexes = [(i << 1) + offset for i in range(length)]
+    expected = np.eye(length << 1, dtype=np.complex128)
+    expected[np.ix_(indexes, indexes)] = mat
+    return expected
+
+
+def test_extend_random_ctrls():
+    for _ in range(10):
+        k = random.randint(2, 6)
+        t = random.randint(1, k)
+        cu = random_ctrlgate(k, t)
+        # print()
+        # print(formatter.tostr(cu.inflate()))
+        new_ctrls = random_control(2, 0)
+        new_qubits = [Qubit(q) for q in random.sample(range(k), 2)]
+
+        # execute
+        ex = cu.extend(new_qubits, new_ctrls)
+
+        # verify
+        expected = cu.inflate()
+        for ctrl in new_ctrls:
+            expected = extend_helper(expected, ctrl.base[0])
+        assert np.allclose(ex.inflate(), expected)
 
 
 def test_matmul_identical_controls():
@@ -284,7 +364,7 @@ def test_matmul_verify_qspace():
 
 def test_expand_eqiv_left_kron():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
-    qid1 = [1, 3]
+    qid1 = [Qubit(1), Qubit(3)]
     unitary1 = random_unitary(4)
     print('unitary1')
     print(formatter.tostr(unitary1))
@@ -292,7 +372,7 @@ def test_expand_eqiv_left_kron():
     print('a')
     print(formatter.tostr(a.inflate()))
 
-    univ = [0, 1, 3]
+    univ = [Qubit(0), Qubit(1), Qubit(3)]
     actual = a.expand(univ)
     # print('actual')
     # print(formatter.tostr(actual.inflate()))
@@ -302,7 +382,7 @@ def test_expand_eqiv_left_kron():
 
 def test_expand_eqiv_inter_product():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
-    qid1 = [3, 0]
+    qid1 = [Qubit(3), Qubit(0)]
     unitary1 = random_unitary(4)
     print('unitary1')
     print(formatter.tostr(unitary1))
@@ -310,7 +390,7 @@ def test_expand_eqiv_inter_product():
     print('a')
     print(formatter.tostr(a.inflate()))
 
-    univ = [0, 1, 3]
+    univ = [Qubit(0), Qubit(1), Qubit(3)]
     actual = a.expand(univ)
     print('actual')
     print(formatter.tostr(actual.inflate()))
@@ -322,11 +402,11 @@ def test_expand_eqiv_inter_product():
 
 def test_matmul_uncontrolled_diff_qspace():
     controls = [QType.TARGET, QType.TARGET]  # all targets, no control
-    a = CtrlGate(random_unitary(4), controls, qspace=[1, 3])
+    a = CtrlGate(random_unitary(4), controls, qspace=[Qubit(1), Qubit(3)])
     # print('a')
     # print(formatter.tostr(a.inflate()))
 
-    b = CtrlGate(random_unitary(4), controls, qspace=[3, 0])
+    b = CtrlGate(random_unitary(4), controls, qspace=[Qubit(3), Qubit(0)])
     # print('b')
     # print(formatter.tostr(b.inflate()))
 

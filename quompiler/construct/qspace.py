@@ -67,9 +67,9 @@ class QSpace:
      2. map a sequence of unique indexes
     """
 
-    def __init__(self, qids: Sequence[Union[int, Qubit]]):
+    def __init__(self, qids: Sequence[Qubit]):
         assert len(set(qids)) == len(qids)
-        self.qids: list[Qubit] = [q if isinstance(q, Qubit) else Qubit(q) for q in qids]
+        self.qids: list[Qubit] = list(qids)
         self.length = len(qids)
         self.sorting = np.argsort(qids).tolist()
 

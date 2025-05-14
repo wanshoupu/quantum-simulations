@@ -72,13 +72,14 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 from typing import Tuple, Sequence
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.unitary import UnitaryM
 from quompiler.construct.qontroller import core2control
 from quompiler.construct.types import UnivGate
 from quompiler.utils.gray import gray_code
 
 
-def cnot_decompose(m: UnitaryM, qspace: Sequence[int] = None) -> Tuple[CtrlGate, ...]:
+def cnot_decompose(m: UnitaryM, qspace: Sequence[Qubit] = None) -> Tuple[CtrlGate, ...]:
     """
     Decompose an arbitrary unitary matrix into single-qubit operations in universal gates.
     :param m: UnitaryM to be decomposed

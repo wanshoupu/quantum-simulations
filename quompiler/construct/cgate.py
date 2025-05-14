@@ -18,21 +18,24 @@ class CtrlGate:
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """
 
-    def __init__(self, m: NDArray, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[Union[int, Qubit]], QSpace] = None):
+    def __init__(self, gate: Union[UnivGate, NDArray], control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[Qubit], QSpace] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
-        :param m: the core matrix.
-        :param control: the control sequence or a Qontroller.
-        Dimension of the matrix is given by len(controls).
+        :param mat: the core matrix operation. It may be a NDArray or UnivGate.
+        :param control: the control sequence or a Qontroller. Order of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
         self._controller = control if isinstance(control, Qontroller) else Qontroller(control)
         core = self._controller.core()
-        assert m.shape[0] == len(core)
+        mat = gate.matrix if isinstance(gate, UnivGate) else gate
+        assert mat.shape[0] == len(core)
         dim = 1 << self._controller.length
-        self.unitary = UnitaryM(dim, core, m)
+        self.unitary = UnitaryM(dim, core, mat)
+        self.gate = gate if isinstance(gate, UnivGate) else UnivGate.get(gate)
+
         if qspace is None:
-            self.qspace = QSpace(list(range(self._controller.length)))
+            qubits = [Qubit(i) for i in range(self._controller.length)]
+            self.qspace = QSpace(qubits)
         elif isinstance(qspace, QSpace):
             self.qspace = qspace
         else:
@@ -44,26 +47,25 @@ class CtrlGate:
     def __repr__(self):
         return f'{repr(self.unitary)},controls={repr(self._controller.controls)},qspace={self.qspace}'
 
+    def order(self) -> int:
+        return self.unitary.order()
+
     def inflate(self) -> NDArray:
-        res = self.unitary.inflate()
-        if self.qspace.is_sorted():
-            return res
-        indexes = self.qspace.map_all(range(res.shape[0]))
-        return res[np.ix_(indexes, indexes)]
+        return self.unitary.inflate()
 
     def isid(self) -> bool:
         return self.unitary.isid()
 
     def is_std(self) -> bool:
-        return UnivGate.get(self.unitary.matrix) is not None
+        return self.gate is not None
 
     def is2l(self) -> bool:
         return self.unitary.is2l()
 
     def issinglet(self) -> bool:
         """
-        Check if this ControlledGate only operates on a single-qubit
-        :return: True if this ControlledGate only operates on a single-qubit. False otherwise.
+        Check if this CtrlGate only operates on a single-qubit
+        :return: True if this CtrlGate only operates on a single-qubit. False otherwise.
         """
         return len(self.target_qids()) == 1
 
@@ -85,9 +87,9 @@ class CtrlGate:
         return new
 
     @classmethod
-    def convert(cls, u: UnitaryM, qspace: Union[Sequence[int], QSpace] = None) -> 'CtrlGate':
+    def convert(cls, u: UnitaryM, qspace: Union[Sequence[Qubit], QSpace] = None) -> 'CtrlGate':
         """
-        Convert a UnitaryM to ControlledGate based on organically grown control sequence.
+        Convert a UnitaryM to CtrlGate based on organically grown control sequence.
         This can potentially expand the order of matrix to a number that is power of 2.
         :param u:
         :param qspace:
@@ -117,48 +119,72 @@ class CtrlGate:
         m[np.ix_(indxs, indxs)] = u.matrix
         return CtrlGate(m, controller, qspace=qspace)
 
-    def sorted(self, sorting: Sequence[int] = None) -> 'CtrlGate':
+    def sorted(self, sorting: Sequence[Qubit] = None) -> 'CtrlGate':
         """
-        Create a sorted version of this ControlledGate.
-        Sorting the ControlledGate means to sort the qspace in ascending order.
-        Unless the qspace was originally sorted in this order, this necessarily incurs changes in other parts such as control sequence.
-        This latter will in turn change the core indexes in the field `unitary`.
+        Create a sorted version of this CtrlGate.
+        Sorting the CtrlGate means to sort the qubits according to the given sorting order and at the same time transform the operator
+        such that the operations on all qubits remain invariant.
         :param sorting: optional sorting sequence. If not provided, will sort by qspace
-        :return: A sorted version of this ControlledGate whose qspace is in ascending order. If this is already sorted, return self.
+        :return: A sorted version of this CtrlGate whose qspace is in ascending order. If this is already sorted, return self.
         """
         if sorting is None:
             sorting = np.argsort(self.qspace.qids)
         else:
             assert self._controller.length == len(sorting) == len(set(sorting))
         controls = [self._controller[i] for i in sorting]
-        # create the sorted ControlledGate
+        # create the sorted CtrlGate
         qspace = [self.qspace[i] for i in sorting]
         return CtrlGate(self.unitary.matrix, controls, qspace)
 
-    def qids(self) -> list[int]:
+    def qids(self) -> list[Qubit]:
         return self.qspace.qids
 
-    def control_qids(self) -> list[int]:
+    def control_qids(self) -> list[Qubit]:
         target = self.target_qids()
         return [qid for qid in self.qspace.qids if qid not in target]
 
-    def target_qids(self) -> list[int]:
+    def target_qids(self) -> list[Qubit]:
         return [qid for i, qid in enumerate(self.qspace.qids) if self._controller.controls[i] == QType.TARGET]
 
-    def expand(self, qspace: Union[QSpace, Sequence[int]]) -> 'CtrlGate':
+    def project(self, qspace: Union[QSpace, Sequence[Qubit]]) -> 'CtrlGate':
         """
-        Expand into the super qspace by adding necessary dimensions.
+        Use with CAUTION: This operation may lead to incorrect results.
+        Project a CtrlGate to its subsystem represented by a subset of QSpace.
+        TODO: a better approach would be to use FactorMat as core matrix for CtrlGate. Then this operation would be made safe - to eliminate IDLER qubits only.
+        :param qspace: must be a subset of self.qspace and must be sorted in ascending order. If the qspace is identical to self.qspace, noop.
+        :return: a projected CtrlGate.
+        """
+        pass
+
+    def extend(self, qspace: Sequence[Qubit], ctrls: Sequence[QType] = None) -> 'CtrlGate':
+        """
+        Extend the control sequence to new qubits.
+        :param qspace: The extra qspace to be extended to.
+        :param ctrls: The control sequence to be applied. If not provided, defaults to [QType.CONTROL1] * len(qspace).
+        :return: A new CtrlGate with extended control sequence.
+        """
+        assert not set(qspace) & set(self.qspace)
+        ctrls = list(ctrls) if ctrls else [QType.CONTROL1] * len(qspace)
+        assert all(c in QType.CONTROL0 | QType.CONTROL1 for c in ctrls)  # only CONTROLs are present
+
+        newctrl = Qontroller(list(self._controller) + ctrls)
+        newqspace = QSpace(list(self.qspace) + list(qspace))
+        return CtrlGate(self.unitary.matrix, newctrl, newqspace)
+
+    def expand(self, qspace: Union[QSpace, Sequence[Qubit]]) -> 'CtrlGate':
+        """
+        Expand into the superset qspace by adding IDLER qubits. TODO treat IDLER qubits the same as TARGET.
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.
-        :return: a ControlledGate
+        :return: a CtrlGate
         """
         if not isinstance(qspace, QSpace):
             qspace = QSpace(qspace)
-        assert all(qspace.qids[i - 1] < qspace.qids[i] for i in range(1, qspace.length))
+        assert qspace.sorting == list(range(qspace.length))
         assert set(self.qspace.qids) <= set(qspace.qids)
         scu = self.sorted()
-        if scu.qspace.qids == qspace.qids:
+        if scu.qspace == qspace:
             return scu
-        extended_tids = sorted(set(qspace.qids) - set(scu.control_qids()))
+        extended_tids = sorted(set(qspace) - set(scu.control_qids()))
         mat = scu._calc_mat(scu, extended_tids)
 
         # prepare the new control sequence

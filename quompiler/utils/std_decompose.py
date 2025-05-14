@@ -6,16 +6,16 @@ from numpy.typing import NDArray
 
 from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.std_gate import CtrlStdGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.solovay import sk_approx
 
 
-def toffoli(ctrs: Sequence[QType], qubits: Sequence[int]) -> list[CtrlStdGate]:
-    return [CtrlStdGate(UnivGate.X, ctrs, qubits)]
+def toffoli(ctrs: Sequence[QType], qubits: Sequence[Qubit]) -> list[CtrlGate]:
+    return [CtrlGate(UnivGate.X, ctrs, qubits)]
 
 
-def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[Union[CtrlStdGate, CtrlGate]]:
+def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]:
     """
     Given a single-qubit CtrlGate, decompose its control sequences into no more than 2.
     :param clength: maximum length of control sequence after the decomposition. 0<clength<=2. Default to 1
@@ -25,11 +25,8 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[Union[Ctr
     """
     assert 1 <= clength <= 2
 
-    # sort by controls
-    gate = gate.sorted(np.argsort(list(gate._controller)))
     ctrl_seq = list(gate._controller)
     qspace = gate.qspace
-    assert len(ctrl_seq) == len(qspace)
     # ctrl indexes
     cindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.CONTROL0 | QType.CONTROL1]
     if len(cindexes) <= clength:
@@ -52,7 +49,7 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[Union[Ctr
             left_coms.extend(toffs)
             right_coms.extend(toffs[::-1])
         else:  # clength == 2
-            left_coms.append(CtrlStdGate(UnivGate.X, actrl, aqubit))
+            left_coms.append(CtrlGate(UnivGate.X, actrl, aqubit))
     # target indexes
     tindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.TARGET]
     core_ctrl = [QType.TARGET] * len(tindexes) + [QType.CONTROL1]
@@ -61,17 +58,17 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[Union[Ctr
     return left_coms + [core] + right_coms[::-1]
 
 
-def std_decompose(gate: Union[CtrlStdGate, CtrlGate], univset: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlStdGate]:
+def std_decompose(gate: Union[CtrlGate, CtrlGate], univset: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlGate]:
     """
-    Given a single-qubit unitary matrix, decompose it into CtrlStdGate with or without controls.
+    Given a single-qubit unitary matrix, decompose it into CtrlGate with or without controls.
     :param gate: controlled unitary matrix as input.
     :param univset: The set of universal gates to be used for the decomposition.
     :param rtol: optional, if provided, will be used as the relative tolerance parameter.
     :param atol: optional, if provided, will be used as the absolute tolerance parameter.
-    :return: a list of CtrlStdGate objects.
+    :return: a list of CtrlGate objects.
     """
     seq = sk_approx(gate.inflate(), rtol=rtol, atol=atol)
-    return [CtrlStdGate(g, gate._controller, gate.qspace) for g in seq]
+    return [CtrlGate(g, gate._controller, gate.qspace) for g in seq]
 
 
 def euler_decompose(cg: CtrlGate) -> list[CtrlGate]:

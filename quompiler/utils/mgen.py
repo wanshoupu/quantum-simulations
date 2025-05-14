@@ -1,10 +1,12 @@
 import random
+from typing import Sequence
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType
 from quompiler.construct.unitary import UnitaryM
 
@@ -34,10 +36,10 @@ def random_UnitaryM(dim, indexes) -> UnitaryM:
     return UnitaryM(dim, indexes, u)
 
 
-def random_CtrlGate(controls: tuple[QType, ...]) -> CtrlGate:
+def random_CtrlGate(controls: tuple[QType, ...], qubits: Sequence[Qubit] = None) -> CtrlGate:
     n = controls.count(QType.TARGET)
     u = unitary_group.rvs(1 << n)
-    return CtrlGate(u, controls)
+    return CtrlGate(u, controls, qubits)
 
 
 def random_indexes(n, k):
@@ -109,3 +111,11 @@ def cyclic_matrix(n, i=0, j=None, c=1):
     indexes = list(range(n))
     xs = indexes[:i] + np.roll(indexes[i:j], c).tolist() + indexes[j:]
     return permeye(xs)
+
+
+def random_ctrlgate(ctrnum, targetnum, qnum=None):
+    controls = random_control(ctrnum, targetnum)
+    if qnum is None:
+        return random_CtrlGate(controls)
+    qubits = [Qubit(q) for q in random.sample(range(qnum), ctrnum)]
+    return random_CtrlGate(controls, qubits)
