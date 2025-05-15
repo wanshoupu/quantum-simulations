@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-from typing import Sequence, Dict, Union
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
+from typing import Sequence, Dict
 
 import numpy as np
 
@@ -91,31 +90,3 @@ class QSpace:
 
     def __len__(self):
         return len(self.qids)
-
-    def map_all(self, indexes: Sequence[int]) -> list[int]:
-        """
-        Convenient method built on top of self.map
-        :param indexes: a sequence of indexes
-        :return: a list of mapped indexes
-        """
-        return [self.map(i) for i in indexes]
-
-    def map(self, n: int) -> int:
-        """
-        Shuffle the bits of an input integer viewed as binary according to the sorting order of qids.
-        For example, if qid = [10,0,7,1,8], sorting order = [4,0,2,1,3]
-        For an integer 0b10101, bits = [1,0,1,0,1] in Little Endian.
-        After reordering the bits, we get output integer 0b11100
-        :param n: input integer
-        :return: perform bit shuffles on n and return the resulting integer.
-        """
-        assert n < (1 << self.length)
-        result = 0
-        for i, s in enumerate(self.sorting):
-            # Get bit from s and put it at position i
-            bit = (n >> s) & 1
-            result |= (bit << i)
-        return result
-
-    def is_sorted(self) -> bool:
-        return all(self.qids[i - 1] < self.qids[i] for i in range(1, len(self.qids)))

@@ -113,7 +113,7 @@ def cyclic_matrix(n, i=0, j=None, c=1):
     return permeye(xs)
 
 
-def random_ctrlgate(ctrnum, targetnum, qnum=None):
+def random_ctrlgate(ctrnum, targetnum, qnum=None) -> CtrlGate:
     controls = random_control(ctrnum, targetnum)
     if qnum is None:
         return random_CtrlGate(controls)
