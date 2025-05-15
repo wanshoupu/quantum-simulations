@@ -128,7 +128,6 @@ class CtrlGate:
 
     def sorted(self, sorting: Sequence[Qubit] = None) -> 'CtrlGate':
         """
-        TODO There is a bug: when qubits of type QType.TARGET are shuffled, the unitary.matrix need to be shuffled accordingly.
         Create a sorted version of this CtrlGate.
         Sorting the CtrlGate means to sort the qubits according to the given sorting order and at the same time transform the operator
         such that the operations on all qubits remain invariant.
