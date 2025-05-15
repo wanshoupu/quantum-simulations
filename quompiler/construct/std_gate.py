@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import QSpace, Qubit
+from quompiler.construct.qspace import  Qubit
 from quompiler.construct.types import QType, UnivGate
 
 
@@ -16,7 +16,7 @@ class CtrlStdGate:
     See also: :class:`cgate.CtrlGate`
     """
 
-    def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[Qubit], QSpace] = None):
+    def __init__(self, gate: UnivGate, control: Union[Sequence[QType], Qontroller], qspace: Sequence[Qubit] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param gate: the core matrix.
@@ -86,7 +86,7 @@ class CtrlStdGate:
     def target_qids(self) -> list[int]:
         return self._ctrlgate.target_qids()
 
-    def expand(self, qspace: Union[QSpace, Sequence[Qubit]]) -> CtrlGate:
+    def expand(self, qspace: Sequence[Qubit]) -> CtrlGate:
         """
         Expand into the super qspace by adding necessary dimensions.
         :param qspace: the super qspace that must be a cover of self.qspace and must be sorted in ascending order.

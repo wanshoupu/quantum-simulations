@@ -1,4 +1,3 @@
-from collections import deque
 from typing import Sequence, Union
 
 import numpy as np
@@ -6,13 +5,9 @@ from numpy.typing import NDArray
 
 from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.solovay import sk_approx
-
-
-def toffoli(ctrs: Sequence[QType], qubits: Sequence[Qubit]) -> list[CtrlGate]:
-    return [CtrlGate(UnivGate.X, ctrs, qubits)]
+from quompiler.utils.toffoli import toffoli
 
 
 def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]:

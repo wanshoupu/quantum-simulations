@@ -3,18 +3,8 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.construct.qspace import QSpace, Qubit, Ancilla
+from quompiler.construct.qspace import  Qubit, Ancilla
 
-
-def test_qspace_init_random():
-    dim = 100
-    for _ in range(10):
-        qids = np.random.choice(dim, size=10, replace=False)
-        qs = QSpace(qids)
-        assert qs
-        sorting = np.argsort(qids).tolist()
-        # print(sorting)
-        assert sorting == qs.sorting
 
 
 def test_qubit_init_invalid():
@@ -24,18 +14,11 @@ def test_qubit_init_invalid():
         Qubit(-50)
 
 
-def test_init_int_array():
-    dim = 100
-    qids = np.random.choice(dim, size=100, replace=False)
-    qs = QSpace(qids)
-    assert all(isinstance(q, Qubit) for q in qs)
 
-
-def test_init_ancilla_array():
+def test_ancilla_array():
     dim = 100
     qids = [Ancilla(i) for i in range(dim)]
-    qs = QSpace(qids)
-    assert all(isinstance(q, Qubit) for q in qs)
+    assert all(isinstance(q, Qubit) for q in qids)
 
 
 def test_qubit_init_comparison():

@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import QSpace, Qubit
 from quompiler.construct.types import QType
 from quompiler.utils.mgen import random_control
 

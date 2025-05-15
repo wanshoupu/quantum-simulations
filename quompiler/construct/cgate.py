@@ -1,5 +1,5 @@
 import copy
-from itertools import groupby, accumulate, chain
+from itertools import chain
 from typing import Union, Sequence
 
 import numpy as np
@@ -7,10 +7,9 @@ from numpy import kron
 from numpy.typing import NDArray
 
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import QSpace, Qubit
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.utils.inter_product import mesh_product, inter_product
 from quompiler.utils.shuffle import Shuffler
 
 
@@ -20,7 +19,7 @@ class CtrlGate:
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """
 
-    def __init__(self, gate: Union[UnivGate, NDArray], control: Union[Sequence[QType], Qontroller], qspace: Union[Sequence[Qubit], QSpace] = None):
+    def __init__(self, gate: Union[UnivGate, NDArray], control: Union[Sequence[QType], Qontroller], qspace: Sequence[Qubit] = None):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param mat: the core matrix operation. It may be a NDArray or UnivGate.
@@ -36,15 +35,12 @@ class CtrlGate:
         self.gate = gate if isinstance(gate, UnivGate) else UnivGate.get(gate)
 
         if qspace is None:
-            qubits = [Qubit(i) for i in range(self._controller.length)]
-            self.qspace = QSpace(qubits)
-        elif isinstance(qspace, QSpace):
-            self.qspace = qspace
+            self.qspace = [Qubit(i) for i in range(self._controller.length)]
         else:
             # qspace is a sequence
             assert len(qspace) == len(set(qspace))  # uniqueness
             assert len(qspace) == len(control)  # consistency
-            self.qspace = QSpace(qspace)
+            self.qspace = list(qspace)
 
     def __repr__(self):
         return f'{repr(self.unitary)},controls={repr(self._controller.controls)},qspace={self.qspace}'
@@ -80,7 +76,7 @@ class CtrlGate:
         if set(self.qspace) == set(other.qspace):
             return self.sorted() @ other.sorted()
         # expand to same qspace
-        univ = set(self.qspace.qids + other.qspace.qids)
+        univ = set(self.qspace + other.qspace)
         return self.expand(list(univ - set(self.qspace))) @ other.expand(list(univ - set(other.qspace)))
 
     def __copy__(self):
@@ -94,7 +90,7 @@ class CtrlGate:
         return new
 
     @classmethod
-    def convert(cls, u: UnitaryM, qspace: Union[Sequence[Qubit], QSpace] = None) -> 'CtrlGate':
+    def convert(cls, u: UnitaryM, qspace: Sequence[Qubit] = None) -> 'CtrlGate':
         """
         Convert a UnitaryM to CtrlGate based on organically grown control sequence.
         This can potentially expand the order of matrix to a number that is power of 2.
@@ -105,19 +101,13 @@ class CtrlGate:
         if qspace is None:
             assert u.order() & (u.order() - 1) == 0
             n = u.order().bit_length() - 1
-            qspace = QSpace(range(n))
-        elif not isinstance(qspace, QSpace):
-            # qspace is a sequence
-            assert len(qspace) == len(set(qspace))  # uniqueness
-            qspace = QSpace(qspace)
-            n = qspace.length
-            assert u.order() == 1 << n
-            assert u.core in set(qspace.qids)
+            qspace = [Qubit(i) for i in range(n)]
         else:
-            n = qspace.length
+            assert len(qspace) == len(set(qspace))  # uniqueness
+            n = len(qspace)
+            assert u.order() == 1 << n
 
         controller = Qontroller.create(n, u.core)
-        assert qspace.length == len(controller.controls)  # consistency
         core = controller.core()
         # assert set(u.core) <= set(core)
         lookup = {idx: i for i, idx in enumerate(core)}
@@ -135,7 +125,7 @@ class CtrlGate:
         :return: A sorted version of this CtrlGate whose qspace is in ascending order. If this is already sorted, return self.
         """
         if sorting is None:
-            sorting = np.argsort(self.qspace.qids)
+            sorting = np.argsort(self.qspace)
         else:
             assert list(range(self._controller.length)) == sorted(sorting)
 
@@ -152,19 +142,19 @@ class CtrlGate:
         return CtrlGate(mat, controls, qspace)
 
     def qids(self) -> list[Qubit]:
-        return self.qspace.qids
+        return self.qspace
 
     def control_qids(self) -> list[Qubit]:
         target = self.target_qids()
-        return [qid for qid in self.qspace.qids if qid not in target]
+        return [qid for qid in self.qspace if qid not in target]
 
     def target_qids(self) -> list[Qubit]:
-        return [qid for i, qid in enumerate(self.qspace.qids) if self._controller.controls[i] == QType.TARGET]
+        return [qid for i, qid in enumerate(self.qspace) if self._controller.controls[i] == QType.TARGET]
 
-    def project(self, qspace: Union[QSpace, Sequence[Qubit]]) -> 'CtrlGate':
+    def project(self, qspace: Sequence[Qubit]) -> 'CtrlGate':
         """
         Use with CAUTION: This operation may lead to incorrect results.
-        Project a CtrlGate to its subsystem represented by a subset of QSpace.
+        Project a CtrlGate to its subsystem represented by a subset of qspace.
         TODO: a better approach would be to use FactorMat as core matrix for CtrlGate. Then this operation would be made safe - to eliminate IDLER qubits only.
         :param qspace: must be a subset of self.qspace and must be sorted in ascending order. If the qspace is identical to self.qspace, noop.
         :return: a projected CtrlGate.

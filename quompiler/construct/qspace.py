@@ -1,7 +1,5 @@
 from dataclasses import dataclass, asdict
-from typing import Sequence, Dict, Union
-
-import numpy as np
+from typing import Dict
 
 
 @dataclass
@@ -57,36 +55,3 @@ class Ancilla(Qubit):
     def __str__(self):
         return f'a{self.qid}'
 
-
-class QSpace:
-    """
-    Helper class for managing the bases of Hilbert space of n-qubits.
-    Functionalities:
-     1. shuffle a square matrix based on the sorting order of qids.
-     2. map a sequence of unique indexes
-    """
-
-    def __init__(self, qids: Sequence[Union[Qubit, int]]) -> None:
-        assert len(set(qids)) == len(qids)
-        self.qids: list[Qubit] = [Qubit(int(q)) if not isinstance(q, Qubit) else q for q in qids]
-        self.length = len(qids)
-        self.sorting = np.argsort(qids).tolist()
-
-    def __repr__(self):
-        return repr(self.qids)
-
-    def __eq__(self, __value):
-        if __value is None:
-            return False
-        if not isinstance(__value, QSpace):
-            return False
-        return self.qids == __value.qids
-
-    def __getitem__(self, index: int):
-        return self.qids[index]
-
-    def __iter__(self):
-        return iter(self.qids)
-
-    def __len__(self):
-        return len(self.qids)

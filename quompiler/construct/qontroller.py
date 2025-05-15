@@ -91,10 +91,10 @@ class Qontroller:
             self._lookup[qtype] = [binary(bits) for bits in product(*bases)]
         return self._lookup[qtype]
 
-    def yeast(self) -> list[NDArray]:
+    def yeast(self) -> list[NDArray]:  # TODO to be deprecated
         return [np.eye(2) for q in self.controls if q == QType.IDLER]
 
-    def factors(self) -> list[int]:
+    def factors(self) -> list[int]:  # TODO to be deprecated
         targets = np.array(self.controls) == QType.TARGET
         cumsum = np.cumsum(targets[::-1])[::-1].astype(int)
         rfactors = list(map(lambda a: 1 << int(a), cumsum[np.array(self.controls) == QType.IDLER]))

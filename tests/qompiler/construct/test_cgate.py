@@ -6,11 +6,10 @@ from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import Qontroller
-from quompiler.construct.qspace import Qubit, QSpace
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import inter_product
 from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate
 from quompiler.utils.shuffle import Shuffler
 
@@ -107,7 +106,7 @@ def test_init_qspace_seq():
     qspace = [Qubit(i) for i in range(3)]
     random.shuffle(qspace)
     cu = CtrlGate(m, controls, qspace)
-    assert cu.qspace.qids == qspace
+    assert cu.qspace == qspace
 
 
 def test_init_qspace_numpy_array():
@@ -116,7 +115,7 @@ def test_init_qspace_numpy_array():
     controls = random_control(k, t)
     qids = np.random.choice(1 << k, size=k, replace=False)
     cu = CtrlGate(random_unitary(2), controls, qspace=[Qubit(q) for q in qids])
-    assert cu.qspace.qids == [Qubit(q) for q in qids]
+    assert cu.qspace == [Qubit(q) for q in qids]
 
 
 def test_init_qspace_obj():
@@ -124,7 +123,7 @@ def test_init_qspace_obj():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     qspace = [Qubit(i) for i in range(3)]
     cu = CtrlGate(m, controls, qspace)
-    assert cu.qspace.qids == [Qubit(i) for i in range(3)]
+    assert cu.qspace == [Qubit(i) for i in range(3)]
 
 
 def test_univ_Y():
@@ -413,7 +412,7 @@ def test_matmul_identical_controls():
     b = CtrlGate(random_unitary(1 << t), controls)
     c = a @ b
     assert np.allclose(c.unitary.matrix, a.unitary.matrix @ b.unitary.matrix)
-    assert c.qspace.qids == a.qspace.qids == b.qspace.qids
+    assert c.qspace == a.qspace == b.qspace
 
 
 def test_matmul_identical_qspace_diff_controls():
@@ -428,7 +427,7 @@ def test_matmul_identical_qspace_diff_controls():
     # print(formatter.tostr(c.inflate()))
     expected = a.inflate() @ b.inflate()
     assert np.allclose(c.inflate(), expected)
-    assert c.qspace.qids == a.qspace.qids == b.qspace.qids
+    assert c.qspace == a.qspace == b.qspace
 
 
 def test_matmul_verify_qspace():
@@ -441,9 +440,9 @@ def test_matmul_verify_qspace():
     # execute
     c = a @ b
 
-    assert a.qspace.qids == qid1
-    assert b.qspace.qids == qid2
-    assert c.qspace.qids == sorted(set(qid1 + qid2))
+    assert a.qspace == qid1
+    assert b.qspace == qid2
+    assert c.qspace == sorted(set(qid1 + qid2))
 
 
 def test_matmul_uncontrolled_diff_qspace():
@@ -461,8 +460,8 @@ def test_matmul_uncontrolled_diff_qspace():
     # print('actual')
     # print(formatter.tostr(actual.inflate()))
 
-    univ = sorted(set(a.qspace.qids + b.qspace.qids))
-    assert actual.qspace.qids == univ
+    univ = sorted(set(a.qspace + b.qspace))
+    assert actual.qspace == univ
 
     expected = a.expand([Qubit(0)]).sorted() @ b.expand([Qubit(1)]).sorted()
     # print('expected')
