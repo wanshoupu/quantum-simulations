@@ -1,4 +1,5 @@
 from sympy import kronecker_product as kron, BlockMatrix
+from sympy import eye, zeros
 
 
 def validate_factors(factors):
@@ -120,6 +121,34 @@ def inter_product(A, B, m):
     blocks = []
     for i in range(0, N, m):
         b = [kron(B, A[i:i + m, j:j + m]) for j in range(0, N, m)]
+        blocks.append(b)
+
+    return BlockMatrix(blocks).as_explicit()
+
+
+def block_ctrl(A, block_size, active):
+    """
+    Insert control effect into the matrix A.
+    :param A: square matrix
+    :param block_size: the block size to be inserted.
+    :param active:
+    :return:
+    """
+
+    def ctr_prod(block, spacer):
+        size = block.shape[0]
+        zero = zeros(size)
+        if active:
+            return BlockMatrix([[spacer, zero], [zero, block]]).as_explicit()
+        return BlockMatrix([[block, zero], [zero, spacer]]).as_explicit()
+
+    N = A.shape[0]
+    assert A.shape == (N, N)
+    assert N % block_size == 0, "block_size must divide matrix size evenly"
+
+    blocks = []
+    for i in range(0, N, block_size):
+        b = [ctr_prod(A[i:i + block_size, j:j + block_size], eye(block_size) if i == j else zeros(block_size)) for j in range(0, N, block_size)]
         blocks.append(b)
 
     return BlockMatrix(blocks).as_explicit()

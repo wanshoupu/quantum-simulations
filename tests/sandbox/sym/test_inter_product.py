@@ -3,7 +3,7 @@ from itertools import product
 import sympy
 from sympy import Matrix, symbols, kronecker_product as kron, pprint
 
-from sandbox.sym.inter_product import inter_product, mesh_product
+from sandbox.sym.inter_product import inter_product, mesh_product, block_ctrl
 from sandbox.sym.sym_gen import symmat
 
 
@@ -301,3 +301,17 @@ def test_mesh_product_84_2():
     # print('\nexpected')
     # pprint(expected, num_columns=10000)
     assert actual == expected
+
+
+def test_block_ctrl():
+    n = 2
+    size = 2
+    A = symmat(1 << n, 'a')
+    print()
+    pprint(A, num_columns=10000)
+    B = block_ctrl(A, size, 1)
+    print()
+    pprint(B, num_columns=10000)
+    C = block_ctrl(A, size, 0)
+    print()
+    pprint(C, num_columns=10000)

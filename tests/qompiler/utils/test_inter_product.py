@@ -7,7 +7,7 @@ import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import inter_product, mesh_product, normalize
+from quompiler.utils.inter_product import inter_product, mesh_product, normalize, block_ctrl
 from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recursive_kron_factor, inter_factor, int_factors
 from quompiler.utils.mfun import allprop, unitary_prop
 from quompiler.utils.mgen import random_unitary
@@ -579,3 +579,16 @@ def test_mesh_factor_eye_yeast():
     u = mesh_product(matrices, factors)
     assert np.allclose(u, test)
     assert all(np.allclose(y, np.eye(y.shape[0])) for y in matrices[1:])
+
+
+@pytest.mark.parametrize("n,size,active", [
+    [2, 2, 1],
+    [2, 2, 0],
+    [2, 4, 1],
+    [2, 1, 0],
+])
+def test_block_ctrl(n, size, active):
+    A = random_unitary(1 << n)
+    B = block_ctrl(A, size, active)
+    print()
+    print(formatter.tostr(B))

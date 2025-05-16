@@ -292,3 +292,77 @@ def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
                 return normalize([A, B]), [c]
     kf = kron_factor(M)
     return kf, [1] * (len(kf) - 1)
+
+
+def block_ctrl(A, block_size, active):
+    """
+    Insert control effect into the matrix A.
+    For example, given A=
+    ⎡a₀₀  a₀₁  a₀₂  a₀₃⎤
+    ⎢                  ⎥
+    ⎢a₁₀  a₁₁  a₁₂  a₁₃⎥
+    ⎢                  ⎥
+    ⎢a₂₀  a₂₁  a₂₂  a₂₃⎥
+    ⎢                  ⎥
+    ⎣a₃₀  a₃₁  a₃₂  a₃₃⎦
+
+    block_ctrl(A, 2, 1) =
+
+    ⎡1  0   0    0   0  0   0    0 ⎤
+    ⎢                              ⎥
+    ⎢0  1   0    0   0  0   0    0 ⎥
+    ⎢                              ⎥
+    ⎢0  0  a₀₀  a₀₁  0  0  a₀₂  a₀₃⎥
+    ⎢                              ⎥
+    ⎢0  0  a₁₀  a₁₁  0  0  a₁₂  a₁₃⎥
+    ⎢                              ⎥
+    ⎢0  0   0    0   1  0   0    0 ⎥
+    ⎢                              ⎥
+    ⎢0  0   0    0   0  1   0    0 ⎥
+    ⎢                              ⎥
+    ⎢0  0  a₂₀  a₂₁  0  0  a₂₂  a₂₃⎥
+    ⎢                              ⎥
+    ⎣0  0  a₃₀  a₃₁  0  0  a₃₂  a₃₃⎦
+
+    block_ctrl(A, 2, 0) =
+
+    ⎡a₀₀  a₀₁  0  0  a₀₂  a₀₃  0  0⎤
+    ⎢                              ⎥
+    ⎢a₁₀  a₁₁  0  0  a₁₂  a₁₃  0  0⎥
+    ⎢                              ⎥
+    ⎢ 0    0   1  0   0    0   0  0⎥
+    ⎢                              ⎥
+    ⎢ 0    0   0  1   0    0   0  0⎥
+    ⎢                              ⎥
+    ⎢a₂₀  a₂₁  0  0  a₂₂  a₂₃  0  0⎥
+    ⎢                              ⎥
+    ⎢a₃₀  a₃₁  0  0  a₃₂  a₃₃  0  0⎥
+    ⎢                              ⎥
+    ⎢ 0    0   0  0   0    0   1  0⎥
+    ⎢                              ⎥
+    ⎣ 0    0   0  0   0    0   0  1⎦
+
+    :param A: square matrix
+    :param block_size: the block size to be inserted.
+    :param active:
+    :return:
+    """
+
+    def ctr_prod(block, spacer):
+        zero = np.zeros_like(block)
+        if active:
+            return np.block([[spacer, zero], [zero, block]])
+        return np.block([[block, zero], [zero, spacer]])
+
+    N = A.shape[0]
+    assert A.shape == (N, N)
+    assert N % block_size == 0, "block_size must divide matrix size evenly"
+
+    blocks = []
+    eye = np.eye(block_size)
+    zero = np.zeros_like(eye)
+    for i in range(0, N, block_size):
+        b = [ctr_prod(A[i:i + block_size, j:j + block_size], eye if i == j else zero) for j in range(0, N, block_size)]
+        blocks.append(b)
+
+    return np.block(blocks)
