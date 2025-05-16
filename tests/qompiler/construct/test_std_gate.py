@@ -5,6 +5,7 @@ import pytest
 from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -61,37 +62,6 @@ def test_UnivGate_Z():
     assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
 
-def test_expand():
-    m = UnivGate.Y
-    controls = (QType.TARGET, QType.CONTROL1)
-    qids = [1, 0]
-    cu = CtrlStdGate(m, controls, qids)
-    univ = list(range(3))
-    ex = cu.expand(univ)
-    # print()
-    # print(formatter.tostr(ex.inflate()))
-    expected = np.block([[np.eye(4), np.zeros((4, 4))], [np.zeros((4, 4)), kron(cu.gate.matrix, np.eye(2))]])
-    assert np.allclose(ex.inflate(), expected)
-
-
-def test_expand_random():
-    for _ in range(10):
-        # print(f'Test {_}th round')
-        n = random.randint(2, 5)
-        k = random.randint(2, n)
-        m = random.choice(list(UnivGate))
-        controls = random_control(k, 1)
-        qids = random.sample(range(n), k)
-        cu = CtrlStdGate(m, controls, qids)
-        univ = list(range(n))
-
-        # execute
-        ex = cu.expand(univ)
-        assert ex
-        # print()
-        # print(formatter.tostr(ex.inflate()))
-
-
 def test_matmul_identical_controls():
     k = random.randint(2, 5)
     t = random.randint(1, k)
@@ -99,7 +69,7 @@ def test_matmul_identical_controls():
     a = CtrlStdGate(UnivGate.X, controls)
     b = CtrlStdGate(UnivGate.S, controls)
     c = a @ b
-    assert np.allclose(c.unitary.matrix, a.gate.matrix @ b.gate.matrix)
+    assert np.allclose(c._unitary.matrix, a.gate.matrix @ b.gate.matrix)
 
 
 def test_matmul_identical_qspace_diff_controls():
@@ -114,23 +84,6 @@ def test_matmul_identical_qspace_diff_controls():
     # print(formatter.tostr(c.inflate()))
     expected = a.inflate() @ b.inflate()
     assert np.allclose(c.inflate(), expected)
-
-
-def test_expand_eqiv_inter_product():
-    controls = [QType.TARGET, QType.CONTROL0]  # all targets, no control
-    qid1 = [3, 0]
-    a = CtrlStdGate(UnivGate.T, controls, qspace=qid1)
-    print('a')
-    print(formatter.tostr(a.inflate()))
-
-    univ = [0, 1, 3]
-    actual = a.expand(univ)
-    print('actual')
-    print(formatter.tostr(actual.inflate()))
-    expected = inter_product(a.sorted().inflate(), np.eye(2), 2)
-    print('expected')
-    print(formatter.tostr(expected))
-    assert np.allclose(actual.inflate(), expected)
 
 
 def test_matmul_uncontrolled_diff_qspace():

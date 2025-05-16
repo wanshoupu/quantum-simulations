@@ -20,7 +20,7 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
     """
     assert 1 <= clength <= 2
 
-    ctrl_seq = list(gate._controller)
+    ctrl_seq = list(gate.controls)
     qspace = gate.qspace
     # ctrl indexes
     cindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.CONTROL0 | QType.CONTROL1]
@@ -49,7 +49,7 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
     tindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.TARGET]
     core_ctrl = [QType.TARGET] * len(tindexes) + [QType.CONTROL1]
     core_qspace = [qspace[tindexes[i]] for i in tindexes] + [aspace[-1]]
-    core = CtrlGate(gate.unitary.matrix, core_ctrl, core_qspace)
+    core = CtrlGate(gate._unitary.matrix, core_ctrl, core_qspace)
     return left_coms + [core] + right_coms[::-1]
 
 
@@ -63,7 +63,7 @@ def std_decompose(gate: Union[CtrlGate, CtrlGate], univset: Sequence[UnivGate], 
     :return: a list of CtrlGate objects.
     """
     seq = sk_approx(gate.inflate(), rtol=rtol, atol=atol)
-    return [CtrlGate(g, gate._controller, gate.qspace) for g in seq]
+    return [CtrlGate(g, gate.controls, gate.qspace) for g in seq]
 
 
 def euler_decompose(cg: CtrlGate) -> list[CtrlGate]:
@@ -77,18 +77,18 @@ def euler_decompose(cg: CtrlGate) -> list[CtrlGate]:
     :return: a list of Euler gates that's equivalent to the controlled unitary matrix.
     """
     assert cg.issinglet()
-    a, b, c, d = euler_param(cg.unitary.matrix)
+    a, b, c, d = euler_param(cg._unitary.matrix)
     phase = a * np.eye(2)
     A = UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c / 2)
     B = UnivGate.Y.rotation(-c / 2) @ UnivGate.Z.rotation(-(d + b) / 2)
     C = UnivGate.Z.rotation((d - b) / 2)
     target = cg.target_qids()
 
-    result = [CtrlGate(phase, cg._controller, cg.qspace),
+    result = [CtrlGate(phase, cg.controls, cg.qspace),
               CtrlGate(A, [QType.TARGET], target),
-              CtrlGate(UnivGate.X.matrix, cg._controller, cg.qspace),
+              CtrlGate(UnivGate.X.matrix, cg.controls, cg.qspace),
               CtrlGate(B, [QType.TARGET], target),
-              CtrlGate(UnivGate.X.matrix, cg._controller, cg.qspace),
+              CtrlGate(UnivGate.X.matrix, cg.controls, cg.qspace),
               CtrlGate(C, [QType.TARGET], target)]
     return result
 

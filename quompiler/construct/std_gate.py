@@ -28,7 +28,7 @@ class CtrlStdGate:
         self.gate: UnivGate = gate
 
     def get_controller(self):
-        return self._ctrlgate._controller
+        return self._ctrlgate.controls
 
     def get_qubits(self):
         return self._ctrlgate.qids()
@@ -49,14 +49,14 @@ class CtrlStdGate:
         return self._ctrlgate @ other._ctrlgate
 
     def __copy__(self):
-        return CtrlStdGate(self.gate, self._ctrlgate._controller, self._ctrlgate.qspace)
+        return CtrlStdGate(self.gate, self._ctrlgate.controls, self._ctrlgate.qspace)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
         gate: UnivGate = copy.deepcopy(self.gate, memodict),
         controlledM: CtrlGate = copy.deepcopy(self._ctrlgate, memodict),
-        new = CtrlStdGate(gate, controlledM._controller, controlledM.qspace)
+        new = CtrlStdGate(gate, controlledM.controls, controlledM.qspace)
         memodict[self] = new
         return new
 
@@ -66,8 +66,8 @@ class CtrlStdGate:
     @classmethod
     def convert(cls, cm: CtrlGate) -> 'CtrlStdGate':
         assert cm.is_std()
-        result = UnivGate.get(cm.unitary.matrix)
-        return CtrlStdGate(result, cm._controller, cm.qspace)
+        result = UnivGate.get(cm._unitary.matrix)
+        return CtrlStdGate(result, cm.controls, cm.qspace)
 
     def sorted(self, sorting: Sequence[int] = None) -> 'CtrlStdGate':
         """
@@ -78,7 +78,7 @@ class CtrlStdGate:
         :return: A sorted version of this ControlledGate whose qspace is in ascending order. If this is already sorted, return self.
         """
         sorted_gate: CtrlGate = self._ctrlgate.sorted(sorting)
-        return CtrlStdGate(self.gate, sorted_gate._controller, sorted_gate.qspace)
+        return CtrlStdGate(self.gate, sorted_gate.controls, sorted_gate.qspace)
 
     def control_qids(self) -> list[int]:
         return self._ctrlgate.control_qids()

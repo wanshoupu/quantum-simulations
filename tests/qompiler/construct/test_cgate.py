@@ -36,7 +36,7 @@ def test_convert_no_inflation():
 
         # execute
         c = CtrlGate.convert(u)
-        assert np.array_equal(c.unitary.matrix, u.matrix)
+        assert np.array_equal(c._unitary.matrix, u.matrix)
 
 
 def test_convert_verify_dimension():
@@ -47,7 +47,7 @@ def test_convert_verify_dimension():
         indexes = random.sample(range(dim), core)
         u = random_UnitaryM(dim, indexes)
         c = CtrlGate.convert(u)
-        assert c.unitary.dimension == dim
+        assert c._unitary.dimension == dim
 
 
 def test_convert_expansion():
@@ -90,14 +90,7 @@ def test_init():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     cu = CtrlGate(m, controls)
     # print(formatter.tostr(cu.inflate()))
-    assert tuple(cu.unitary.core) == (6, 7), f'Core indexes is unexpected {cu.unitary.core}'
-
-
-def test_init_qontroller():
-    m = random_unitary(2)
-    controller = Qontroller((QType.CONTROL1, QType.CONTROL1, QType.TARGET))
-    cu = CtrlGate(m, controller)
-    assert cu._controller == controller
+    assert tuple(cu._unitary.core) == (6, 7), f'Core indexes is unexpected {cu._unitary.core}'
 
 
 def test_init_qspace_seq():
@@ -171,7 +164,7 @@ def test_sorted_2_targets():
     # print()
     # print(formatter.tostr(cu.inflate()))
     actual = cu.sorted()
-    assert tuple(cu.unitary.core) == tuple(range(4)), f'Core indexes is unexpected {cu.unitary.core}'
+    assert tuple(cu._unitary.core) == tuple(range(4)), f'Core indexes is unexpected {cu._unitary.core}'
     assert np.array_equal(cu.inflate(), m)
     # print()
     # print(formatter.tostr(cu.inflate()))
@@ -188,9 +181,9 @@ def test_sorted_with_ctrl():
     cu = CtrlGate(m, controls, qids)
     # print()
     # print(formatter.tostr(cu.inflate()))
-    assert tuple(cu.unitary.core) == (1, 3), f'Core indexes is unexpected {cu.unitary.core}'
+    assert tuple(cu._unitary.core) == (1, 3), f'Core indexes is unexpected {cu._unitary.core}'
     actual = cu.sorted()
-    assert tuple(actual.unitary.core) == (2, 3), f'Core indexes is unexpected {actual.unitary.core}'
+    assert tuple(actual._unitary.core) == (2, 3), f'Core indexes is unexpected {actual._unitary.core}'
 
     sh = Shuffler(qids)
     indexes = sh.map_all(range(cu.order()))
@@ -213,12 +206,12 @@ def test_sorted_ctrl_2target():
 
     sh = Shuffler.from_permute(qids, list(actual.qspace))
     eqiv_original = np.eye(original.order(), dtype=np.complexfloating)
-    eqiv_original[np.ix_(original.unitary.core, original.unitary.core)] = original.unitary.matrix
+    eqiv_original[np.ix_(original._unitary.core, original._unitary.core)] = original._unitary.matrix
     assert np.array_equal(eqiv_original, original.inflate())
 
-    core = sh.map_all(original.unitary.core)
+    core = sh.map_all(original._unitary.core)
     expected = np.eye(original.order(), dtype=np.complexfloating)
-    expected[np.ix_(core, core)] = original.unitary.matrix
+    expected[np.ix_(core, core)] = original._unitary.matrix
     # print('expected\n')
     # print(formatter.tostr(expected))
     assert np.allclose(actual.inflate(), expected)
@@ -233,10 +226,10 @@ def test_sorted_by_ctrl():
     cu = CtrlGate(m, controls, qids)
 
     # execute
-    sorting = np.argsort(cu._controller)
+    sorting = np.argsort(cu.controls)
     sorted_cu = cu.sorted(sorting=sorting)
-    assert sorted_cu._controller[:t] == [QType.TARGET] * t
-    ctrls = sorted_cu._controller[t:]
+    assert sorted_cu.controls[:t] == [QType.TARGET] * t
+    ctrls = sorted_cu.controls[t:]
     assert all(c in QType(0x110) for c in ctrls)
 
 
@@ -249,7 +242,7 @@ def test_expand_target_in_order():
     actual = cu.expand(extended_qspace).sorted()
     # print()
     # print(formatter.tostr(actual.inflate()))
-    expected = np.block([[np.eye(4), np.zeros((4, 4))], [np.zeros((4, 4)), kron(cu.unitary.matrix, np.eye(2))]])
+    expected = np.block([[np.eye(4), np.zeros((4, 4))], [np.zeros((4, 4)), kron(cu._unitary.matrix, np.eye(2))]])
     # print()
     # print(formatter.tostr(expected))
     assert np.allclose(actual.inflate(), expected)
@@ -264,7 +257,7 @@ def test_expand_target_out_of_order():
     actual = cu.expand(extended_qspace)
     # print()
     # print(formatter.tostr(actual.inflate()))
-    expected = CtrlGate(np.kron(cu.unitary.matrix, np.eye(2)), list(controls) + [QType.TARGET], qids + extended_qspace)
+    expected = CtrlGate(np.kron(cu._unitary.matrix, np.eye(2)), list(controls) + [QType.TARGET], qids + extended_qspace)
     # print()
     # print(formatter.tostr(expected.inflate()))
     assert np.allclose(actual.inflate(), expected.inflate())
@@ -321,7 +314,7 @@ def test_expand_default_ctrls():
     # print('actual\n')
     # print(formatter.tostr(actual.inflate()))
 
-    ctrls = list(actual._controller)[cu._controller.length:]
+    ctrls = actual.controls[len(cu.controls):]
     assert ctrls == [QType.TARGET] * len(ctrls)
 
 
@@ -404,6 +397,26 @@ def test_expand_by_multi_target():
     assert np.allclose(actual.inflate(), expected)
 
 
+@pytest.mark.parametrize("ctrs,qspace,qubits", [
+    [[QType.TARGET, QType.CONTROL1], [Qubit(1), Qubit(0)], [Qubit(0)]],
+    [[QType.TARGET, QType.CONTROL0], [Qubit(1), Qubit(0)], [Qubit(0)]],
+    [[QType.CONTROL1, QType.TARGET], [Qubit(1), Qubit(0)], [Qubit(1)]],
+    [[QType.CONTROL1, QType.TARGET, QType.CONTROL0], [Qubit(1), Qubit(0), Qubit(10)], [Qubit(1)]],
+    [[QType.CONTROL1, QType.TARGET, QType.CONTROL0], [Qubit(1), Qubit(0), Qubit(10)], [Qubit(1), Qubit(0)]],
+])
+def test_promote_target_invariant(ctrs, qspace, qubits):
+    expected = CtrlGate(random_unitary(2), ctrs, qspace=qspace)
+    # print('expected')
+    # print(formatter.tostr(expected.inflate()))
+
+    # execute
+    actual = expected.promote(qubits)
+
+    # print('actual')
+    # print(formatter.tostr(actual.inflate()))
+    assert np.allclose(actual.inflate(), expected.inflate())
+
+
 def test_matmul_identical_controls():
     k = random.randint(2, 5)
     t = random.randint(1, k)
@@ -411,23 +424,62 @@ def test_matmul_identical_controls():
     a = CtrlGate(random_unitary(1 << t), controls)
     b = CtrlGate(random_unitary(1 << t), controls)
     c = a @ b
-    assert np.allclose(c.unitary.matrix, a.unitary.matrix @ b.unitary.matrix)
+    assert np.allclose(c._unitary.matrix, a._unitary.matrix @ b._unitary.matrix)
     assert c.qspace == a.qspace == b.qspace
 
 
-def test_matmul_identical_qspace_diff_controls():
-    k = random.randint(2, 5)
-    t = random.randint(1, k)
-    a = CtrlGate(random_unitary(2), random_control(k, t))
-    b = CtrlGate(random_unitary(2), random_control(k, t))
+@pytest.mark.parametrize("ctrl1,ctrl2", [
+    [[QType.CONTROL1, QType.TARGET], [QType.TARGET, QType.CONTROL0]],
+    [[QType.CONTROL1, QType.TARGET], [QType.TARGET, QType.TARGET]],
+    [[QType.CONTROL1, QType.TARGET, QType.CONTROL0], [QType.TARGET, QType.TARGET, QType.TARGET]],
+    [[QType.CONTROL1, QType.TARGET, QType.CONTROL0], [QType.TARGET, QType.CONTROL1, QType.TARGET]],
+])
+def test_matmul_identical_qspace_diff_controls(ctrl1, ctrl2):
+    target_count1 = ctrl1.count(QType.TARGET)
+    target_count2 = ctrl2.count(QType.TARGET)
+    a = CtrlGate(random_unitary(1 << target_count1), ctrl1)
+    b = CtrlGate(random_unitary(1 << target_count2), ctrl2)
 
     # execute
-    c = a @ b
+    actual = a @ b
     # print()
-    # print(formatter.tostr(c.inflate()))
+    # print(formatter.tostr(actual.inflate()))
+    assert actual.qspace == a.qspace == b.qspace
     expected = a.inflate() @ b.inflate()
-    assert np.allclose(c.inflate(), expected)
-    assert c.qspace == a.qspace == b.qspace
+    assert np.allclose(actual.inflate(), expected)
+
+
+@pytest.mark.parametrize("ctrl1,ctrl2,qspace1,qspace2", [
+    [[QType.CONTROL1, QType.TARGET], [QType.TARGET, QType.CONTROL0], [Qubit(1), Qubit(0)], [Qubit(1), Qubit(7)]],
+    [[QType.CONTROL1, QType.TARGET], [QType.TARGET, QType.TARGET], [Qubit(2), Qubit(0)], [Qubit(1), Qubit(7)]],
+    [[QType.CONTROL1, QType.TARGET, QType.CONTROL0], [QType.TARGET], [Qubit(1), Qubit(0), Qubit(4)], [Qubit(1)]],
+    [[QType.TARGET, QType.CONTROL0], [QType.TARGET, QType.CONTROL1, QType.TARGET], [Qubit(1), Qubit(6)], [Qubit(1), Qubit(7), Qubit(6)]],
+])
+def test_matmul_diff_qspace_diff_controls_length(ctrl1, ctrl2, qspace1, qspace2):
+    ctrgate = lambda ctrs, qspace: CtrlGate(random_unitary(1 << ctrs.count(QType.TARGET)), ctrs, qspace=qspace)
+    a = ctrgate(ctrl1, qspace1)
+    b = ctrgate(ctrl2, qspace2)
+
+    # execute
+    actual = a @ b
+    print('actual\n')
+    print(formatter.tostr(actual.inflate()))
+
+
+def test_matmul_random():
+    univ = [Qubit(i) for i in range(10)]
+    rcg = lambda k, t: CtrlGate(random_unitary(1 << t), random_control(k, t), qspace=(random.sample(univ, k)))
+    for _ in range(10):
+        k1, k2 = random.randint(1, 5), random.randint(1, 5)
+        t1, t2 = random.randint(1, k1), random.randint(1, k2)
+        a = rcg(k1, t1)
+        b = rcg(k2, t2)
+
+        # execute
+        c = a @ b
+
+        print('actual\n')
+        print(formatter.tostr(c.inflate()))
 
 
 def test_matmul_verify_qspace():

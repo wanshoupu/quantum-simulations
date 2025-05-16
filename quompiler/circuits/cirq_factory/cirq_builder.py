@@ -1,10 +1,8 @@
+import warnings
 from typing import Union, Optional
 
-from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
-from typing_extensions import override
-import warnings
-
 import cirq
+from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z, eject_z, drop_negligible_operations, drop_empty_moments
 
 from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.circuits.qdevice import QDevice
@@ -34,7 +32,7 @@ class CirqBuilder(CircuitBuilder):
 
     def get_univ_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Optional[EigenGate]:
         if isinstance(m, CtrlGate) or isinstance(m, CtrlStdGate):
-            matrix = m.gate.matrix if isinstance(m, CtrlStdGate) else m.unitary.matrix
+            matrix = m.gate.matrix if isinstance(m, CtrlStdGate) else m._unitary.matrix
             univ_gate = UnivGate.get(matrix)
             if univ_gate:
                 return CirqBuilder.__UNIV_GATES[univ_gate]
@@ -42,8 +40,8 @@ class CirqBuilder(CircuitBuilder):
 
     def build_gate(self, m: Union[UnitaryM, CtrlGate, CtrlStdGate]):
         if isinstance(m, CtrlGate):
-            gate = self.get_univ_gate(m) or cirq.MatrixGate(m.unitary.matrix)
-            self._append_gate(m._controller, gate, m.qids())
+            gate = self.get_univ_gate(m) or cirq.MatrixGate(m._unitary.matrix)
+            self._append_gate(m.controls, gate, m.qids())
         if isinstance(m, CtrlStdGate):
             self._append_gate(m.get_controller(), m.gate, m.get_qubits())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
