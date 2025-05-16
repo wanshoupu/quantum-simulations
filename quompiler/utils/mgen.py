@@ -43,8 +43,7 @@ def random_CtrlGate(controls: tuple[QType, ...], qubits: Sequence[Qubit] = None)
 
 
 def random_indexes(n, k):
-    indexes = list(range(n))
-    return tuple(random.sample(indexes, k=k))
+    return tuple(random.sample(range(n), k=k))
 
 
 def random_control(k, t=None) -> tuple[QType, ...]:

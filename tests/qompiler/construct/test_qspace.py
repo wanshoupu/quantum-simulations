@@ -3,8 +3,7 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.construct.qspace import  Qubit, Ancilla
-
+from quompiler.construct.qspace import Qubit, Ancilla
 
 
 def test_qubit_init_invalid():
@@ -13,6 +12,35 @@ def test_qubit_init_invalid():
     with pytest.raises(AssertionError):
         Qubit(-50)
 
+
+def test_qubit_eq():
+    q0 = Qubit(0)
+    q1 = Qubit(1)
+    q2 = Qubit(1)
+    assert q0 != q1
+    assert q1 == q2
+
+
+def test_qubit_hash():
+    q0 = Qubit(0)
+    q1 = Qubit(1)
+    q2 = Qubit(1)
+    assert hash(q0) != hash(q1)
+    assert hash(q1) == hash(q2)
+
+
+def test_qubit_set():
+    qubits = {Qubit(i) for i in range(3)}
+    others = {Qubit(i) for i in range(4)}
+    assert qubits & others == {Qubit(i) for i in range(3)}
+    assert qubits | others == {Qubit(i) for i in range(4)}
+
+
+def test_qubit_dict():
+    qubit_dict = {Qubit(i): i for i in range(3)}
+    for i in range(3):
+        qubit_dict[Qubit(i)] = i + 3
+    assert qubit_dict == {Qubit(i): i + 3 for i in range(3)}
 
 
 def test_ancilla_array():

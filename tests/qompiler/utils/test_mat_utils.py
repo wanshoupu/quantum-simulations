@@ -3,10 +3,10 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.construct.qontroller import Qontroller, core2control
+from quompiler.construct.qontroller import Qontroller, core2control, ctrl2core
 from quompiler.construct.types import QType
 from quompiler.utils.mat_utils import idindexes, coreindexes
-from quompiler.utils.mgen import cyclic_matrix, random_indexes
+from quompiler.utils.mgen import cyclic_matrix, random_indexes, random_control
 
 
 def test_coreindexes():
@@ -27,20 +27,26 @@ def test_core2control():
         assert gcb == tuple(expected), f'gcb {gcb} != expected {expected}'
 
 
-def test_control2core_empty_core():
+def test_core2control_empty_core():
     with pytest.raises(AssertionError):
         # core cannot be empty
         core2control(5, [])
 
 
-def test_control2core_big_endian():
+def test_core2control_core_exceed_n():
+    with pytest.raises(AssertionError):
+        # core cannot be empty
+        core2control(5, [1 << 5])
+
+
+def test_core2control_big_endian():
     n = 3
     core = [2, 3]
     control = core2control(n, core)
     assert control == (QType.CONTROL0, QType.CONTROL1, QType.TARGET)
 
 
-def test_control2core_single_index():
+def test_core2control_single_index():
     for _ in range(10):
         print(f'Test round {_}...')
         n = random.randint(1, 5)
@@ -61,7 +67,7 @@ def test_control2core_single_index():
     [4, [2, 4], (QType.CONTROL0, QType.TARGET, QType.TARGET, QType.CONTROL0)],
     [4, [3, 5], (QType.CONTROL0, QType.TARGET, QType.TARGET, QType.CONTROL1)],
 ])
-def test_control2core_unsaturated_core(n, core, expected):
+def test_core2control_unsaturated_core(n, core, expected):
     """
     this test is to verify that unsaturated core (m indexes where 2^(n-1) < m < 2^n for some n) creates the correct control sequence.
     """
@@ -69,18 +75,27 @@ def test_control2core_unsaturated_core(n, core, expected):
     assert control == expected
 
 
-def test_control2core_random():
+def test_roundtrip_core_ctrl_core():
+    for _ in range(10):
+        n = random.randint(1, 1 << 10)
+        k = random.randint(1, n)
+        core = random_indexes(n, k)
+        control = core2control(n, core)
+        rectified = tuple(ctrl2core(control))
+        assert set(core) <= set(rectified)
+        assert all(rectified[i - 1] < rectified[i] for i in range(1, len(rectified)))
+
+
+def test_roundtrip_ctrl_core_ctrl():
     for _ in range(10):
         n = random.randint(1, 5)
-        control = [random.choice(list(QType)) for _ in range(n)]
-        k = control.count(QType.TARGET) + control.count(QType.IDLER)
-        core = Qontroller(control).core()
+        t = random.randint(1, n)
+        control = random_control(n, t)
+        k = control.count(QType.TARGET)
+        core = ctrl2core(control)
         assert len(core) == 1 << k
-        for i in range(len(control)):
-            if control[i] == QType.TARGET or control[i] == QType.IDLER:
-                control[i] = QType.TARGET
-        expected = core2control(n, core)
-        assert tuple(control) == expected
+        actual = core2control(n, core)
+        assert actual == control
 
 
 def test_idindexes():

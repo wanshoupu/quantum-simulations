@@ -1,8 +1,9 @@
 from itertools import product
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType
 from numpy.typing import NDArray
 
@@ -104,7 +105,7 @@ class Qontroller:
         return all(self.controls[i - 1] < self.controls[i] for i in range(1, len(self.controls)))
 
 
-def core2control(bitlength: int, core: Sequence) -> Tuple[QType, ...]:
+def core2control(bitlength: int, core: Sequence[int]) -> Tuple[QType, ...]:
     """
     Generate the control sequence of a bundle of indexes given by core.
     The CONTROL0/CONTROL1 correspond to the shared bits by all the indexes in the core. The rest are QType.TARGET.
@@ -126,3 +127,24 @@ def core2control(bitlength: int, core: Sequence) -> Tuple[QType, ...]:
     for i in idiff:
         controls[i] = QType.TARGET
     return tuple(controls[::-1])
+
+
+def ctrl2core(controls: Sequence[QType]) -> list[int]:
+    """
+    Create the core indexes in the controlled matrix.
+    It is defined as the sparce indexes occupied by the matrix for targets + idlers under the controls (both type 0 and type 1) restrictions.
+    :return: the core indexes in the controlled matrix.
+    """
+    bases = [q.base for q in controls]
+    return [binary(bits) for bits in product(*bases)]
+
+
+def rec_core(n: int, core: Sequence[int]) -> list[int]:
+    """
+    Rectify the core indexes in the given core by making them accessible by qubits controller.
+    :param n: number of qubits, the dimension of the qspace.
+    :param core: a sequence of integers, the indexes of the target bits.
+    :return: rectified core.
+    """
+    ctrl = core2control(n, core)
+    return ctrl2core(ctrl)
