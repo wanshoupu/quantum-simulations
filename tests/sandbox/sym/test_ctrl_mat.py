@@ -4,8 +4,8 @@ from typing import Sequence
 import pytest
 import sympy
 
+from quompiler.construct.qontroller import ctrl2core
 from quompiler.construct.types import QType
-from quompiler.construct.qontroller import Qontroller
 from quompiler.utils.mgen import random_control
 from sandbox.sym.ctrl_mat import CUnitary
 from sandbox.sym.inter_product import mesh_product
@@ -86,9 +86,9 @@ def another_inflate(A: sympy.Matrix, controls: Sequence[QType]) -> sympy.Matrix:
     core = mesh_product(A, yeast, factors)
 
     result = sympy.eye(1 << n)
-    controller = Qontroller(controls)
-    for i, row in enumerate(controller.core()):
-        for j, col in enumerate(controller.core()):
+    reced_core = ctrl2core(controls)
+    for i, row in enumerate(reced_core):
+        for j, col in enumerate(reced_core):
             result[row, col] = core[i, j]
     return result
 
