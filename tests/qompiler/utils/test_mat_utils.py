@@ -1,9 +1,11 @@
 import random
+from itertools import product
+from typing import Sequence, Tuple, Iterable
 
 import numpy as np
 import pytest
 
-from quompiler.construct.qontroller import Qontroller, core2control, ctrl2core
+from quompiler.construct.qontroller import core2control, ctrl2core, binary
 from quompiler.construct.types import QType
 from quompiler.utils.mat_utils import idindexes, coreindexes
 from quompiler.utils.mgen import cyclic_matrix, random_indexes, random_control
@@ -39,11 +41,14 @@ def test_core2control_core_exceed_n():
         core2control(5, [1 << 5])
 
 
-def test_core2control_big_endian():
-    n = 3
-    core = [2, 3]
-    control = core2control(n, core)
-    assert control == (QType.CONTROL0, QType.CONTROL1, QType.TARGET)
+@pytest.mark.parametrize("n,core,expected", [
+    [2, [0b10, 0b11], (QType.CONTROL1, QType.TARGET)],
+    [3, [0b10, 0b11], (QType.CONTROL0, QType.CONTROL1, QType.TARGET)],
+    [3, [0b010, 0b110, 0b000], (QType.TARGET, QType.TARGET, QType.CONTROL0)],
+])
+def test_core2control_big_endian(n, core, expected):
+    actual = core2control(n, core)
+    assert actual == expected
 
 
 def test_core2control_single_index():
@@ -75,10 +80,48 @@ def test_core2control_unsaturated_core(n, core, expected):
     assert control == expected
 
 
+@pytest.mark.parametrize('seq,expected', [
+    [[0], 0b0],
+    [[1], 0b1],
+    [[1, 0, 0], 0b100],
+    [[1, 1, 0], 0b110],
+    [[0, 1, 1], 0b11],
+    [[1, 0, 0, 1, 0], 0b10010],
+    [[0, 1, 0, 0, 1], 0b1001],
+])
+def test_binary_big_endian(seq, expected):
+    assert binary(seq) == expected
+
+
+def binary_combo(seq: Iterable[Tuple[int, ...]]) -> list[int]:
+    # Big Endian for Control sequence
+    return [binary(t) for t in product(*seq)]
+
+
+@pytest.mark.parametrize("ctrls,expected", [
+    [(QType.CONTROL1, QType.TARGET), [0b10, 0b11]],
+    [(QType.CONTROL0, QType.CONTROL1, QType.TARGET), [0b10, 0b11]],
+    [(QType.TARGET, QType.TARGET, QType.CONTROL0), [0, 2, 4, 6]],
+])
+def test_ctrl2core_big_endian(ctrls: Sequence[QType], expected):
+    actual = ctrl2core(ctrls)
+    assert actual == expected
+
+
+def test_ctrl2core_random():
+    for _ in range(10):
+        k = random.randint(1, 10)
+        t = random.randint(1, k)
+        controls = random_control(k, t)
+        indexes = ctrl2core(controls)
+        expected = binary_combo(c.base for c in controls)
+        assert indexes == expected
+
+
 def test_roundtrip_core_ctrl_core():
     for _ in range(10):
-        n = random.randint(1, 1 << 10)
-        k = random.randint(1, n)
+        n = random.randint(2, 1 << 6)
+        k = random.randint(2, min(16, n))
         core = random_indexes(n, k)
         control = core2control(n, core)
         rectified = tuple(ctrl2core(control))

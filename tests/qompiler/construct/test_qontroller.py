@@ -4,7 +4,7 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from quompiler.construct.qontroller import Qontroller
+from quompiler.construct.qontroller import Qontroller, ctrl2core
 from quompiler.construct.types import QType
 from quompiler.utils.mgen import random_control
 
@@ -48,29 +48,6 @@ def test_qontroller_mask_random():
         assert new == expected
 
 
-def test_qontroller_core():
-    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Qontroller(controls)
-    indexes = controller.core()
-    n = len(controls)
-    num = 1 << n
-    expected = sorted(set(controller.mask(i) for i in range(num)))
-    assert indexes == expected
-
-
-def test_qontroller_core_create():
-    for _ in range(10):
-        n = random.randint(1, 10)
-        dim = 1 << n
-        k = random.randint(2, min(dim, 100))
-        core = (random.sample(range(dim), k))
-        controller = Qontroller.create(n, core)
-        controlled_core = controller.core()
-        assert set(core) <= set(controlled_core)
-        expected = sorted(set(controller.mask(i) for i in range(dim)))
-        assert controlled_core == expected
-
-
 @pytest.mark.parametrize("qtype,expected", [
     (QType.IDLER, [0, 2, 8, 10]),
     (QType.TARGET, [0, 4, 32, 36]),
@@ -90,8 +67,12 @@ def test_qontroller_inflated_indexes_equivalence():
         controls = random_control(n)
         controller = Qontroller(controls)
         universe = reduce(lambda a, b: a | b, QType)
+
+        # execute
         indexes = controller.indexes(universe)
-        expected = controller.core()
+
+        # verify
+        expected = ctrl2core(controls)
         assert indexes == expected
 
 
@@ -99,37 +80,16 @@ def test_qontroller_indexes_target_idler_combined():
     controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
     controller = Qontroller(controls)
     qtype = QType.IDLER | QType.TARGET
+
+    # execute
     indexes = controller.indexes(qtype)
-    assert len(indexes) == len(controller.core())
-    print()
-    print(controller.core())
+
+    # verify
+    actual = ctrl2core(controls)
+    assert len(indexes) == len(actual)
+    # print()
+    # print(actual)
     # assert indexes == controller.extended_indexes()
-    result = [a - b for a, b in zip(indexes, controller.core())]
-    print(result)
-    assert all(b - a == 16 for a, b in zip(indexes, controller.core()))
-
-
-def test_qontroller_yeast_factor():
-    controls = [QType.TARGET, QType.CONTROL1, QType.IDLER, QType.TARGET, QType.IDLER, QType.CONTROL0]
-    controller = Qontroller(controls)
-    yeast = controller.yeast()
-    factors = controller.factors()
-    assert len(yeast) == len(factors)
-    assert all(np.array_equal(y, np.eye(2)) for y in yeast)
-    filtered_controls = [q for q in controls if q == QType.TARGET or q == QType.IDLER]
-    expected = [1 << filtered_controls[i:].count(QType.TARGET) for i, q in enumerate(filtered_controls) if q == QType.IDLER]
-    assert factors == expected
-
-
-def test_qontroller_yeast_factor_random():
-    for _ in range(10):
-        n = random.randint(1, 15)
-        controls = random_control(n)
-        controller = Qontroller(controls)
-        yeast = controller.yeast()
-        factors = controller.factors()
-        assert len(yeast) == len(factors)
-        assert all(np.array_equal(y, np.eye(2)) for y in yeast)
-        filtered_controls = [q for q in controls if q == QType.TARGET or q == QType.IDLER]
-        expected = [1 << filtered_controls[i:].count(QType.TARGET) for i, q in enumerate(filtered_controls) if q == QType.IDLER]
-        assert factors == expected
+    result = [a - b for a, b in zip(indexes, actual)]
+    # print(result)
+    assert all(b - a == 16 for a, b in zip(indexes, actual))

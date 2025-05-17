@@ -1,5 +1,6 @@
 from itertools import product
 from typing import Sequence, Tuple, Union
+from deprecated import deprecated
 
 import numpy as np
 
@@ -11,6 +12,8 @@ from numpy.typing import NDArray
 def binary(bits: Sequence[int]) -> int:
     """
     This function converts sequence of binary bits into the integer represented by the bits.
+    Big Endian is used. The most significant digit appears first in a sequence.
+    For example, the sequence [1,0,0,1,0] translate to integer is 0b1001 = 9.
     :param bits: the sequence of bits such as [1,0,0,1,0]. leading zeros have effect.
     :return: int represented by bits as a binary bits of an integer.
     """
@@ -70,16 +73,14 @@ class Qontroller:
                 index |= 1 << i
         return index
 
-    def core(self) -> list[int]:
+    @deprecated
+    def core(self) -> list[int]:  # TODO to be deprecated
         """
         Create the core indexes in the controlled matrix.
         It is defined as the sparce indexes occupied by the matrix for targets + idlers under the controls (both type 0 and type 1) restrictions.
         :return: the core indexes in the controlled matrix.
         """
-        if self._inflated_indexes is None:
-            bases = [q.base for q in self.controls]
-            self._inflated_indexes = [binary(bits) for bits in product(*bases)]
-        return self._inflated_indexes
+        raise NotImplementedError('Deprecated, use ctrl2core() instead')
 
     def indexes(self, qtype: QType):
         """
@@ -92,15 +93,6 @@ class Qontroller:
             self._lookup[qtype] = [binary(bits) for bits in product(*bases)]
         return self._lookup[qtype]
 
-    def yeast(self) -> list[NDArray]:  # TODO to be deprecated
-        return [np.eye(2) for q in self.controls if q == QType.IDLER]
-
-    def factors(self) -> list[int]:  # TODO to be deprecated
-        targets = np.array(self.controls) == QType.TARGET
-        cumsum = np.cumsum(targets[::-1])[::-1].astype(int)
-        rfactors = list(map(lambda a: 1 << int(a), cumsum[np.array(self.controls) == QType.IDLER]))
-        return rfactors
-
     def is_sorted(self) -> bool:
         return all(self.controls[i - 1] < self.controls[i] for i in range(1, len(self.controls)))
 
@@ -108,6 +100,8 @@ class Qontroller:
 def core2control(bitlength: int, core: Sequence[int]) -> Tuple[QType, ...]:
     """
     Generate the control sequence of a bundle of indexes given by core.
+
+    Big Endian is used. The most significant digit corresponds to the first in the control sequence.
     The CONTROL0/CONTROL1 correspond to the shared bits by all the indexes in the core. The rest are QType.TARGET.
     The control sequence is formed by mapping the corresponding common bits in the core (0->CONTROL0, 1->CONTROL1).
     Big endian is used, namely, most significant bits on the left most end of the array.
@@ -132,6 +126,7 @@ def core2control(bitlength: int, core: Sequence[int]) -> Tuple[QType, ...]:
 def ctrl2core(controls: Sequence[QType]) -> list[int]:
     """
     Create the core indexes in the controlled matrix.
+    Big Endian is used. The most significant digit comes from the first element in the control sequence.
     It is defined as the sparce indexes occupied by the matrix for targets + idlers under the controls (both type 0 and type 1) restrictions.
     :return: the core indexes in the controlled matrix.
     """
