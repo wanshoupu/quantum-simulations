@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 from numpy import ndarray
 from numpy.typing import NDArray
@@ -5,13 +7,18 @@ from numpy.typing import NDArray
 
 class MatrixFormatter:
 
-    def __init__(self, precision=None):
+    def __init__(self, precision=None, fun: Callable = None):
         self.precision = precision
+        self.fun = fun
         if precision:
             np.set_printoptions(precision=precision)
 
     def nformat(self, x: np.complexfloating) -> object:
-        """Convert to real if possible, otherwise to integer if exact."""
+        """
+        Convert to real if possible, otherwise to integer if exact.
+        """
+        if self.fun is not None:
+            x = self.fun(x)
         if self.precision:
             x = np.round(x, self.precision)
         if np.isclose(x, 0):
