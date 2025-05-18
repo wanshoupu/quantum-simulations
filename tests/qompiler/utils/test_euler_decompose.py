@@ -88,9 +88,14 @@ def test_controlled_equality_C1T():
     assert np.allclose(actual.inflate(), cu.inflate())
 
 
-def test_controlled_equality_C0T():
+@pytest.mark.parametrize('controls', [
+    [QType.CONTROL0, QType.TARGET],
+    [QType.TARGET, QType.CONTROL1],
+    [QType.CONTROL1, QType.TARGET],
+    [QType.TARGET, QType.CONTROL0],
+])
+def test_controlled_equality_C0T(controls):
     u = random_unitary(2)
-    controls = [QType.CONTROL0, QType.TARGET]
     # random.shuffle(controls)
     cu = CtrlGate(u, controls)
 
@@ -104,12 +109,15 @@ def test_controlled_equality_C0T():
     assert np.allclose(actual.inflate(), cu.inflate())
 
 
-def test_controlled_equality_C0TC1():
+def test_multi_controlled_decompose_equality():
+    """
+    Question: is euler decomposition applicable to multi-control operation?
+    This test shows yes, it is.
+    """
     u = random_unitary(2)
-    controls = [QType.CONTROL0, QType.TARGET, QType.CONTROL1]
+    controls = [QType.CONTROL1, QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
     cu = CtrlGate(u, controls)
-
     # execute
     result = euler_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result)

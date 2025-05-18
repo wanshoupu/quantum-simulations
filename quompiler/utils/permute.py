@@ -59,9 +59,9 @@ class Permuter:
 
     def bitsortall(self, indexes: Sequence[int]) -> list[int]:
         """
-        Convenient method built on top of self.map
+        Convenient method built on top of bitsort
         :param indexes: a sequence of indexes
-        :return: a list of mapped indexes
+        :return: a list of `bitsort`ed indexes
         """
         return [self.bitsort(i) for i in indexes]
 
@@ -77,6 +77,14 @@ class Permuter:
         :return: perform bitsort on `n` and return the resulting integer.
         """
         return self._bitmap(n, self._sort)
+
+    def bitpermuteall(self, indexes: Sequence[int]) -> list[int]:
+        """
+        Convenient method built on top of bitpermute
+        :param indexes: a sequence of indexes
+        :return: a list of `bitpermute`d indexes
+        """
+        return [self.bitpermute(i) for i in indexes]
 
     def bitpermute(self, n: int) -> int:
         """
@@ -110,5 +118,4 @@ class Permuter:
             bit = (n >> (length - 1 - s)) & 1
             # Put it at position i
             result |= bit << (length - 1 - i)
-            print(bin(result))
         return result

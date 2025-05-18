@@ -294,7 +294,7 @@ def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
     return kf, [1] * (len(kf) - 1)
 
 
-def block_ctrl(A, block_size, active):
+def ctrl_expand(A, block_size, active):
     """
     Insert control effect into the matrix A.
     For example, given A=

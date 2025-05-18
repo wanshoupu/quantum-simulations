@@ -10,8 +10,8 @@ from quompiler.construct.qontroller import core2control, ctrl2core
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.utils.inter_product import block_ctrl
-from quompiler.utils.shuffle import Shuffler
+from quompiler.utils.inter_product import ctrl_expand
+from quompiler.utils.permute import Permuter
 
 
 class CtrlGate:
@@ -74,7 +74,7 @@ class CtrlGate:
             return NotImplemented(f'cannot matmult with {type(other)}')
         # direct product
         if self.qspace == other.qspace and self.controls == other.controls:
-            return CtrlGate(self._unitary.matrix @ other._unitary.matrix, other.controls, self.qspace)
+            return CtrlGate(self._unitary.matrix @ other._unitary.matrix, self.controls, self.qspace)
         # sort qspace
         if self._qlookup == other._qlookup:
             return self.sorted() @ other.sorted()
@@ -83,12 +83,10 @@ class CtrlGate:
         if conflicts:
             return self.promote(list(conflicts)) @ other.promote(list(conflicts))
         # expand to same qspace
-        univ_lookup = {q: self._qlookup.get(q) or other._qlookup[q] for q in self._qlookup.keys() | other._qlookup.keys()}
-        qspace1 = list(univ_lookup.keys() - set(self.qspace))
-        ctrl1 = [univ_lookup[q] for q in qspace1]
-        qspace2 = list(univ_lookup.keys() - set(other.qspace))
-        ctrl2 = [univ_lookup[q] for q in qspace2]
-        return self.expand(qspace1, ctrl1) @ other.expand(qspace2, ctrl2)
+        univ =  self._qlookup.keys() | other._qlookup.keys()
+        qspace1 = list(univ - set(self.qspace))
+        qspace2 = list(univ - set(other.qspace))
+        return self.expand(qspace1) @ other.expand(qspace2)
 
     def __copy__(self):
         return CtrlGate(self._unitary.matrix, self.controls, self.qspace)
@@ -147,8 +145,8 @@ class CtrlGate:
 
         # create the sorted core matrix
         new_targets = [qid for i, qid in enumerate(qspace) if controls[i] == QType.TARGET]
-        sh = Shuffler.from_permute(self.target_qids(), new_targets)
-        indexes = sh.map_all(range(1 << len(new_targets)))
+        perm = Permuter.from_permute(self.target_qids(), new_targets)
+        indexes = perm.bitsortall(range(1 << len(new_targets)))
         mat = self._unitary.matrix[np.ix_(indexes, indexes)]
         return CtrlGate(mat, controls, qspace)
 
@@ -203,6 +201,8 @@ class CtrlGate:
         :param qubits: subset of the qspace to promote.
         :return: a CtrlGate with promoted control sequence.
         """
+        if not qubits or all(self._qlookup[q] == QType.TARGET for q in qubits):
+            return self
         qubits = set(qubits)
         assert qubits <= set(self.qspace), f'Promoting qubits must be a subset of existing qspace.'
         mat = self._unitary.matrix
@@ -211,7 +211,7 @@ class CtrlGate:
         for i in range(len(self.qspace) - 1, -1, -1):
             ctrl = self.controls[i]
             if self.qspace[i] in qubits and ctrl in QType.CONTROL0 | QType.CONTROL1:
-                mat = block_ctrl(mat, 1 << target_count, ctrl.base[0])
+                mat = ctrl_expand(mat, 1 << target_count, ctrl.base[0])
                 target_count += 1
                 new_ctrls.append(QType.TARGET)
             elif ctrl == QType.TARGET:

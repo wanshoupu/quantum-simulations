@@ -36,7 +36,7 @@ def random_UnitaryM(dim, indexes) -> UnitaryM:
     return UnitaryM(dim, indexes, u)
 
 
-def random_CtrlGate(controls: tuple[QType, ...], qubits: Sequence[Qubit] = None) -> CtrlGate:
+def random_CtrlGate(controls: Sequence[QType], qubits: Sequence[Qubit] = None) -> CtrlGate:
     n = controls.count(QType.TARGET)
     u = unitary_group.rvs(1 << n)
     return CtrlGate(u, controls, qubits)
