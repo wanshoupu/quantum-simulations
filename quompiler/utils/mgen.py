@@ -118,3 +118,13 @@ def random_ctrlgate(ctrnum, targetnum, qnum=None) -> CtrlGate:
         return random_CtrlGate(controls)
     qubits = [Qubit(q) for q in random.sample(range(qnum), ctrnum)]
     return random_CtrlGate(controls, qubits)
+
+
+def random_state(dimension) -> NDArray:
+    """
+    Generate a random state vector e.g., normalized quantum state of dimension `dimension`.
+    :param dimension:
+    :return: NDArray representing the state vector.
+    """
+    arr = np.random.randn(dimension) + 1j * np.random.randn(dimension)
+    return arr / np.linalg.norm(arr)  # normalize to unit length
