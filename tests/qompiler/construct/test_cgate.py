@@ -6,12 +6,12 @@ from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import ctrl2core
-from quompiler.construct.qspace import Qubit
+from quompiler.construct.qspace import Qubit, Ancilla
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import mykron
-from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate, random_CtrlGate
+from quompiler.utils.inter_product import mykron, qproject
+from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate, random_CtrlGate, random_state
 from quompiler.utils.permute import Permuter
 
 formatter = MatrixFormatter(precision=2)
@@ -599,3 +599,42 @@ def test_matmul_diff_cores():
     b_expanded[idxs] = b.matrix
     expected = a_expanded @ b_expanded
     assert np.allclose(c.matrix, expected)
+
+
+def test_is_idler_promoted_qubits():
+    """
+    Promoted qubits is usually not idler.
+    """
+    ctrls = [QType.CONTROL1, QType.TARGET]
+    cg = CtrlGate(random_unitary(2), ctrls)
+    qubit = cg.qspace[0]
+    cg = cg.promote([qubit])
+
+    # execute
+    assert not cg.is_idler(qubit)
+
+
+def test_is_idler_true_case():
+    ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
+    u = kron(np.eye(2), random_unitary(2))
+    cg = CtrlGate(u, ctrls)
+    qubit = cg.qspace[0]
+
+    # execute and verify
+    assert not cg.is_idler(qubit)
+
+
+def test_dela_happy_case():
+    ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
+    qspace = [Qubit(10), Ancilla(12), Qubit(7)]
+    unitary = random_unitary(2)
+    mat = kron(np.eye(2), unitary)
+    cg = CtrlGate(mat, ctrls, qspace=qspace)
+    qubit = cg.qspace[1]
+    assert isinstance(qubit, Ancilla)
+
+    # execute
+    actual = cg.dela(qubit)
+    expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
+    assert actual.qspace == expected.qspace
+    assert np.allclose(actual.inflate(), expected.inflate())

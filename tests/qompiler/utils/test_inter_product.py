@@ -6,7 +6,7 @@ import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import inter_product, mesh_product, normalize, ctrl_expand, qproject
+from quompiler.utils.inter_product import inter_product, mesh_product, normalize, ctrl_expand, qproject, is_idler
 from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recursive_kron_factor, inter_factor, int_factors
 from quompiler.utils.mfun import allprop, unitary_prop
 from quompiler.utils.mgen import random_unitary, random_state
@@ -685,3 +685,46 @@ def test_qproject_random():
         # verify
         assert actual.shape == expected.shape
         assert np.allclose(actual, expected)
+
+
+def test_is_idler_inter_product_4_2():
+    actual = inter_product(random_unitary(4), np.eye(2), 2)
+    # print()
+    # print(formatter.tostr(actual))
+    assert is_idler(actual, 1)
+
+
+@pytest.mark.parametrize("idx", [0, 1])
+def test_eye_4_is_idler(idx: int):
+    """
+    both qubits are idlers in eye(4)
+    """
+    actual = np.eye(4)
+    # print()
+    # print(formatter.tostr(actual))
+    assert is_idler(actual, idx)
+
+
+def test_is_idler_kron_u_eye():
+    actual = kron(random_unitary(2), np.eye(2))
+    # print()
+    # print(formatter.tostr(actual))
+    assert is_idler(actual, 1)
+    assert not is_idler(actual, 0)
+
+
+def test_is_idler_kron_eye_u():
+    actual = kron(np.eye(2), random_unitary(2))
+    # print()
+    # print(formatter.tostr(actual))
+    assert is_idler(actual, 0)
+    assert not is_idler(actual, 1)
+
+
+@pytest.mark.parametrize("idx", [0, 1])
+def test_is_idler_neither(idx):
+    u, v = random_unitary(2), random_unitary(2)
+    actual = np.block([[u, np.zeros_like(u)], [np.zeros_like(v), v]])
+    # print()
+    # print(formatter.tostr(actual))
+    assert not is_idler(actual, idx)

@@ -5,12 +5,13 @@ from typing import Union, Sequence
 import numpy as np
 from numpy import kron
 from numpy.typing import NDArray
+from prompt_toolkit.layout import controls
 
 from quompiler.construct.qontroller import core2control, ctrl2core
-from quompiler.construct.qspace import Qubit
+from quompiler.construct.qspace import Qubit, Ancilla
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.utils.inter_product import ctrl_expand
+from quompiler.utils.inter_product import ctrl_expand, qproject, is_idler
 from quompiler.utils.permute import Permuter
 
 
@@ -27,7 +28,7 @@ class CtrlGate:
         :param control: the control sequence or a Qontroller. Order of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
-        self.controls = control
+        self.controls = list(control)
         core = ctrl2core(control)
         mat = gate.matrix if isinstance(gate, UnivGate) else gate
         assert mat.shape[0] == len(core), f'matrix shape does not match the control sequence'
@@ -83,7 +84,7 @@ class CtrlGate:
         if conflicts:
             return self.promote(list(conflicts)) @ other.promote(list(conflicts))
         # expand to same qspace
-        univ =  self._qlookup.keys() | other._qlookup.keys()
+        univ = self._qlookup.keys() | other._qlookup.keys()
         qspace1 = list(univ - set(self.qspace))
         qspace2 = list(univ - set(other.qspace))
         return self.expand(qspace1) @ other.expand(qspace2)
@@ -160,16 +161,6 @@ class CtrlGate:
     def target_qids(self) -> list[Qubit]:
         return [qid for i, qid in enumerate(self.qspace) if self.controls[i] == QType.TARGET]
 
-    def project(self, qspace: Sequence[Qubit]) -> 'CtrlGate':
-        """
-        Use with CAUTION: This operation may lead to incorrect results.
-        Project a CtrlGate to its subsystem represented by a subset of qspace.
-        TODO: a better approach would be to use FactorMat as core matrix for CtrlGate. Then this operation would be made safe - to eliminate IDLER qubits only.
-        :param qspace: must be a subset of self.qspace and must be sorted in ascending order. If the qspace is identical to self.qspace, noop.
-        :return: a projected CtrlGate.
-        """
-        raise NotImplementedError('This method is not implemented.')
-
     def expand(self, qspace: Sequence[Qubit], ctrls: Sequence[QType] = None) -> 'CtrlGate':
         """
         Expand into the new qspace with additional qubits with the optional control sequence.
@@ -194,6 +185,37 @@ class CtrlGate:
         extended_ctrl = list(chain(self.controls, ctrls))
         extended_qspace = list(chain(self.qspace, qspace))
         return CtrlGate(mat, extended_ctrl, extended_qspace)
+
+    def is_idler(self, qubit) -> bool:
+        if qubit not in self._qlookup:
+            return True
+        if self._qlookup[qubit] == QType.CONTROL1:
+            return False
+        idx = self.target_qids().index(qubit)
+        return is_idler(self._unitary.matrix, idx)
+
+    def dela(self, qubit: Qubit) -> 'CtrlGate':
+        assert qubit in self.target_qids()
+        assert self.is_idler(qubit)
+        n = len(self.target_qids())
+        idx = self.target_qids().index(qubit)
+        idxs = [i for i in range(len(self._unitary.matrix)) if i & (1 << (n - 1 - idx)) == 0]
+        mat = self._unitary.matrix[np.ix_(idxs, idxs)]
+
+        cut = self.qspace.index(qubit)
+        return CtrlGate(mat, self.controls[:cut] + self.controls[cut + 1:], self.qspace[:cut] + self.qspace[cut + 1:])
+
+    def del_all_ancilla(self) -> 'CtrlGate':
+        """
+        Shed all ancilla qubits, if any.
+        Throw exception if any qubit is ancilla but not idler.
+        :return: A CtrlGate free from ancilla qubits.
+        """
+        ancillas = [q for q in self.qspace if isinstance(q, Ancilla)]
+        gate = self
+        for q in ancillas:
+            gate = gate.dela(q)
+        return gate
 
     def promote(self, qubits: Sequence[Qubit]) -> 'CtrlGate':
         """

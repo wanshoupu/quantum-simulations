@@ -294,6 +294,28 @@ def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
     return kf, [1] * (len(kf) - 1)
 
 
+def is_idler(mat: NDArray, idx: int) -> bool:
+    """
+    Check if a square matrix, deemed as multi-qubit operator, is an idler for the qubit at index `idx`.
+    :param mat: a square matrix of shape (N, N) where N = 1<<n.
+    :param idx:
+        The index (0-based) of the qubit subsystem to be projected out, where |ψ⟩ lives.
+        Note that our matrix is based on [qubit-0 ⨂ qubit-1 ⨂ ...].
+    :return: True if the given qubit at index `idx` is an idler, otherwise False.
+    """
+    N = mat.shape[0]
+    assert mat.shape == (N, N) and 4 <= N and N & (N - 1) == 0, f" {mat} must be a square matrix of order of power of 2 and order>=4"
+    n = N.bit_length() - 1
+    assert 0 <= idx < n, f"idx {idx} must be within range(0, {n})"
+    even_idxs = [i for i in range(N) if i & (1 << (n - 1 - idx)) == 0]
+    odd_idxs = [i for i in range(N) if i & (1 << (n - 1 - idx)) != 0]
+    sub_ee = mat[np.ix_(even_idxs, even_idxs)]
+    sub_eo = mat[np.ix_(even_idxs, odd_idxs)]
+    sub_oe = mat[np.ix_(odd_idxs, even_idxs)]
+    sub_oo = mat[np.ix_(odd_idxs, odd_idxs)]
+    return np.allclose(sub_oo, sub_ee) and np.allclose(sub_eo, np.zeros_like(sub_eo)) and np.allclose(sub_oe, np.zeros_like(sub_oe))
+
+
 def qproject(mat: NDArray, idx: int, state: NDArray) -> NDArray:
     """
     Project a square matrix, deemed as multi-qubit operator, onto a subsystem where the target qubit is fixed in a given pure state |ψ⟩.
@@ -310,7 +332,7 @@ def qproject(mat: NDArray, idx: int, state: NDArray) -> NDArray:
 
     :param idx:
         The index (0-based) of the qubit subsystem to be projected out, where |ψ⟩ lives.
-        Remember that our matrix is based on [qubit-0 ⨂ qubit-1 ⨂ ...].
+        Note that our matrix is based on [qubit-0 ⨂ qubit-1 ⨂ ...].
 
     Returns:
     --------
@@ -328,6 +350,7 @@ def qproject(mat: NDArray, idx: int, state: NDArray) -> NDArray:
      U = np.array(...)  # |01>
      U_eff = U.project(ψ, qubit=0)
     """
+    assert state.shape == (2,), f'state vector must be a 1D array of length 2, but got {state.shape}'
     N = mat.shape[0]
     assert mat.shape == (N, N) and 4 <= N and N & (N - 1) == 0, f" {mat} must be a square matrix of order of power of 2 and order>=4"
     n = N.bit_length() - 1
