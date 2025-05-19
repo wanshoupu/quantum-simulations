@@ -1,16 +1,15 @@
 import random
 from itertools import product
-from trace import Trace
 
 import numpy as np
 import pytest
 from numpy import kron
 
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.inter_product import inter_product, mesh_product, normalize, ctrl_expand
+from quompiler.utils.inter_product import inter_product, mesh_product, normalize, ctrl_expand, qproject
 from quompiler.utils.inter_product import kron_factor, mykron, mesh_factor, recursive_kron_factor, inter_factor, int_factors
 from quompiler.utils.mfun import allprop, unitary_prop
-from quompiler.utils.mgen import random_unitary
+from quompiler.utils.mgen import random_unitary, random_state
 
 formatter = MatrixFormatter(precision=2)
 
@@ -592,3 +591,97 @@ def test_block_ctrl(n, size, active):
     B = ctrl_expand(A, size, active)
     print()
     print(formatter.tostr(B))
+
+
+def test_qproject_invalid_shape():
+    with pytest.raises(AssertionError):
+        u = random_unitary(3)
+        state = random_state(2)
+        qproject(u, 0, state)
+
+
+def test_qproject_invalid_qidx():
+    with pytest.raises(AssertionError):
+        u = random_unitary(4)
+        state = random_state(2)
+        qproject(u, 4, state)
+
+
+@pytest.mark.parametrize("state,qidx,expected_idxs", [
+    [[1, 0], 0, [0, 1]],
+    [[0, 1], 0, [2, 3]],
+    [[1, 0], 1, [0, 2]],
+    [[0, 1], 1, [1, 3]],
+])
+def test_qproject_4x4_base_states(state, qidx, expected_idxs):
+    """
+    :param state: the state vector to project
+    :param qidx: the qubit index
+    :param expected_idxs: parameter to help calculate expected
+    :return:
+    """
+    state = np.array(state)
+    u = random_unitary(4)
+    actual = qproject(u, qidx, state)
+    print()
+    print(formatter.tostr(actual))
+    expected = u[np.ix_(expected_idxs, expected_idxs)]
+    assert actual.shape == expected.shape
+    assert np.array_equal(actual, expected)
+
+
+def test_qproject_4x4_left_qubit_random_state():
+    u = random_unitary(4)
+    state = random_state(2)
+    actual = qproject(u, 0, state)
+    print()
+    print(formatter.tostr(actual))
+    ul = u[np.ix_([0, 1], [0, 1])]
+    ur = u[np.ix_([0, 1], [2, 3])]
+    ll = u[np.ix_([2, 3], [0, 1])]
+    lr = u[np.ix_([2, 3], [2, 3])]
+    a, b = state.tolist()
+    expected = np.conj(a) * a * ul + np.conj(b) * a * ll + np.conj(a) * b * ur + np.conj(b) * b * lr
+    assert actual.shape == expected.shape
+    assert np.allclose(actual, expected)
+
+
+def test_qproject_4x4_right_qubit_random_state():
+    u = random_unitary(4)
+    state = random_state(2)
+    actual = qproject(u, 1, state)
+    print()
+    print(formatter.tostr(actual))
+    ul = u[np.ix_([0, 2], [0, 2])]
+    ur = u[np.ix_([0, 2], [1, 3])]
+    ll = u[np.ix_([1, 3], [0, 2])]
+    lr = u[np.ix_([1, 3], [1, 3])]
+    a, b = state.tolist()
+    expected = np.conj(a) * a * ul + np.conj(b) * a * ll + np.conj(a) * b * ur + np.conj(b) * b * lr
+    assert actual.shape == expected.shape
+    assert np.allclose(actual, expected)
+
+
+def test_qproject_random():
+    for _ in range(10):
+        n = random.randint(2, 5)
+        u = random_unitary(1 << n)
+        state = random_state(2)
+        qidx = random.choice(range(n))
+        half0 = sorted(set(i & ~(1 << (n - 1 - qidx)) for i in range(1 << n)))
+        half1 = sorted(set(i | (1 << (n - 1 - qidx)) for i in range(1 << n)))
+        ul = u[np.ix_(half0, half0)]
+        ur = u[np.ix_(half0, half1)]
+        ll = u[np.ix_(half1, half0)]
+        lr = u[np.ix_(half1, half1)]
+        a, b = state.tolist()
+        expected = np.conj(a) * a * ul + np.conj(b) * a * ll + np.conj(a) * b * ur + np.conj(b) * b * lr
+
+        # execute
+        actual = qproject(u, qidx, state)
+        # print()
+        # print(formatter.tostr(actual))
+
+        # verify
+        assert actual.shape == expected.shape
+        assert np.allclose(actual, expected)

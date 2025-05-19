@@ -1,4 +1,4 @@
-from itertools import chain
+from itertools import chain, product
 from typing import Sequence
 
 import numpy as np
@@ -292,6 +292,53 @@ def inter_factor(M: NDArray) -> tuple[list[NDArray], list[int]]:
                 return normalize([A, B]), [c]
     kf = kron_factor(M)
     return kf, [1] * (len(kf) - 1)
+
+
+def qproject(mat: NDArray, idx: int, state: NDArray) -> NDArray:
+    """
+    Project a square matrix, deemed as multi-qubit operator, onto a subsystem where the target qubit is fixed in a given pure state |ψ⟩.
+
+    This computes the effective operator on the remaining qubits by sandwiching U with |ψ⟩ on the specified qubit.
+    That is, it returns:
+        U_eff = ⟨ψ| U |ψ⟩
+
+    Parameters:
+    -----------
+    :param mat: a square matrix of shape (N, N) where N = 1<<n.
+    :param state: np.ndarray, state to be used to project the qubit.
+        A 2-dimensional complex vector representing a normalized pure state |ψ⟩ of a single qubit.
+
+    :param idx:
+        The index (0-based) of the qubit subsystem to be projected out, where |ψ⟩ lives.
+        Remember that our matrix is based on [qubit-0 ⨂ qubit-1 ⨂ ...].
+
+    Returns:
+    --------
+    U_eff : NDArray
+        A NDArray representing the projected operator acting on the remaining n-1 qubits.
+
+    Notes:
+    ------
+    - This is not the same as a partial trace. It conditions on the subsystem being in a known state |ψ⟩.
+    - Useful for computing effective dynamics or gates when a subsystem is initialized or post-selected in a known pure state.
+
+    Example:
+    --------
+     ψ = np.array([1, 0])  # |0>
+     U = np.array(...)  # |01>
+     U_eff = U.project(ψ, qubit=0)
+    """
+    N = mat.shape[0]
+    assert mat.shape == (N, N) and 4 <= N and N & (N - 1) == 0, f" {mat} must be a square matrix of order of power of 2 and order>=4"
+    n = N.bit_length() - 1
+    assert 0 <= idx < n, f"idx {idx} must be within range(0, {n})"
+    idxs0 = [i for i in range(N) if i & (1 << (n - 1 - idx)) == 0]
+    idxs1 = [i for i in range(N) if i & (1 << (n - 1 - idx)) != 0]
+    a = np.conj(state[0]) * state[0] * mat[np.ix_(idxs0, idxs0)]
+    b = np.conj(state[1]) * state[0] * mat[np.ix_(idxs1, idxs0)]
+    c = np.conj(state[0]) * state[1] * mat[np.ix_(idxs0, idxs1)]
+    d = np.conj(state[1]) * state[1] * mat[np.ix_(idxs1, idxs1)]
+    return a + b + c + d
 
 
 def ctrl_expand(A, block_size, active):
