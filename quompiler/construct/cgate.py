@@ -194,6 +194,69 @@ class CtrlGate:
         idx = self.target_qids().index(qubit)
         return is_idler(self._unitary.matrix, idx)
 
+    def project(self, qubit: Qubit, state: NDArray) -> 'CtrlGate':
+        """
+        Project a subsystem consisting the target qubit unto a given pure state |ψ⟩ and compute the CtrlGate for the remaining qubits.
+
+        This computes the effective operator on the remaining qubits by sandwiching U with |ψ⟩ on the specified qubit.
+        That is, it returns:
+            U_eff = ⟨ψ| U |ψ⟩
+
+        Parameters:
+        -----------
+        :param state: np.ndarray, state to be used to project the qubit.
+            A 2-dimensional complex vector representing a normalized pure state |ψ⟩ of a single qubit.
+
+        :param qubit:
+            The qubit subsystem to be projected out, where |ψ⟩ lives.
+            Note that our matrix is based on [qubit-0 ⨂ qubit-1 ⨂ ...].
+
+        Returns:
+        --------
+        U_eff : CtrlGate representing the projected operator acting on the remaining n-1 qubits.
+
+        Notes:
+        ------
+        - This is not the same as a partial trace. It conditions on the subsystem being in a known state |ψ⟩.
+        - Useful for computing effective dynamics or gates when a subsystem is initialized or post-selected in a known pure state.
+
+        Example:
+        --------
+         ψ = np.array([1, 0])  # |0>
+         U = CtrlGate(...)  # |01>
+         U_eff = U.project(ψ, qubit)
+        """
+        assert qubit in self._qlookup, f'Qubit {qubit} not in qspace.'
+        assert state.shape == (2,), f'state vector must be a 1D array of length 2, but got {state.shape}.'
+        assert np.isclose(np.linalg.norm(state), 1), f'state vector must normalized but got {state}.'
+
+        ctrl = self._qlookup[qubit]
+        if ctrl == QType.IDLER:
+            # nothing need to be changed but to eliminate the qubit
+            raise NotImplementedError(f"CtrlGate {ctrl} not implemented.")
+            # return CtrlGate(self._unitary.matrix, new_ctrls, new_qspace)
+
+        idx = self.qspace.index(qubit)
+        new_ctrls = self.controls[:idx] + self.controls[idx + 1:]
+        new_qspace = self.qspace[:idx] + self.qspace[idx + 1:]
+        if ctrl in QType.CONTROL1 | QType.CONTROL0:
+            a, b = state
+            u = self._unitary.matrix
+            e = np.eye(u.shape[0])
+            u, e = (u, e) if ctrl == QType.CONTROL1 else (e, u)
+            mat = abs(a) ** 2 * e + abs(b) ** 2 * u
+            if mat.shape[0] == 2 and UnivGate.get(mat):
+                return CtrlGate(UnivGate.get(mat), new_ctrls, new_qspace)
+            return CtrlGate(mat, new_ctrls, new_qspace)
+
+        assert ctrl == QType.TARGET
+        tq = self.target_qids()
+        if len(tq) == 1:
+            return CtrlGate(UnivGate.I, [QType.TARGET], new_qspace)
+
+        mat = qproject(self._unitary.matrix, tq.index(qubit), state)
+        return CtrlGate(mat, new_ctrls, new_qspace)
+
     def dela(self, qubit: Qubit) -> 'CtrlGate':
         assert qubit in self.target_qids()
         assert self.is_idler(qubit)

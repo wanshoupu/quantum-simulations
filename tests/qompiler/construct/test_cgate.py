@@ -638,3 +638,96 @@ def test_dela_happy_case():
     expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
     assert actual.qspace == expected.qspace
     assert np.allclose(actual.inflate(), expected.inflate())
+
+
+def test_project_invalid_shape():
+    with pytest.raises(AssertionError) as e:
+        cg = random_ctrlgate(3, 1, 10)
+        qubit = cg.qspace[0]
+        state = np.array([[1], [0]])
+        cg.project(qubit, state)
+    assert str(e.value) == 'state vector must be a 1D array of length 2, but got (2, 1).'
+
+
+def test_project_unnormalized_state():
+    with pytest.raises(AssertionError) as e:
+        cg = random_ctrlgate(3, 1, 10)
+        qubit = cg.qspace[0]
+        state = np.array([1, 1])
+        cg.project(qubit, state)
+    assert str(e.value) == 'state vector must normalized but got [1 1].'
+
+
+def test_project_invalid_qubit():
+    with pytest.raises(AssertionError) as e:
+        cg = random_ctrlgate(3, 1, 3)
+        qubit = Qubit(10)
+        state = np.array([1, 0])
+        cg.project(qubit, state)
+    assert str(e.value) == 'Qubit q10 not in qspace.'
+
+
+@pytest.mark.parametrize("ctr, state", [
+    [QType.CONTROL0, [0, 1]],
+    [QType.CONTROL1, [1, 0]],
+])
+def test_project_CONTROL_eye(ctr, state):
+    ctrls = [ctr, QType.TARGET]
+    cg = random_CtrlGate(ctrls)
+    actual = cg.project(Qubit(0), np.array(state))
+    assert np.array_equal(actual.inflate(), np.eye(2))
+
+
+@pytest.mark.parametrize("ctr, state", [
+    [QType.CONTROL0, [1, 0]],
+    [QType.CONTROL1, [0, 1]],
+])
+def test_project_CONTROL_non_eye(ctr, state):
+    ctrls = [ctr, QType.TARGET]
+    u = random_unitary(2)
+    cg = CtrlGate(u, ctrls)
+    actual = cg.project(Qubit(0), np.array(state))
+    assert np.array_equal(actual.inflate(), u)
+
+
+@pytest.mark.parametrize("ctr", [QType.CONTROL0, QType.CONTROL1])
+def test_project_2x2_base_eye(ctr):
+    state = random_state(2)
+    ctrls = [ctr, QType.TARGET]
+    cg = random_CtrlGate(ctrls)
+    actual = cg.project(Qubit(1), np.array(state))
+    assert np.array_equal(actual.inflate(), np.eye(2))
+
+
+@pytest.mark.parametrize("ctrl,state,qidx", [
+    [QType.CONTROL0, [1, 0], 0],
+    [QType.CONTROL0, [0, 1], 0],
+    [QType.CONTROL0, [1, 0], 1],
+    [QType.CONTROL0, [0, 1], 1],
+    [QType.CONTROL1, [1, 0], 0],
+    [QType.CONTROL1, [0, 1], 0],
+    [QType.CONTROL1, [1, 0], 1],
+    [QType.CONTROL1, [0, 1], 1],
+])
+def test_project_4x4_base_states(ctrl, state, qidx):
+    """
+    :param ctrl: ctr type
+    :param state: the state vector to project
+    :param qidx: the qubit index
+    :return:
+    """
+    state = np.array(state)
+    unitary = random_unitary(2)
+    mat = kron(np.eye(2), unitary) if qidx == 0 else kron(unitary, np.eye(2))
+
+    ctrls = [ctrl, QType.TARGET, QType.TARGET]
+    cg = CtrlGate(mat, ctrls)
+    actual = cg.project(Qubit(1 + qidx), np.array(state))
+    # print()
+    # print(formatter.tostr(actual.inflate()))
+
+    expected = qproject(mat, qidx, state)
+    # print()
+    # print(expected)
+    assert actual.order() == 4
+    assert np.array_equal(actual._unitary.matrix, expected)
