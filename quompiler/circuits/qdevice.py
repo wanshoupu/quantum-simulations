@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from quompiler.config.construct import DeviceConfig
-from quompiler.construct.qspace import Ancilla, Qubit
+from quompiler.construct.qspace import Qubit
 
 
 class QDevice(ABC):
@@ -26,11 +26,11 @@ class QDevice(ABC):
     def alloc_ancilla(self, n):
         if self.qoffset + n > self.CAPACITY:
             raise EnvironmentError(f'Not enough qubits to allocate ancilla {n} qubits')
-        self.aspace.extend(Ancilla(i) for i in range(self.aoffset, n))
+        self.aspace.extend(Qubit(i,ancilla=True) for i in range(self.aoffset, n))
         self.aoffset += n
         while len(self.aspace) < n:
             self.aoffset += 1
-            self.aspace.append(Ancilla(self.aoffset))
+            self.aspace.append(Qubit(self.aoffset, ancilla=True))
         result = self.aspace[:n]
         for a in result:
             self.reset(a)

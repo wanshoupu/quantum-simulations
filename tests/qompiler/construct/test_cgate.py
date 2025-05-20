@@ -6,7 +6,7 @@ from numpy import kron
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import ctrl2core
-from quompiler.construct.qspace import Qubit, Ancilla
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -626,12 +626,12 @@ def test_is_idler_true_case():
 
 def test_dela_happy_case():
     ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
-    qspace = [Qubit(10), Ancilla(12), Qubit(7)]
+    qspace = [Qubit(10), Qubit(12, ancilla=True), Qubit(7)]
     unitary = random_unitary(2)
     mat = kron(np.eye(2), unitary)
     cg = CtrlGate(mat, ctrls, qspace=qspace)
     qubit = cg.qspace[1]
-    assert isinstance(qubit, Ancilla)
+    assert qubit.ancilla
 
     # execute
     actual = cg.dela(qubit)

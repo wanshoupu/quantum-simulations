@@ -40,24 +40,5 @@ class Qubit:
             return NotImplemented(f'Comparison is undefined for type {type(__value)}')
         return self < __value or self == __value
 
-    def is_ancilla(self):
-        return self.ancilla
-
     def to_dict(self) -> Dict:
         return asdict(self)
-
-
-class Ancilla(Qubit):
-    """
-    Represents an ancilla qubit. It's strongly recommended to use distinct qid ranges for main Qubits and Ancilla qubits.
-    For example, make Qubit in the range [0-100] and Ancilla in [101-200].
-    """
-
-    def __init__(self, qid):
-        super().__init__(qid)
-
-    def __repr__(self):
-        return f'a{self.qid}'
-
-    def __str__(self):
-        return f'a{self.qid}'

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pytest
 
-from quompiler.construct.qspace import Qubit, Ancilla
+from quompiler.construct.qspace import Qubit
 
 
 def test_qubit_init_invalid():
@@ -45,7 +45,7 @@ def test_qubit_dict():
 
 def test_ancilla_array():
     dim = 100
-    qids = [Ancilla(i) for i in range(dim)]
+    qids = [Qubit(i, ancilla=True) for i in range(dim)]
     assert all(isinstance(q, Qubit) for q in qids)
 
 

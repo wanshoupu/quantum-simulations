@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 from prompt_toolkit.layout import controls
 
 from quompiler.construct.qontroller import core2control, ctrl2core
-from quompiler.construct.qspace import Qubit, Ancilla
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import ctrl_expand, qproject, is_idler
@@ -274,7 +274,7 @@ class CtrlGate:
         Throw exception if any qubit is ancilla but not idler.
         :return: A CtrlGate free from ancilla qubits.
         """
-        ancillas = [q for q in self.qspace if isinstance(q, Ancilla)]
+        ancillas = [q for q in self.qspace if q.ancilla]
         gate = self
         for q in ancillas:
             gate = gate.dela(q)
