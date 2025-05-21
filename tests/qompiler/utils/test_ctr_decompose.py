@@ -65,6 +65,6 @@ def test_ctr_decompose_clength_eq_2():
     assert isinstance(actual, CtrlGate)
     # print(f'actual:\n{formatter.tostr(recovered.inflate())}')
     expected = cu.sorted()
-    assert actual.qspace == expected.qspace  # TODO failing assert
+    assert actual.qspace == expected.qspace
     # print(f'expected:\n{formatter.tostr(expected.inflate())}')
     assert np.allclose(actual.inflate(), expected.inflate()), f'actual != expected: \n{formatter.tostr(actual.inflate())},\n\n{formatter.tostr(expected.inflate())}'
