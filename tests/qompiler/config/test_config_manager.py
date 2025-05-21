@@ -2,9 +2,10 @@ import os
 import sys
 
 import pytest
+from jsonschema import ValidationError
 
 from quompiler.config.config_manager import ConfigManager, merge_dicts
-from quompiler.construct.types import EmitType
+from quompiler.construct.types import EmitType, OptLevel, QompilePlatform
 
 fpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "test_compiler_config.json"))
 
@@ -90,6 +91,81 @@ def test_load_config():
 
     config = man.create_config()
     assert "TWO_LEVEL" == config.emit != default.emit
+
+
+def test_enum_invalid_emit():
+    man = ConfigManager()
+    data = {
+        "emit": "THIS_DOESNT_EXIST",
+    }
+    # execute
+    with pytest.raises(ValidationError):
+        man.load_config(data)
+        man.create_config()
+
+
+def test_in_sync_enum_emit():
+    man = ConfigManager()
+    for emit in EmitType:
+        conf_value = emit.name
+        data = {
+            "emit": conf_value,
+        }
+        man.load_config(data)
+
+        # execute
+        config = man.create_config()
+        assert conf_value == config.emit
+
+
+def test_enum_invalid_optimization():
+    man = ConfigManager()
+    data = {
+        "optimization": "THIS_DOESNT_EXIST",
+    }
+    # execute
+    with pytest.raises(ValidationError):
+        man.load_config(data)
+        man.create_config()
+
+
+def test_in_sync_enum_optimization():
+    man = ConfigManager()
+    for opt in OptLevel:
+        conf_value = opt.name
+        data = {
+            "optimization": conf_value,
+        }
+        man.load_config(data)
+
+        # execute
+        config = man.create_config()
+        assert conf_value == config.optimization, f'{conf_value} != {config.optimization}'
+
+
+def test_enum_invalid_target():
+    man = ConfigManager()
+    data = {
+        "target": "THIS_DOESNT_EXIST",
+    }
+    # execute
+    with pytest.raises(ValidationError):
+        man.load_config(data)
+        man.create_config()
+
+
+def test_in_sync_enum_target():
+    man = ConfigManager()
+    for opt in QompilePlatform:
+        conf_value = opt.name
+        data = {
+            "target": conf_value,
+        }
+        man.load_config(data)
+
+        # execute
+        config = man.create_config()
+        assert conf_value == config.target, f'{conf_value} != {config.target}'
 
 
 def test_override_order(mocker):
