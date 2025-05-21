@@ -29,28 +29,25 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
         return [gate]
     # alloc ancilla
     aspace = device.alloc_ancilla(len(cindexes) - 1)
-    left_coms = []
-    right_coms = []
+    coms = []
     for i, ancilla in enumerate(aspace):
         if i == 0:
             actrl = ctrl_seq[cindexes[0]], ctrl_seq[cindexes[1]], QType.TARGET
             aqubit = qspace[cindexes[0]], qspace[cindexes[1]], ancilla
         else:
             actrl = ctrl_seq[cindexes[i + 1]], QType.CONTROL1, QType.TARGET
-            aqubit = qspace[cindexes[0]], aspace[i - 1], ancilla
+            aqubit = qspace[cindexes[i + 1]], aspace[i - 1], ancilla
 
         if clength == 1:
-            toffs = toffoli(actrl, aqubit)
-            left_coms.extend(toffs)
-            right_coms.extend(toffs[::-1])
+            coms.extend(toffoli(actrl, aqubit))
         else:  # clength == 2
-            left_coms.append(CtrlGate(UnivGate.X, actrl, aqubit))
+            coms.append(CtrlGate(UnivGate.X, actrl, aqubit))
     # target indexes
     tindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.TARGET]
     core_ctrl = [QType.TARGET] * len(tindexes) + [QType.CONTROL1]
-    core_qspace = [qspace[tindexes[i]] for i in tindexes] + [aspace[-1]]
+    core_qspace = [qspace[i] for i in tindexes] + [aspace[-1]]
     core = CtrlGate(gate._unitary.matrix, core_ctrl, core_qspace)
-    return left_coms + [core] + right_coms[::-1]
+    return coms + [core] + coms[::-1]
 
 
 def std_decompose(gate: Union[CtrlGate, CtrlGate], univset: Sequence[UnivGate], rtol=1.e-5, atol=1.e-8) -> list[CtrlGate]:

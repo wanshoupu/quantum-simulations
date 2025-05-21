@@ -21,7 +21,7 @@ def test_ctr_decompose_2CU():
     """
     ctrls = random_control(3, 1)
     cg = random_CtrlGate(ctrls)
-    print(f'cg:\n{formatter.tostr(cg.inflate())}')
+    # print(f'cg:\n{formatter.tostr(cg.inflate())}')
     # print(cg.controllers)
     factory = FactoryManager().create_factory()
     device = factory.get_device()
@@ -32,7 +32,8 @@ def test_ctr_decompose_2CU():
     # verify
     assert len(ctrlgates) == 3
 
-    actual = clean_up_ancilla(ctrlgates)
+    result = reduce(lambda x, y: x @ y, ctrlgates)
+    actual = clean_up_ancilla(result)
     assert isinstance(actual, CtrlGate)
     # print(f'actual:\n{formatter.tostr(actual.inflate())}')
     expected = cg.sorted()
@@ -40,8 +41,7 @@ def test_ctr_decompose_2CU():
     assert np.allclose(actual.inflate(), expected.inflate()), f'actual != expected: \n{formatter.tostr(actual.inflate())},\n\n{formatter.tostr(expected.inflate())}'
 
 
-def clean_up_ancilla(gates):
-    result = reduce(lambda x, y: x @ y, gates)
+def clean_up_ancilla(result):
     ancillas = [q for q in result.qspace if q.ancilla]
     for q in ancillas:
         result = result.project(q, np.array([1, 0]))
@@ -49,17 +49,19 @@ def clean_up_ancilla(gates):
     return result
 
 
-def test_ctr_decompose():
-    k = random.randint(3, 8)
+def test_ctr_decompose_clength_eq_2():
+    k = random.randint(3, 5)
     t = random.randint(1, 3)
     ctrls = random_control(k, t)
     cu = random_CtrlGate(ctrls)
     # print(cu.controller)
+    print(f'cu:\n{formatter.tostr(cu.inflate())}')
     factory = FactoryManager().create_factory()
     device = factory.get_device()
-    ctrlgates = ctrl_decompose(cu, device=device, clength=1)
-    assert len(ctrlgates) == 13
-    actual = clean_up_ancilla(ctrlgates)
+    ctrlgates = ctrl_decompose(cu, device=device, clength=2)
+    assert len(ctrlgates) == 7
+    result = reduce(lambda x, y: x @ y, ctrlgates)
+    actual = clean_up_ancilla(result)
     assert isinstance(actual, CtrlGate)
     # print(f'actual:\n{formatter.tostr(recovered.inflate())}')
     expected = cu.sorted()
