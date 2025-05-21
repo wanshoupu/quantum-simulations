@@ -26,6 +26,7 @@ def _toffoli(t: Qubit, c1: Qubit, c2: Qubit) -> list[CtrlGate]:
     result.append(CtrlGate(UnivGate.TD, [QType.TARGET], [c2]))
     result.append(_CNOT(c1, c2))
     result.append(CtrlGate(UnivGate.TD, [QType.TARGET], [c2]))
+    result.append(_CNOT(c1, c2))
     result.append(CtrlGate(UnivGate.T, [QType.TARGET], [c1]))
     result.append(CtrlGate(UnivGate.S, [QType.TARGET], [c2]))
 
@@ -45,8 +46,8 @@ def toffoli_decompose(ctrls: Sequence[QType], qspace: Sequence[Qubit]) -> list[C
     """
     assert len(ctrls) == len(qspace) == 3
     sorting = np.argsort(ctrls)
-    qtcc = np.array(qspace)[sorting]
-    ctcc = np.array(ctrls)[sorting]
+    qtcc = [qspace[i] for i in sorting]
+    ctcc = [ctrls[i] for i in sorting]
     assert ctcc[0] == QType.TARGET
     assert all(c in QType.CONTROL0 | QType.CONTROL1 for c in ctcc[1:])
 
@@ -55,7 +56,7 @@ def toffoli_decompose(ctrls: Sequence[QType], qspace: Sequence[Qubit]) -> list[C
     # adjust for control activation value
     for i in range(1, 3):
         if ctcc[i] == QType.CONTROL0:
-            result = [CtrlGate(UnivGate.X, [QType.TARGET], qtcc[i])] + result
-            result.append(CtrlGate(UnivGate.X, [QType.TARGET], qtcc[i]))
+            result = [CtrlGate(UnivGate.X, [QType.TARGET], [qtcc[i]])] + result
+            result.append(CtrlGate(UnivGate.X, [QType.TARGET], [qtcc[i]]))
 
     return result

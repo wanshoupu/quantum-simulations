@@ -4,11 +4,12 @@ from functools import reduce
 import numpy as np
 import pytest
 
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
-from quompiler.construct.types import QType
+from quompiler.construct.types import QType, UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_CtrlGate
-from quompiler.utils.toffoli import toffoli_decompose
+from quompiler.utils.toffoli import toffoli_decompose, _toffoli
 
 formatter = MatrixFormatter(precision=2)
 
@@ -19,6 +20,26 @@ def random_qubit(ancilla=None) -> Qubit:
     return Qubit(qid, ancilla=ancilla)
 
 
+def test_toffoli_cnot_equiv():
+    qspace = [Qubit(1), Qubit(2), Qubit(3)]
+    actual = reduce(lambda x, y: x @ y, _toffoli(*qspace))
+    # print(f'actual:\n{formatter.tostr(actual.inflate())}')
+    ctrls = [QType.TARGET, QType.CONTROL1, QType.CONTROL1]
+    expected = CtrlGate(UnivGate.X, ctrls, qspace)
+    assert actual.qspace == expected.qspace
+    # print(f'expected:\n{formatter.tostr(expected.inflate())}')
+    assert np.allclose(actual.inflate(), expected.inflate())
+
+
+def test_toffoli_reverse_eq_forward():
+    qspace = [Qubit(1), Qubit(2), Qubit(3)]
+    tcoms = _toffoli(*qspace)
+    forward = reduce(lambda x, y: x @ y, tcoms)
+    reverse = reduce(lambda x, y: x @ y, tcoms[::-1])
+    assert len(tcoms) == 16
+    assert np.allclose(forward.inflate(), reverse.inflate())
+
+
 @pytest.mark.parametrize("ctrls", [
     [QType.CONTROL0, QType.CONTROL0, QType.TARGET],
     [QType.CONTROL1, QType.CONTROL0, QType.TARGET],
@@ -26,17 +47,21 @@ def random_qubit(ancilla=None) -> Qubit:
     [QType.CONTROL0, QType.CONTROL1, QType.TARGET],
 ])
 def test_toffoli_decompose(ctrls):
+    random.shuffle(ctrls)
     qspace = [random_qubit() for _ in range(len(ctrls))]
-    cg = random_CtrlGate(ctrls + [QType.TARGET])
+    cg = CtrlGate(UnivGate.X, ctrls, qspace)
     # print(f'cg:\n{formatter.tostr(cg.inflate())}')
     # print(cg.controllers)
     # execute
     toffoli_coms = toffoli_decompose(ctrls, qspace)
+
     # verify
-    assert len(toffoli_coms) == 15
+    gcount = 16 + ctrls.count(QType.CONTROL0) * 2
+    assert len(toffoli_coms) == gcount
 
     actual = reduce(lambda x, y: x @ y, toffoli_coms).sorted()
-    # print(f'actual:\n{formatter.tostr(toffoli_coms.inflate())}')
+    # print(f'actual:\n{formatter.tostr(actual.inflate())}')
     expected = cg.sorted()
     # print(f'expected:\n{formatter.tostr(expected.inflate())}')
+    assert actual.qspace == expected.qspace
     assert np.allclose(actual.inflate(), expected.inflate()), f'actual != expected: \n{formatter.tostr(actual.inflate())},\n\n{formatter.tostr(expected.inflate())}'
