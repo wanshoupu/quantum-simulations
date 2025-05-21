@@ -29,7 +29,9 @@ def test_ctr_decompose_2CU():
     ctrlgates = ctrl_decompose(cg, device=device, clength=1)
 
     # verify
-    assert len(ctrlgates) == 3
+    ccount = sum(c in QType.CONTROL1 | QType.CONTROL0 for c in ctrls)
+    gcount = 32 * (ccount - 1) + 4 * ctrls.count(QType.CONTROL0) + 1
+    assert len(ctrlgates) == gcount
 
     result = reduce(lambda x, y: x @ y, ctrlgates)
     actual = clean_up_ancilla(result)

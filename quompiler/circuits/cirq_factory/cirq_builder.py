@@ -20,6 +20,8 @@ class CirqBuilder(CircuitBuilder):
         UnivGate.H: cirq.H,
         UnivGate.S: cirq.S,
         UnivGate.T: cirq.T,
+        UnivGate.SD: lambda q:cirq.S(q)**-1,
+        UnivGate.TD: lambda q:cirq.T(q)**-1,
         # additional auxiliary gates
         UnivGate.X: cirq.X,
         UnivGate.Y: cirq.Y,
