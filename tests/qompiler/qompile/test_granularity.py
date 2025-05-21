@@ -1,4 +1,4 @@
-from quompiler.construct.std_gate import CtrlStdGate
+from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import EmitType, UnivGate
 from quompiler.utils.granularity import granularity
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -51,7 +51,7 @@ def test_granularity_ctrl_pruned():
 
 def test_granularity_std_ctrl_pruned():
     """
-    This test demo that CtrlStdGate are classified as EmitType.CTRL_PRUNED
+    This test demo that std CtrlGate are classified as EmitType.CTRL_PRUNED
     """
     n = 2
     ctrl = random_control(n, 1)
@@ -63,7 +63,7 @@ def test_granularity_std_ctrl_pruned():
 def test_granularity_std_clifford_t():
     n = 1
     ctrl = random_control(n, 1)
-    u = CtrlStdGate(UnivGate.H, ctrl)
+    u = CtrlGate(UnivGate.H, ctrl)
     grain = granularity(u)
     assert grain == EmitType.CLIFFORD_T
 

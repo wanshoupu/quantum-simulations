@@ -20,15 +20,15 @@ def test_inter_product_reshaping():
     A = kron(np.arange(1, 1 + 2 ** 2).reshape(2, 2), np.ones((3, 3)))
     B = np.array([[1, 1j], [113, 113j]])
     M = inter_product(A, B, b)
-    print()
-    print(formatter.tostr(M))
+    # print()
+    # print(formatter.tostr(M))
     M1 = rearrange1(M, a, b, c)
-    print('rearrange1')
-    print(formatter.tostr(M1))
+    # print('rearrange1')
+    # print(formatter.tostr(M1))
 
     M2 = rearrange2(M, a * b, c)
-    print('rearrange2')
-    print(formatter.tostr(M2))
+    # print('rearrange2')
+    # print(formatter.tostr(M2))
 
 
 def rearrange1(M, a, b, c):

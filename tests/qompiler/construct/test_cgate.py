@@ -526,8 +526,8 @@ def test_matmul_target_ctrl_mult_target():
 
     # execute
     actual = a @ b
-    print('actual\n')
-    print(formatter.tostr(actual.inflate()))
+    # print('actual\n')
+    # print(formatter.tostr(actual.inflate()))
 
 
 def test_matmul_random():
@@ -542,8 +542,8 @@ def test_matmul_random():
         # execute
         c = a @ b
 
-        print('actual\n')
-        print(formatter.tostr(c.inflate()))
+        # print('actual\n')
+        # print(formatter.tostr(c.inflate()))
 
 
 def test_matmul_verify_qspace():

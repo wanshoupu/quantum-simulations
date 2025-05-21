@@ -29,7 +29,7 @@ def test_qontroller_mask_ones():
     controller = Qontroller(controls)
     n = len(controls)
     num = (1 << n) - 1
-    print(bin(num))
+    # print(bin(num))
     new = controller.mask(num)
     assert new == num - 1
 

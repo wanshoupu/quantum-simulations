@@ -12,7 +12,6 @@ from quompiler.circuits.qdevice import QDevice
 from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
@@ -33,7 +32,7 @@ class Qompiler:
         component = self.compile(u)
         for c in BytecodeRevIter(component):
             m = c.data
-            if isinstance(m, CtrlStdGate) or isinstance(m, CtrlGate):
+            if isinstance(m, CtrlGate):
                 self.builder.build_gate(m)
             elif isinstance(m, UnitaryM):
                 self.builder.build_group(m)
@@ -43,7 +42,7 @@ class Qompiler:
         um = UnitaryM(s[0], tuple(range(s[0])), u)
         return self._decompose(um)
 
-    def _decompose(self, data: Union[UnitaryM, CtrlGate, CtrlStdGate]) -> Bytecode:
+    def _decompose(self, data: Union[UnitaryM, CtrlGate]) -> Bytecode:
         root = Bytecode(data)
         grain = granularity(data)
         if self.emit <= grain:  # noop
@@ -53,8 +52,6 @@ class Qompiler:
             constituents = self._decompose_unitary(grain, data)
         elif isinstance(data, CtrlGate):
             constituents = self._decompose_ctrl(grain, data)
-        elif isinstance(data, CtrlStdGate):
-            constituents = self._decompose_std(data)
         else:
             raise ValueError(f"Unrecognized gate of type {type(grain)}")
         # decompose is noop
@@ -64,12 +61,12 @@ class Qompiler:
             root.append(self._decompose(c))
         return root
 
-    def _decompose_std(self, gate: Union[CtrlGate, CtrlStdGate]) -> list[CtrlStdGate]:
+    def _decompose_std(self, gate: CtrlGate) -> list[CtrlGate]:
         std_gates = UnivGate.cliffordt() if self.emit == EmitType.CLIFFORD_T else list(UnivGate)
         constituents = std_decompose(gate, std_gates, self.config.rtol, self.config.atol)
         return constituents
 
-    def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> list[Union[CtrlGate, CtrlStdGate]]:
+    def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> list[CtrlGate]:
         # EmitType.MULTI_TARGET is disabled atm
         # if g < EmitType.MULTI_TARGET:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)

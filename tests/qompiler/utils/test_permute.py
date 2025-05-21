@@ -92,8 +92,8 @@ def test_create_from_init_equivalence():
 def test_sort_bits(seq, original, expected):
     qs = Permuter(seq)
     actual = qs.sort(original)
-    print()
-    print(actual)
+    # print()
+    # print(actual)
     assert actual == expected, f'{actual} != {expected}'
 
 
@@ -103,8 +103,8 @@ def test_sort_bits(seq, original, expected):
 def test_permute_bits(seq, original, expected):
     qs = Permuter(seq)
     actual = qs.permute(original)
-    print()
-    print(actual)
+    # print()
+    # print(actual)
     assert actual == expected, f'{actual} != {expected}'
 
 
@@ -123,8 +123,8 @@ def test_permute_bits(seq, original, expected):
 def test_bitpermute(seq, n, expected):
     qs = Permuter(seq)
     actual = qs.bitpermute(n)
-    print()
-    print(bin(actual))
+    # print()
+    # print(bin(actual))
     assert actual == expected, f'{bin(actual)} != {bin(expected)}'
 
 
@@ -151,7 +151,7 @@ def test_sort_and_bits():
     assert qs._sort == [1, 3, 2, 4, 0]
     items = list('abcde')
     permuted = qs.sort(items)
-    print(permuted)
+    # print(permuted)
     assert permuted == list('bdcea')
 
 

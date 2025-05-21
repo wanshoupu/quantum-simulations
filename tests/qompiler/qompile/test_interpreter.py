@@ -71,7 +71,7 @@ def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
 
 def test_interp_random_unitary(mocker):
     for _ in range(10):
-        print(f'Test {_}th round')
+        # print(f'Test {_}th round')
         n = random.randint(1, 4)
         dim = 1 << n
         expected = random_unitary(dim)

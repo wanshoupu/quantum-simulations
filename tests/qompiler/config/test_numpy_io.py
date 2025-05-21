@@ -31,11 +31,11 @@ def test_load_array():
 
     with tempfile.NamedTemporaryFile(suffix=".npy", mode="w+", delete=True) as tmp:
         save_ndarray(tmp.name, mat, fmt="npy")
-        print(tmp.name)  # path to the temp file
+        # print(tmp.name)  # path to the temp file
 
         # execute
         ndarray = load_ndarray(tmp.name, fmt="npy")
 
         # verify
         assert ndarray.shape == (n, n)
-        print(formatter.tostr(ndarray))
+        # print(formatter.tostr(ndarray))

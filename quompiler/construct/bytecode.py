@@ -3,7 +3,6 @@ from typing import List, Union
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.factor import FactoredM
-from quompiler.construct.std_gate import CtrlStdGate
 from quompiler.construct.types import UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -14,7 +13,7 @@ formatter = MatrixFormatter()
 
 @dataclass
 class Bytecode:
-    data: Union[NDArray, FactoredM, UnitaryM, CtrlGate, CtrlStdGate, UnivGate]
+    data: Union[NDArray, FactoredM, UnitaryM, CtrlGate,  UnivGate]
     children: List['Bytecode'] = field(default_factory=list)
 
     def append(self, child: 'Bytecode'):

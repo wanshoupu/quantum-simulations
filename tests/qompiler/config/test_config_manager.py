@@ -110,9 +110,9 @@ def test_override_order(mocker):
     default_device = default.device
     file_device = file_config.device
     cmd_device = cmd_config.device
-    print('default_device\n', default_device)
-    print('file_device\n', file_device)
-    print('cmd_device\n', cmd_device)
+    # print('default_device\n', default_device)
+    # print('file_device\n', file_device)
+    # print('cmd_device\n', cmd_device)
 
     assert default_device.ancilla_offset != cmd_device.ancilla_offset
     assert cmd_device.ancilla_offset != file_device.ancilla_offset

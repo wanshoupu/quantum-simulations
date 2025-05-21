@@ -623,8 +623,8 @@ def test_qproject_4x4_base_states(state, qidx, expected_idxs):
     state = np.array(state)
     u = random_unitary(4)
     actual = qproject(u, qidx, state)
-    print()
-    print(formatter.tostr(actual))
+    # print()
+    # print(formatter.tostr(actual))
     expected = u[np.ix_(expected_idxs, expected_idxs)]
     assert actual.shape == expected.shape
     assert np.array_equal(actual, expected)
@@ -634,8 +634,8 @@ def test_qproject_4x4_left_qubit_random_state():
     u = random_unitary(4)
     state = random_state(2)
     actual = qproject(u, 0, state)
-    print()
-    print(formatter.tostr(actual))
+    # print()
+    # print(formatter.tostr(actual))
     ul = u[np.ix_([0, 1], [0, 1])]
     ur = u[np.ix_([0, 1], [2, 3])]
     ll = u[np.ix_([2, 3], [0, 1])]
@@ -650,8 +650,8 @@ def test_qproject_4x4_right_qubit_random_state():
     u = random_unitary(4)
     state = random_state(2)
     actual = qproject(u, 1, state)
-    print()
-    print(formatter.tostr(actual))
+    # print()
+    # print(formatter.tostr(actual))
     ul = u[np.ix_([0, 2], [0, 2])]
     ur = u[np.ix_([0, 2], [1, 3])]
     ll = u[np.ix_([1, 3], [0, 2])]

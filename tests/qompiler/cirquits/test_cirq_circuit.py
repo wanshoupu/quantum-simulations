@@ -31,10 +31,10 @@ def test_create_builder(mocker):
 
 def test_builder_standard_ctrlgate(mocker):
     for gate in UnivGate:
-        print(gate)
+        # print(gate)
         n = random.randint(1, 4)
         control = random_control(n, 1)
-        print(f'n={n}, control={control}')
+        # print(f'n={n}, control={control}')
         cu = CtrlGate(gate.matrix, control)
         man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
         factory = man.create_factory()
@@ -43,7 +43,7 @@ def test_builder_standard_ctrlgate(mocker):
         # execution
         cirqC.build_gate(cu)
         circuit = cirqC.finish()
-        print(circuit)
+        # print(circuit)
         u = circuit.unitary(sorted(circuit.all_qubits()))
         expected = cu.inflate()
         assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
@@ -51,7 +51,7 @@ def test_builder_standard_ctrlgate(mocker):
 
 def test_builder_random_ctrlgate(mocker):
     for _ in range(10):
-        print(f'\nTest round #{_} ...')
+        # print(f'\nTest round #{_} ...')
         n = random.randint(1, 4)
         k = random.randint(1, n)
         control = random_control(n, k)
@@ -64,7 +64,7 @@ def test_builder_random_ctrlgate(mocker):
         # execution
         cirqC.build_gate(cu)
         circuit = cirqC.finish()
-        print(circuit)
+        # print(circuit)
         u = circuit.unitary(sorted(circuit.all_qubits()))
         expected = cu.inflate()
         assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'

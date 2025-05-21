@@ -42,8 +42,8 @@ def test_control2mat_single_target(controls):
 
 def test_control2mat_zero_target():
     controls = [QType.CONTROL1, QType.CONTROL1]
-    print()
-    print(controls)
+    # print()
+    # print(controls)
 
     A = symmat(1)
     # mat_print(A)
@@ -62,8 +62,8 @@ def test_control2mat_two_targets():
     mat_print(A)
     for _ in range(10):
         random.shuffle(controls)
-        print()
-        print(controls)
+        # print()
+        # print(controls)
         cu = CUnitary(A, controls)
         actual = cu.inflate()
         mat_print(actual)
@@ -97,8 +97,8 @@ def test_control2mat_random():
     for _ in range(10):
         n = random.randint(1, 5)
         controls = random_control(n)
-        print()
-        print(controls)
+        # print()
+        # print(controls)
 
         A = symmat(1 << controls.count(QType.TARGET))
         # mat_print(A)

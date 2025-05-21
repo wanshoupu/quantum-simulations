@@ -84,8 +84,8 @@ def test_gate_mat():
     m = -1j * UnivGate.H.matrix
     formatter = MatrixFormatter(precision=2)
     d = formatter.nformat(m[0, 0])
-    print()
-    print(d)
+    # print()
+    # print(d)
     assert isinstance(d, complex)
     assert d.real == 0
     assert d.imag < 0

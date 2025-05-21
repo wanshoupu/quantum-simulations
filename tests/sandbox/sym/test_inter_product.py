@@ -46,12 +46,12 @@ def test_kron_equivalence():
 
     # Compute the Kronecker product
     expected = kron(A, B, C)
-    print('expected')
-    pprint(expected)
+    # print('expected')
+    # pprint(expected)
 
     actual = inter_product(kron(A, C), B, 2)
-    print('actual')
-    pprint(actual)
+    # print('actual')
+    # pprint(actual)
     assert actual == expected
 
 
