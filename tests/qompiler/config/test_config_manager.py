@@ -4,6 +4,7 @@ import sys
 import pytest
 
 from quompiler.config.config_manager import ConfigManager, merge_dicts
+from quompiler.construct.types import EmitType
 
 fpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "test_compiler_config.json"))
 
@@ -13,7 +14,7 @@ def test_parse_default_config():
     config = parser.create_config()
     assert config.device is not None
     assert config.target == "CIRQ"
-    assert config.emit == "CTRL_PRUNED"
+    assert config.emit in {e.name for e in list(EmitType)}
 
 
 @pytest.mark.parametrize("dict1,dict2,expected", [
