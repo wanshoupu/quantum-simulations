@@ -14,6 +14,8 @@ class UnivGate(Enum):
     H = ('H', np.array([[1, 1], [1, -1]]) / np.sqrt(2))
     S = ('S', np.array([[1, 0j], [0j, 1j]]))
     T = ('T', np.array([[1, 0j], [0j, np.exp(1j * np.pi / 4)]]))
+    SD = ('S†', np.array([[1, 0j], [0j, -1j]]))
+    TD = ('T†', np.array([[1, 0j], [0j, np.exp(-1j * np.pi / 4)]]))
 
     def __init__(self, label, mat: NDArray):
         self.label = label

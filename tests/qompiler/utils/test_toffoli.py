@@ -1,0 +1,42 @@
+import random
+from functools import reduce
+
+import numpy as np
+import pytest
+
+from quompiler.construct.qspace import Qubit
+from quompiler.construct.types import QType
+from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mgen import random_CtrlGate
+from quompiler.utils.toffoli import toffoli_decompose
+
+formatter = MatrixFormatter(precision=2)
+
+
+def random_qubit(ancilla=None) -> Qubit:
+    qid = random.randint(1, 10000)
+    ancilla = ancilla or random.choice([False, True])
+    return Qubit(qid, ancilla=ancilla)
+
+
+@pytest.mark.parametrize("ctrls", [
+    [QType.CONTROL0, QType.CONTROL0, QType.TARGET],
+    [QType.CONTROL1, QType.CONTROL0, QType.TARGET],
+    [QType.CONTROL1, QType.CONTROL1, QType.TARGET],
+    [QType.CONTROL0, QType.CONTROL1, QType.TARGET],
+])
+def test_toffoli_decompose(ctrls):
+    qspace = [random_qubit() for _ in range(len(ctrls))]
+    cg = random_CtrlGate(ctrls + [QType.TARGET])
+    # print(f'cg:\n{formatter.tostr(cg.inflate())}')
+    # print(cg.controllers)
+    # execute
+    toffoli_coms = toffoli_decompose(ctrls, qspace)
+    # verify
+    assert len(toffoli_coms) == 15
+
+    actual = reduce(lambda x, y: x @ y, toffoli_coms).sorted()
+    # print(f'actual:\n{formatter.tostr(toffoli_coms.inflate())}')
+    expected = cg.sorted()
+    # print(f'expected:\n{formatter.tostr(expected.inflate())}')
+    assert np.allclose(actual.inflate(), expected.inflate()), f'actual != expected: \n{formatter.tostr(actual.inflate())},\n\n{formatter.tostr(expected.inflate())}'

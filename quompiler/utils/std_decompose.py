@@ -7,7 +7,7 @@ from quompiler.circuits.qdevice import QDevice
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.solovay import sk_approx
-from quompiler.utils.toffoli import toffoli
+from quompiler.utils.toffoli import toffoli_decompose
 
 
 def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]:
@@ -39,7 +39,7 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
             aqubit = qspace[cindexes[i + 1]], aspace[i - 1], ancilla
 
         if clength == 1:
-            coms.extend(toffoli(actrl, aqubit))
+            coms.extend(toffoli_decompose(actrl, aqubit))
         else:  # clength == 2
             coms.append(CtrlGate(UnivGate.X, actrl, aqubit))
     # target indexes

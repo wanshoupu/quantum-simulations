@@ -5,14 +5,13 @@ import numpy as np
 
 from quompiler.circuits.factory_manager import FactoryManager
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.qspace import Qubit
-from quompiler.construct.std_gate import CtrlStdGate
-from quompiler.construct.types import QType, UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_CtrlGate, random_control, random_unitary
+from quompiler.utils.mgen import random_CtrlGate, random_control
 from quompiler.utils.std_decompose import ctrl_decompose
 
 formatter = MatrixFormatter(precision=2)
+factory = FactoryManager().create_factory()
+device = factory.get_device()
 
 
 def test_ctr_decompose_2CU():
@@ -23,8 +22,6 @@ def test_ctr_decompose_2CU():
     cg = random_CtrlGate(ctrls)
     # print(f'cg:\n{formatter.tostr(cg.inflate())}')
     # print(cg.controllers)
-    factory = FactoryManager().create_factory()
-    device = factory.get_device()
 
     # execute
     ctrlgates = ctrl_decompose(cg, device=device, clength=1)
@@ -55,9 +52,7 @@ def test_ctr_decompose_clength_eq_2():
     ctrls = random_control(k, t)
     cu = random_CtrlGate(ctrls)
     # print(cu.controller)
-    print(f'cu:\n{formatter.tostr(cu.inflate())}')
-    factory = FactoryManager().create_factory()
-    device = factory.get_device()
+    # print(f'cu:\n{formatter.tostr(cu.inflate())}')
     ctrlgates = ctrl_decompose(cu, device=device, clength=2)
     assert len(ctrlgates) == 7
     result = reduce(lambda x, y: x @ y, ctrlgates)
