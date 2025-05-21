@@ -2,9 +2,11 @@ import random
 from functools import reduce
 
 import numpy as np
+import pytest
 
 from quompiler.circuits.factory_manager import FactoryManager
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.types import QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_CtrlGate, random_control
 from quompiler.utils.std_decompose import ctrl_decompose
@@ -46,15 +48,22 @@ def clean_up_ancilla(result):
     return result
 
 
-def test_ctr_decompose_clength_eq_2():
+@pytest.mark.parametrize("clength", [1, 2])
+def test_ctr_decompose_clength_2(clength):
     k = random.randint(3, 5)
     t = random.randint(1, 3)
     ctrls = random_control(k, t)
     cu = random_CtrlGate(ctrls)
     # print(cu.controller)
     # print(f'cu:\n{formatter.tostr(cu.inflate())}')
-    ctrlgates = ctrl_decompose(cu, device=device, clength=2)
-    assert len(ctrlgates) == 7
+    ctrlgates = ctrl_decompose(cu, device=device, clength=clength)
+    ccount = sum(c in QType.CONTROL1 | QType.CONTROL0 for c in ctrls)
+    if clength == 1:
+        gcount = 32 * (ccount - 1) + 4 * ctrls.count(QType.CONTROL0) + 1
+    else:
+        # clength == 2
+        gcount = 2 * (ccount - 1) + 1
+    assert len(ctrlgates) == gcount
     result = reduce(lambda x, y: x @ y, ctrlgates)
     actual = clean_up_ancilla(result)
     assert isinstance(actual, CtrlGate)
