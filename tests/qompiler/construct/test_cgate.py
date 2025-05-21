@@ -630,11 +630,9 @@ def test_dela_happy_case():
     unitary = random_unitary(2)
     mat = kron(np.eye(2), unitary)
     cg = CtrlGate(mat, ctrls, qspace=qspace)
-    qubit = cg.qspace[1]
-    assert qubit.ancilla
 
     # execute
-    actual = cg.dela(qubit)
+    actual = cg.dela()
     expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
     assert actual.qspace == expected.qspace
     assert np.allclose(actual.inflate(), expected.inflate())

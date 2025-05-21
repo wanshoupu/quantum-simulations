@@ -13,7 +13,7 @@ def test_parse_default_config():
     config = parser.create_config()
     assert config.device is not None
     assert config.target == "CIRQ"
-    assert config.emit == "SINGLET"
+    assert config.emit == "CTRL_PRUNED"
 
 
 @pytest.mark.parametrize("dict1,dict2,expected", [

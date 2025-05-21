@@ -266,6 +266,9 @@ class CtrlGate:
         """
         if state is None:
             state = np.array([1, 0])
+        else:
+            assert isinstance(state, np.ndarray), f'state vector must be a np.ndarray.'
+            assert state.shape == (2,), f'state vector must be a 1D array of length 2, but got {state.shape}'
         ancillas = [q for q in self.qspace if q.ancilla]
         gate = self
         for q in ancillas:

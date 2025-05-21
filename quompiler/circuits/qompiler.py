@@ -2,7 +2,6 @@
 This module provide the compilation functionalities.
 If needed, it may make distinctions between target qubits and ancilla qubits.
 """
-
 from typing import Union
 
 from numpy._typing import NDArray
@@ -14,6 +13,7 @@ from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
+from quompiler.optimize.optimizer import Optimizer
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.granularity import granularity
 from quompiler.utils.mat2l_decompose import mat2l_decompose
@@ -22,14 +22,24 @@ from quompiler.utils.std_decompose import std_decompose, ctrl_decompose
 
 class Qompiler:
 
-    def __init__(self, config: QompilerConfig, builder: CircuitBuilder, device: QDevice):
+    def __init__(self, config: QompilerConfig, builder: CircuitBuilder, device: QDevice, optimizers: list[Optimizer] = None):
         self.config = config
         self.builder = builder
         self.device = device
+        self.optimizers = optimizers or []
         self.emit = EmitType[config.emit]
 
     def interpret(self, u: NDArray):
         code = self.compile(u)
+        code = self.optimize(code)
+        self.render(code)
+
+    def optimize(self, code):
+        for opt in self.optimizers:
+            code = opt.optimize(code)
+        return code
+
+    def render(self, code: Bytecode):
         for c in BytecodeRevIter(code):
             m = c.data
             if not c.is_leaf():

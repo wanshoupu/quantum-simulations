@@ -96,3 +96,10 @@ class QompilePlatform(Enum):
 
     def __repr__(self):
         return self.name
+
+
+class OptimizerLevel(Enum):
+    O0 = 'O0'  # basic optimization
+    O1 = 'O1'  # mild optimization
+    O2 = 'O2'  # advanced optimization
+    O3 = 'O3'  # bold optimization

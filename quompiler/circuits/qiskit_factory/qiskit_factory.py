@@ -5,11 +5,17 @@ from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.circuits.qdevice import QDevice
 from quompiler.circuits.qompiler import Qompiler
 from quompiler.config.construct import QompilerConfig
+from quompiler.optimize.basic_optimizer import SlidingWindowOptimizer
+from quompiler.optimize.optimizer import Optimizer
 
 
 class QiskitFactory(QFactory):
     def __init__(self, config: QompilerConfig):
         self._config = config
+
+    @override
+    def get_optimizers(self) -> list[Optimizer]:
+        return [SlidingWindowOptimizer(2)]
 
     @override
     def get_qompiler(self) -> Qompiler:

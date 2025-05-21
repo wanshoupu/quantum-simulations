@@ -10,6 +10,8 @@ from quompiler.circuits.cirq_factory.cirq_builder import CirqBuilder
 from quompiler.circuits.qompiler import Qompiler
 from quompiler.config.construct import QompilerConfig, DeviceConfig
 from quompiler.construct.qspace import Qubit
+from quompiler.optimize.basic_optimizer import SlidingWindowOptimizer
+from quompiler.optimize.optimizer import Optimizer
 
 
 class CirqDevice(QDevice):
@@ -30,6 +32,9 @@ class CirqDevice(QDevice):
 
 
 class CirqFactory(QFactory):
+    @override
+    def get_optimizers(self) -> list[Optimizer]:
+        return [SlidingWindowOptimizer(2)]
 
     def __init__(self, config: QompilerConfig):
         self._config = config
@@ -40,7 +45,7 @@ class CirqFactory(QFactory):
     @override
     def get_qompiler(self) -> Qompiler:
         if self._qompiler is None:
-            self._qompiler = Qompiler(self._config, self.get_builder(), self.get_device())
+            self._qompiler = Qompiler(self._config, self.get_builder(), self.get_device(), self.get_optimizers())
         return self._qompiler
 
     @override
