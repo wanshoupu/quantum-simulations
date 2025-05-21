@@ -98,7 +98,10 @@ class QompilePlatform(Enum):
         return self.name
 
 
-class OptimizerLevel(Enum):
+class OptLevel(Enum):
+    """
+    Optimization level for compiler.
+    """
     O0 = 'O0'  # basic optimization
     O1 = 'O1'  # mild optimization
     O2 = 'O2'  # advanced optimization
