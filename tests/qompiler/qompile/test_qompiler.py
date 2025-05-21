@@ -56,21 +56,9 @@ def test_compile_cyclic_8_ctrl_prune():
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
     assert len(data) == 559
-    analyze(bc)
     leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
     v = reduce(lambda a, b: a @ b, leaves).dela().inflate()
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
-
-
-def analyze(root) -> bool:
-    if root is None:
-        return False
-    print()
-    print(root.metadata)
-    print(root.data)
-    if root.is_leaf() and len(root.data.controls) > 1:
-        return True
-    return any(analyze(c) for c in root.children)
 
 
 def test_compile_cyclic_8(mocker):

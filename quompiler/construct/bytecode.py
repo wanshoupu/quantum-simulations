@@ -1,14 +1,12 @@
 from dataclasses import dataclass, field
 from typing import List, Union
 
+from numpy.typing import NDArray
+
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.factor import FactoredM
 from quompiler.construct.types import UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.utils.format_matrix import MatrixFormatter
-from numpy.typing import NDArray
-
-formatter = MatrixFormatter()
 
 
 @dataclass

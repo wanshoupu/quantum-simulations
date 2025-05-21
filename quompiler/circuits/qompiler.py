@@ -29,8 +29,8 @@ class Qompiler:
         self.emit = EmitType[config.emit]
 
     def interpret(self, u: NDArray):
-        component = self.compile(u)
-        for c in BytecodeRevIter(component):
+        code = self.compile(u)
+        for c in BytecodeRevIter(code):
             m = c.data
             if not c.is_leaf():
                 self.builder.build_group(m)
@@ -44,6 +44,11 @@ class Qompiler:
 
     def _decompose(self, data: Union[UnitaryM, CtrlGate]) -> Bytecode:
         root = Bytecode(data)
+        if isinstance(data, UnitaryM):
+            root.metadata['data'] = f'UnitaryM(core={data.core})'
+        elif isinstance(data, CtrlGate):
+            root.metadata['data'] = f'CtrlGate(ctrl={data.controls},qspace={data.qspace})'
+
         grain = granularity(data)
         if self.emit <= grain:  # noop
             return root
@@ -55,6 +60,8 @@ class Qompiler:
         else:
             raise ValueError(f"Unrecognized gate of type {type(grain)}")
         root.metadata.update(meta)
+        root.metadata['fanout'] = len(constituents)
+
         # decompose is noop
         if len(constituents) == 1 and constituents[0] == data:
             return root
