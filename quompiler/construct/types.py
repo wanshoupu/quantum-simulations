@@ -82,8 +82,8 @@ class EmitType(IntEnum):
     MULTI_TARGET = 0x22,  # CtrlGate and with more than one qubit in target
     SINGLET = 0x26,  # CtrlGate and with one-qubit target
     CTRL_PRUNED = 0x2a,  # CtrlGate with single target and zero or one control qubit.
-    UNIV_GATE = 0x32,  # any CtrlStdGate with any UnivGate as the operator
-    CLIFFORD_T = 0x38,  # CtrlStdGate and the gate is among Clifford + T gates, namely, {X, H, S, T}
+    UNIV_GATE = 0x32,  # any std CtrlGate with any UnivGate as the operator
+    CLIFFORD_T = 0x38,  # CtrlGate and the gate is among Clifford + T gates, namely, {X, H, S, T}
 
     def __repr__(self):
         return self.name

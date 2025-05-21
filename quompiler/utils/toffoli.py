@@ -42,7 +42,7 @@ def toffoli_decompose(ctrls: Sequence[QType], qspace: Sequence[Qubit]) -> list[C
     This is a constant function, meaning both its input and output are both constants.
     :param ctrls: CNOT gate with two-qubit control sequence as input.
     :param qspace: the qspace these gates operate on.
-    :return: a list of CtrlStdGate and/or StdGate objects.
+    :return: a list of CtrlGate objects.
     """
     assert len(ctrls) == len(qspace) == 3
     sorting = np.argsort(ctrls)
