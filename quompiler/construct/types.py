@@ -43,7 +43,7 @@ class UnivGate(Enum):
 
     @staticmethod
     def cliffordt():
-        return [UnivGate.X, UnivGate.H, UnivGate.S, UnivGate.T]
+        return [UnivGate.X, UnivGate.H, UnivGate.S, UnivGate.T, UnivGate.SD, UnivGate.TD]
 
 
 class QType(IntFlag):

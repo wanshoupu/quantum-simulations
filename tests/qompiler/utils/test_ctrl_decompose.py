@@ -9,7 +9,7 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_CtrlGate, random_control
-from quompiler.utils.std_decompose import ctrl_decompose
+from quompiler.utils.ctrl_decompose import ctrl_decompose
 
 formatter = MatrixFormatter(precision=2)
 factory = FactoryManager().create_factory()

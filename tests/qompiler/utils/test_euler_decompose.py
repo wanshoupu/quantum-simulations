@@ -9,7 +9,7 @@ from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, random_control
-from quompiler.utils.std_decompose import euler_decompose, euler_param
+from quompiler.utils.euler_decompose import euler_decompose, euler_param
 
 formatter = MatrixFormatter(precision=2)
 
@@ -56,7 +56,7 @@ def test_uncontrolled_equality():
     assert np.allclose(actual, expected)
 
 
-def test_controlled_equality_1_target():
+def test_controlled_equality_1_ctr_1_target():
     u = random_unitary(2)
     controls = [QType.CONTROL1, QType.TARGET]
     # random.shuffle(controls)
@@ -64,6 +64,35 @@ def test_controlled_equality_1_target():
 
     # execute
     result = euler_decompose(cu)
+
+    # verify
+    phase_gate = result[0]
+    assert not phase_gate.control_qids()
+    assert phase_gate.qspace[0] == cu.qspace[0]
+    assert result[2].is_std() and result[4].is_std()
+
+    actual = reduce(lambda a, b: a @ b, result)
+    # print('actual:')
+    # print(formatter.tostr(actual.inflate()))
+    # print('expected:')
+    # print(formatter.tostr(cu.inflate()))
+    assert np.allclose(actual.inflate(), cu.inflate())
+
+
+def test_controlled_equality_2_ctrl_1_target():
+    u = random_unitary(2)
+    controls = [QType.CONTROL1, QType.CONTROL0, QType.TARGET]
+    # random.shuffle(controls)
+    cu = CtrlGate(u, controls)
+
+    # execute
+    result = euler_decompose(cu)
+
+    # verify
+    phase_gate = result[0]
+    assert len(phase_gate.control_qids()) > 1
+    assert result[2].is_std() and result[4].is_std()
+
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
@@ -80,6 +109,9 @@ def test_controlled_equality_C1T():
 
     # execute
     result = euler_decompose(cu)
+
+    # verify
+    assert result[2].is_std() and result[4].is_std()
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
@@ -101,11 +133,12 @@ def test_controlled_equality_C0T(controls):
 
     # execute
     result = euler_decompose(cu)
-    actual = reduce(lambda a, b: a @ b, result)
+    actual = reduce(lambda a, b: a @ b, result).sorted()
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
     # print('expected:')
     # print(formatter.tostr(cu.inflate()))
+    assert actual.qspace == cu.qspace
     assert np.allclose(actual.inflate(), cu.inflate())
 
 

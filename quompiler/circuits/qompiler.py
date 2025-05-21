@@ -17,7 +17,8 @@ from quompiler.optimize.optimizer import Optimizer
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.granularity import granularity
 from quompiler.utils.mat2l_decompose import mat2l_decompose
-from quompiler.utils.std_decompose import std_decompose, ctrl_decompose
+from quompiler.utils.std_decompose import std_decompose
+from quompiler.utils.ctrl_decompose import ctrl_decompose
 
 
 class Qompiler:
@@ -80,8 +81,7 @@ class Qompiler:
         return root
 
     def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
-        std_gates = UnivGate.cliffordt() if self.emit == EmitType.CLIFFORD_T else list(UnivGate)
-        constituents = std_decompose(gate, std_gates, self.config.rtol, self.config.atol)
+        constituents = std_decompose(gate, self.emit, self.config.rtol, self.config.atol)
         return constituents, {'method': 'std_decompose', 'params': str(self.emit)}
 
     def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
