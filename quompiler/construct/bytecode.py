@@ -13,8 +13,9 @@ formatter = MatrixFormatter()
 
 @dataclass
 class Bytecode:
-    data: Union[NDArray, FactoredM, UnitaryM, CtrlGate,  UnivGate]
+    data: Union[NDArray, FactoredM, UnitaryM, CtrlGate, UnivGate]
     children: List['Bytecode'] = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)
 
     def append(self, child: 'Bytecode'):
         self.children.append(child)

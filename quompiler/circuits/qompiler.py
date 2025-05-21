@@ -32,10 +32,10 @@ class Qompiler:
         component = self.compile(u)
         for c in BytecodeRevIter(component):
             m = c.data
-            if isinstance(m, CtrlGate):
-                self.builder.build_gate(m)
-            elif isinstance(m, UnitaryM):
+            if not c.is_leaf():
                 self.builder.build_group(m)
+            else:
+                self.builder.build_gate(m)
 
     def compile(self, u: NDArray) -> Bytecode:
         s = u.shape
@@ -49,11 +49,12 @@ class Qompiler:
             return root
 
         if isinstance(data, UnitaryM):
-            constituents = self._decompose_unitary(grain, data)
+            constituents, meta = self._decompose_unitary(grain, data)
         elif isinstance(data, CtrlGate):
-            constituents = self._decompose_ctrl(grain, data)
+            constituents, meta = self._decompose_ctrl(grain, data)
         else:
             raise ValueError(f"Unrecognized gate of type {type(grain)}")
+        root.metadata.update(meta)
         # decompose is noop
         if len(constituents) == 1 and constituents[0] == data:
             return root
@@ -61,29 +62,36 @@ class Qompiler:
             root.append(self._decompose(c))
         return root
 
-    def _decompose_std(self, gate: CtrlGate) -> list[CtrlGate]:
+    def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
         std_gates = UnivGate.cliffordt() if self.emit == EmitType.CLIFFORD_T else list(UnivGate)
         constituents = std_decompose(gate, std_gates, self.config.rtol, self.config.atol)
-        return constituents
+        return constituents, {'method': 'std_decompose', 'params': str(self.emit)}
 
-    def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> list[CtrlGate]:
+    def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
+        meta = dict()
         # EmitType.MULTI_TARGET is disabled atm
         # if g < EmitType.MULTI_TARGET:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
         if grain < EmitType.CTRL_PRUNED:
             result = ctrl_decompose(gate, self.device, clength=1)
+            meta['method'] = 'ctrl_decompose'
         else:
-            result = self._decompose_std(gate)
-        return result
+            result, meta1 = self._decompose_std(gate)
+            meta.update(meta1)
+        return result, meta
 
     @staticmethod
-    def _decompose_unitary(grain: EmitType, u: UnitaryM) -> list[Union[UnitaryM, CtrlGate]]:
+    def _decompose_unitary(grain: EmitType, u: UnitaryM) -> tuple[list[Union[UnitaryM, CtrlGate]], dict]:
+        meta = dict()
+
         if grain < EmitType.TWO_LEVEL:
             result = mat2l_decompose(u)
+            meta['method'] = 'mat2l_decompose'
         else:
             assert u.is2l()
             result = cnot_decompose(u)
-        return result
+            meta['method'] = 'cnot_decompose'
+        return result, meta
 
     def finish(self, optimized=False) -> object:
         return self.builder.finish(optimized=optimized)

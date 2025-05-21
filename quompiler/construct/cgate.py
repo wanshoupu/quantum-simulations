@@ -257,27 +257,19 @@ class CtrlGate:
         mat = qproject(self._unitary.matrix, tq.index(qubit), state)
         return CtrlGate(mat, new_ctrls, new_qspace)
 
-    def dela(self, qubit: Qubit) -> 'CtrlGate':
-        assert qubit in self.target_qids()
-        assert self.is_idler(qubit)
-        n = len(self.target_qids())
-        idx = self.target_qids().index(qubit)
-        idxs = [i for i in range(len(self._unitary.matrix)) if i & (1 << (n - 1 - idx)) == 0]
-        mat = self._unitary.matrix[np.ix_(idxs, idxs)]
-
-        cut = self.qspace.index(qubit)
-        return CtrlGate(mat, self.controls[:cut] + self.controls[cut + 1:], self.qspace[:cut] + self.qspace[cut + 1:])
-
-    def del_all_ancilla(self) -> 'CtrlGate':
+    def dela(self, state=None) -> 'CtrlGate':
         """
-        Shed all ancilla qubits, if any.
-        Throw exception if any qubit is ancilla but not idler.
+        Eliminate all ancilla qubits by projecting them to the base `state`, or [1, 0] if not given.
+        Use with caution! Exception may be raised if the resulting gate is not unitary.
+
         :return: A CtrlGate free from ancilla qubits.
         """
+        if state is None:
+            state = np.array([1, 0])
         ancillas = [q for q in self.qspace if q.ancilla]
         gate = self
         for q in ancillas:
-            gate = gate.dela(q)
+            gate = gate.project(q, state)
         return gate
 
     def promote(self, qubits: Sequence[Qubit]) -> 'CtrlGate':

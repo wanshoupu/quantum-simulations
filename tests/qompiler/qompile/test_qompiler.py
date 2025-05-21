@@ -5,6 +5,7 @@ import numpy as np
 
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 from tests.qompiler.mock_fixtures import mock_factory_manager
@@ -41,6 +42,35 @@ def test_compile_sing_qubit_circuit(mocker):
     assert len(bc.children) == 1
     data = bc.children[0].data
     assert isinstance(data, CtrlGate)
+
+
+def test_compile_cyclic_8_ctrl_prune():
+    u = cyclic_matrix(8, 1)
+    man = mock_factory_manager(emit="CTRL_PRUNED")
+    factory = man.create_factory()
+    interp = factory.get_qompiler()
+
+    # execute
+    bc = interp.compile(u)
+    # print(bc)
+    assert bc is not None
+    data = [a.data for a in BytecodeIter(bc)]
+    assert len(data) == 559
+    analyze(bc)
+    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
+    v = reduce(lambda a, b: a @ b, leaves).dela().inflate()
+    assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
+
+
+def analyze(root) -> bool:
+    if root is None:
+        return False
+    print()
+    print(root.metadata)
+    print(root.data)
+    if root.is_leaf() and len(root.data.controls) > 1:
+        return True
+    return any(analyze(c) for c in root.children)
 
 
 def test_compile_cyclic_8(mocker):

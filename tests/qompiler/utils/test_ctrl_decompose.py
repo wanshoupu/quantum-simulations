@@ -16,10 +16,7 @@ factory = FactoryManager().create_factory()
 device = factory.get_device()
 
 
-def test_ctr_decompose_2CU():
-    """
-    controls = [C,C,T] + ancilla
-    """
+def test_ctrl_decompose_2CU():
     ctrls = random_control(3, 1)
     cg = random_CtrlGate(ctrls)
     # print(f'cg:\n{formatter.tostr(cg.inflate())}')
@@ -33,8 +30,7 @@ def test_ctr_decompose_2CU():
     gcount = 32 * (ccount - 1) + 4 * ctrls.count(QType.CONTROL0) + 1
     assert len(ctrlgates) == gcount
 
-    result = reduce(lambda x, y: x @ y, ctrlgates)
-    actual = clean_up_ancilla(result)
+    actual = reduce(lambda x, y: x @ y, ctrlgates).dela()
     assert isinstance(actual, CtrlGate)
     # print(f'actual:\n{formatter.tostr(actual.inflate())}')
     expected = cg.sorted()
@@ -42,16 +38,8 @@ def test_ctr_decompose_2CU():
     assert np.allclose(actual.inflate(), expected.inflate()), f'actual != expected: \n{formatter.tostr(actual.inflate())},\n\n{formatter.tostr(expected.inflate())}'
 
 
-def clean_up_ancilla(result):
-    ancillas = [q for q in result.qspace if q.ancilla]
-    for q in ancillas:
-        result = result.project(q, np.array([1, 0]))
-    result = result.sorted()
-    return result
-
-
 @pytest.mark.parametrize("clength", [1, 2])
-def test_ctr_decompose_clength_2(clength):
+def test_ctrl_decompose_clength_2(clength):
     k = random.randint(3, 5)
     t = random.randint(1, 3)
     ctrls = random_control(k, t)
@@ -66,8 +54,7 @@ def test_ctr_decompose_clength_2(clength):
         # clength == 2
         gcount = 2 * (ccount - 1) + 1
     assert len(ctrlgates) == gcount
-    result = reduce(lambda x, y: x @ y, ctrlgates)
-    actual = clean_up_ancilla(result)
+    actual = reduce(lambda x, y: x @ y, ctrlgates).dela()
     assert isinstance(actual, CtrlGate)
     # print(f'actual:\n{formatter.tostr(recovered.inflate())}')
     expected = cu.sorted()
