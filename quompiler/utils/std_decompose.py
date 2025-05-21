@@ -18,7 +18,7 @@ def std_decompose(gate: CtrlGate, univset: EmitType = EmitType.CLIFFORD_T, rtol=
     :param atol: optional, if provided, will be used as the absolute tolerance parameter.
     :return: a list of CtrlGate objects.
     """
-    assert univset in EmitType.CLIFFORD_T | EmitType.UNIV_GATE
+    assert univset in {EmitType.CLIFFORD_T, EmitType.UNIV_GATE}
     assert gate.issinglet()
     coms = euler_decompose(gate)
     result = []
