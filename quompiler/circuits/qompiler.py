@@ -11,14 +11,14 @@ from quompiler.circuits.qdevice import QDevice
 from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import EmitType, UnivGate
+from quompiler.construct.types import EmitType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.optimize.optimizer import Optimizer
 from quompiler.utils.cnot_decompose import cnot_decompose
+from quompiler.utils.ctrl_decompose import ctrl_decompose
 from quompiler.utils.granularity import granularity
 from quompiler.utils.mat2l_decompose import mat2l_decompose
 from quompiler.utils.std_decompose import std_decompose
-from quompiler.utils.ctrl_decompose import ctrl_decompose
 
 
 class Qompiler:
@@ -29,6 +29,7 @@ class Qompiler:
         self.device = device
         self.optimizers = optimizers or []
         self.emit = EmitType[config.emit]
+        self.debug = self.config.debug
 
     def interpret(self, u: NDArray):
         code = self.compile(u)
@@ -55,10 +56,11 @@ class Qompiler:
 
     def _decompose(self, data: Union[UnitaryM, CtrlGate]) -> Bytecode:
         root = Bytecode(data)
-        if isinstance(data, UnitaryM):
-            root.metadata['data'] = f'UnitaryM(core={data.core})'
-        elif isinstance(data, CtrlGate):
-            root.metadata['data'] = f'CtrlGate(ctrl={data.controls},qspace={data.qspace})'
+        if self.debug:
+            if isinstance(data, UnitaryM):
+                root.metadata['data'] = f'UnitaryM(core={data.core})'
+            elif isinstance(data, CtrlGate):
+                root.metadata['data'] = f'CtrlGate(ctrl={data.controls},qspace={data.qspace})'
 
         grain = granularity(data)
         if self.emit <= grain:  # noop
@@ -70,19 +72,25 @@ class Qompiler:
             constituents, meta = self._decompose_ctrl(grain, data)
         else:
             raise ValueError(f"Unrecognized gate of type {type(grain)}")
-        root.metadata.update(meta)
-        root.metadata['fanout'] = len(constituents)
+        if self.debug:
+            root.metadata.update(meta)
 
         # decompose is noop
         if len(constituents) == 1 and constituents[0] == data:
             return root
+        if self.debug:
+            root.metadata['fanout'] = len(constituents)
         for c in constituents:
             root.append(self._decompose(c))
         return root
 
     def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
         constituents = std_decompose(gate, self.emit, self.config.rtol, self.config.atol)
-        return constituents, {'method': 'std_decompose', 'params': str(self.emit)}
+        if self.debug:
+            meta = {'method': 'std_decompose', 'params': str(self.emit)}
+        else:
+            meta = dict()
+        return constituents, meta
 
     def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
         meta = dict()
@@ -91,10 +99,12 @@ class Qompiler:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
         if grain < EmitType.CTRL_PRUNED:
             result = ctrl_decompose(gate, self.device, clength=1)
-            meta['method'] = 'ctrl_decompose'
+            if self.debug:
+                meta['method'] = 'ctrl_decompose'
         else:
             result, meta1 = self._decompose_std(gate)
-            meta.update(meta1)
+            if self.debug:
+                meta.update(meta1)
         return result, meta
 
     @staticmethod
