@@ -21,13 +21,15 @@ class CtrlGate:
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """
 
-    def __init__(self, gate: Union[UnivGate, NDArray], control: Sequence[QType], qspace: Sequence[Qubit] = None):
+    def __init__(self, gate: Union[UnivGate, NDArray], control: Sequence[QType], qspace: Sequence[Qubit] = None, phase: complex = 1.0):
         """
         Instantiate a controlled n-qubit unitary matrix.
         :param mat: the core matrix operation. It may be a NDArray or UnivGate.
         :param control: the control sequence or a Qontroller. Order of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
+        assert np.isclose(np.linalg.norm(phase), 1), f'phase factor must be normalized.'
+        self.phase = phase
         self.controls = list(control)
         core = ctrl2core(control)
         mat = gate.matrix if isinstance(gate, UnivGate) else gate
@@ -46,13 +48,13 @@ class CtrlGate:
         self._qlookup = {q: c for q, c in zip(qspace, control)}
 
     def __repr__(self):
-        return f'{repr(self._unitary)},controls={repr(self.controls)},qspace={self.qspace}'
+        return f'{repr(self._unitary)},controls={repr(self.controls)},qspace={self.qspace},phase={self.phase}'
 
     def order(self) -> int:
         return self._unitary.order()
 
     def inflate(self) -> NDArray:
-        return self._unitary.inflate()
+        return self._unitary.inflate() * self.phase
 
     def isid(self) -> bool:
         return self._unitary.isid()
@@ -72,10 +74,10 @@ class CtrlGate:
 
     def __matmul__(self, other: 'CtrlGate') -> 'CtrlGate':
         if not isinstance(other, CtrlGate):
-            return NotImplemented(f'cannot matmult with {type(other)}')
+            return NotImplemented(f'cannot matmul with {type(other)}')
         # direct product
         if self.qspace == other.qspace and self.controls == other.controls:
-            return CtrlGate(self._unitary.matrix @ other._unitary.matrix, self.controls, self.qspace)
+            return CtrlGate(self._unitary.matrix @ other._unitary.matrix, self.controls, self.qspace, self.phase * other.phase)
         # sort qspace
         if self._qlookup == other._qlookup:
             return self.sorted() @ other.sorted()
@@ -90,12 +92,12 @@ class CtrlGate:
         return self.expand(qspace1) @ other.expand(qspace2)
 
     def __copy__(self):
-        return CtrlGate(self._unitary.matrix, self.controls, self.qspace)
+        return CtrlGate(self._unitary.matrix, self.controls, self.qspace, self.phase)
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
-        new = CtrlGate(copy.deepcopy(self._unitary.matrix, memodict), copy.deepcopy(self.controls, memodict), copy.deepcopy(self.qspace, memodict))
+        new = CtrlGate(copy.deepcopy(self._unitary.matrix, memodict), copy.deepcopy(self.controls, memodict), copy.deepcopy(self.qspace, memodict), copy.deepcopy(self.phase))
         memodict[self] = new
         return new
 
@@ -149,7 +151,7 @@ class CtrlGate:
         perm = Permuter.from_permute(self.target_qids(), new_targets)
         indexes = perm.bitsortall(range(1 << len(new_targets)))
         mat = self._unitary.matrix[np.ix_(indexes, indexes)]
-        return CtrlGate(mat, controls, qspace)
+        return CtrlGate(mat, controls, qspace, self.phase)
 
     def qids(self) -> list[Qubit]:
         return self.qspace
@@ -184,7 +186,7 @@ class CtrlGate:
                 mat = kron(mat, np.eye(2))
         extended_ctrl = list(chain(self.controls, ctrls))
         extended_qspace = list(chain(self.qspace, qspace))
-        return CtrlGate(mat, extended_ctrl, extended_qspace)
+        return CtrlGate(mat, extended_ctrl, extended_qspace, self.phase)
 
     def is_idler(self, qubit) -> bool:
         if qubit not in self._qlookup:
@@ -246,16 +248,16 @@ class CtrlGate:
             u, e = (u, e) if ctrl == QType.CONTROL1 else (e, u)
             mat = abs(a) ** 2 * e + abs(b) ** 2 * u
             if mat.shape[0] == 2 and UnivGate.get(mat):
-                return CtrlGate(UnivGate.get(mat), new_ctrls, new_qspace)
-            return CtrlGate(mat, new_ctrls, new_qspace)
+                return CtrlGate(UnivGate.get(mat), new_ctrls, new_qspace, self.phase)
+            return CtrlGate(mat, new_ctrls, new_qspace, self.phase)
 
         assert ctrl == QType.TARGET
         tq = self.target_qids()
         if len(tq) == 1:
-            return CtrlGate(UnivGate.I, [QType.TARGET], new_qspace)
+            return CtrlGate(UnivGate.I, [QType.TARGET], new_qspace, self.phase)
 
         mat = qproject(self._unitary.matrix, tq.index(qubit), state)
-        return CtrlGate(mat, new_ctrls, new_qspace)
+        return CtrlGate(mat, new_ctrls, new_qspace, self.phase)
 
     def dela(self, state=None) -> 'CtrlGate':
         """
@@ -299,4 +301,4 @@ class CtrlGate:
                 new_ctrls.append(QType.TARGET)
             else:
                 new_ctrls.append(ctrl)
-        return CtrlGate(mat, new_ctrls[::-1], self.qspace)
+        return CtrlGate(mat, new_ctrls[::-1], self.qspace, self.phase)

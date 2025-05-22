@@ -128,3 +128,7 @@ def random_state(dimension) -> NDArray:
     """
     arr = np.random.randn(dimension) + 1j * np.random.randn(dimension)
     return arr / np.linalg.norm(arr)  # normalize to unit length
+
+
+def random_phase():
+    return np.exp(1j * np.random.uniform(0, 2 * np.pi))

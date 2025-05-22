@@ -11,7 +11,7 @@ from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import mykron, qproject
-from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate, random_CtrlGate, random_state
+from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate, random_CtrlGate, random_state, random_phase
 from quompiler.utils.permute import Permuter
 
 formatter = MatrixFormatter(precision=2)
@@ -624,7 +624,7 @@ def test_is_idler_true_case():
     assert not cg.is_idler(qubit)
 
 
-def test_dela_happy_case():
+def test_dela_single_ancilla():
     ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
     qspace = [Qubit(10), Qubit(12, ancilla=True), Qubit(7)]
     unitary = random_unitary(2)
@@ -636,6 +636,35 @@ def test_dela_happy_case():
     expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
     assert actual.qspace == expected.qspace
     assert np.allclose(actual.inflate(), expected.inflate())
+
+
+def test_dela_double_ancilla():
+    ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET, QType.TARGET]
+    qspace = [Qubit(10), Qubit(12, ancilla=True), Qubit(7), Qubit(1, ancilla=True)]
+    unitary = random_unitary(2)
+    mat = mykron(np.eye(2), unitary, np.eye(2))
+    cg = CtrlGate(mat, ctrls, qspace=qspace)
+
+    # execute
+    actual = cg.dela()
+
+    expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
+
+    assert actual.qspace == [qspace[0], qspace[2]]
+    assert np.allclose(actual.inflate(), expected.inflate())
+
+
+def test_dela_del_ctrl():
+    ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET, QType.TARGET]
+    qspace = [Qubit(10, ancilla=True), Qubit(12), Qubit(7, ancilla=True), Qubit(1)]
+    unitary = random_unitary(2)
+    mat = mykron(np.eye(2), unitary, np.eye(2))
+    cg = CtrlGate(mat, ctrls, qspace=qspace)
+
+    # execute
+    actual = cg.dela()
+    assert actual.qspace == [qspace[1], qspace[-1]]
+    assert np.allclose(actual.inflate(), np.eye(4))
 
 
 def test_project_invalid_shape():
@@ -729,3 +758,120 @@ def test_project_4x4_base_states(ctrl, state, qidx):
     # print(expected)
     assert actual.order() == 4
     assert np.array_equal(actual._unitary.matrix, expected)
+
+
+def test_invalid_phase():
+    u = random_unitary(2)
+    phase = -1j + 1
+    with pytest.raises(AssertionError) as e:
+        CtrlGate(u, random_control(2, 1), phase=phase)
+    assert str(e.value) == 'phase factor must be normalized.'
+
+
+def test_verify_phase_inflation():
+    phase = np.sqrt(-1j)
+    cg = CtrlGate(np.eye(2), [QType.TARGET], phase=phase)
+    actual = cg.inflate()
+    assert np.array_equal(actual, np.eye(2) * phase)
+
+
+def test_verify_phase_matmul():
+    phase1, phase2 = random_phase(), random_phase()
+    u = random_unitary(2)
+    cg1 = CtrlGate(u, [QType.TARGET], phase=phase1)
+    cg2 = CtrlGate(UnivGate.X, [QType.TARGET], phase=phase2)
+    # execute
+    actual = (cg1 @ cg2).inflate()
+    # print('actual')
+    # print(formatter.tostr(actual))
+
+    # verify
+    expected = u @ UnivGate.X.matrix * phase1 * phase2
+    # print('expected')
+    # print(formatter.tostr(expected))
+    assert np.allclose(actual, expected)
+
+
+def test_sorted_by_ctrl():
+    n = random.randint(1, 4)
+    t = random.randint(1, n)
+    m = random_unitary(1 << t)
+    controls = random_control(n, t)
+    qids = np.random.choice(100, size=n, replace=False)
+    cu = CtrlGate(m, controls, qids)
+
+    # execute
+    sorting = np.argsort(cu.controls)
+    sorted_cu = cu.sorted(sorting=sorting)
+    assert sorted_cu.controls[:t] == [QType.TARGET] * t
+    ctrls = sorted_cu.controls[t:]
+    assert all(c in QType(0x110) for c in ctrls)
+
+
+def test_verify_phase_project():
+    """
+    :param ctrl: ctr type
+    :param state: the state vector to project
+    :param qidx: the qubit index
+    :return:
+    """
+    phase = random_phase()
+    ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
+    mat = kron(random_unitary(2), np.eye(2))
+    cg = CtrlGate(mat, ctrls, phase=phase)
+    actual = cg.project(Qubit(2), np.array(np.array([0, 1])))
+    assert actual.phase == phase
+
+
+def test_verify_phase_sorted():
+    phase = random_phase()
+    n = random.randint(1, 4)
+    t = random.randint(1, n)
+    m = random_unitary(1 << t)
+    controls = random_control(n, t)
+    qids = np.random.choice(100, size=n, replace=False)
+    cu = CtrlGate(m, controls, qids, phase=phase)
+    sorting = np.argsort(cu.controls)
+
+    # execute
+    actual = cu.sorted(sorting=sorting)
+    assert actual.phase == phase
+
+
+def test_verify_phase_expand():
+    phase = random_phase()
+    k = 3
+    t = 1
+    controls = random_control(k, t)
+    cu = CtrlGate(random_unitary(2), controls, phase=phase)
+
+    # execute
+    actual = cu.expand([Qubit(k + 1)])
+    assert actual.phase == phase
+
+
+def test_verify_phase_promote():
+    phase = random_phase()
+    ctrls = [QType.CONTROL1, QType.TARGET]
+    cg = CtrlGate(random_unitary(2), ctrls, phase=phase)
+    qubit = cg.qspace[0]
+
+    # execute
+    actual = cg.promote([qubit])
+    assert actual.phase == phase
+
+
+def test_verify_phase_dela():
+    phase = random_phase()
+    ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET, QType.TARGET]
+    qspace = [Qubit(10), Qubit(12, ancilla=True), Qubit(7), Qubit(1, ancilla=True)]
+    unitary = random_unitary(2)
+    mat = mykron(np.eye(2), unitary, np.eye(2))
+    cg = CtrlGate(mat, ctrls, qspace=qspace, phase=phase)
+
+    # execute
+    actual = cg.dela()
+
+    expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
+    assert actual.qspace == expected.qspace
+    assert np.allclose(actual.inflate(), expected.inflate() * phase)
