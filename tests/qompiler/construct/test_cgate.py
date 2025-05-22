@@ -223,7 +223,7 @@ def test_sorted_by_ctrl():
     t = random.randint(1, n)
     m = random_unitary(1 << t)
     controls = random_control(n, t)
-    qids = np.random.choice(100, size=n, replace=False)
+    qids = [Qubit(i) for i in np.random.choice(100, size=n, replace=False)]
     cu = CtrlGate(m, controls, qids)
 
     # execute
@@ -792,22 +792,6 @@ def test_verify_phase_matmul():
     assert np.allclose(actual, expected)
 
 
-def test_sorted_by_ctrl():
-    n = random.randint(1, 4)
-    t = random.randint(1, n)
-    m = random_unitary(1 << t)
-    controls = random_control(n, t)
-    qids = np.random.choice(100, size=n, replace=False)
-    cu = CtrlGate(m, controls, qids)
-
-    # execute
-    sorting = np.argsort(cu.controls)
-    sorted_cu = cu.sorted(sorting=sorting)
-    assert sorted_cu.controls[:t] == [QType.TARGET] * t
-    ctrls = sorted_cu.controls[t:]
-    assert all(c in QType(0x110) for c in ctrls)
-
-
 def test_verify_phase_project():
     """
     :param ctrl: ctr type
@@ -818,24 +802,36 @@ def test_verify_phase_project():
     phase = random_phase()
     ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
     mat = kron(random_unitary(2), np.eye(2))
-    cg = CtrlGate(mat, ctrls, phase=phase)
-    actual = cg.project(Qubit(2), np.array(np.array([0, 1])))
-    assert actual.phase == phase
+    cg_phase = CtrlGate(mat, ctrls, phase=phase)
+    cg_no_phase = CtrlGate(mat, ctrls)
+    actual = cg_phase.project(Qubit(2), np.array([0, 1]))
+    # print(f'actual:\n{formatter.tostr(actual.inflate())}')
+    expected = cg_no_phase.project(Qubit(2), np.array([0, 1]))
+    # print(f'expected:\n{formatter.tostr(expected.inflate())}')
+    # verify that the core matrices differ by phase
+    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
 def test_verify_phase_sorted():
     phase = random_phase()
-    n = random.randint(1, 4)
-    t = random.randint(1, n)
+    n = 4
+    t = 2
     m = random_unitary(1 << t)
-    controls = random_control(n, t)
-    qids = np.random.choice(100, size=n, replace=False)
-    cu = CtrlGate(m, controls, qids, phase=phase)
-    sorting = np.argsort(cu.controls)
+    controls = [QType.TARGET, QType.CONTROL1, QType.CONTROL0, QType.TARGET]
+    qids = [Qubit(i) for i in np.random.choice(100, size=n, replace=False)]
+    cg_phase = CtrlGate(m, controls, qids, phase=phase)
+    cg_no_phase = CtrlGate(m, controls, qids)
+    sorting = np.argsort(cg_phase.controls)
 
     # execute
-    actual = cu.sorted(sorting=sorting)
-    assert actual.phase == phase
+    actual = cg_phase.sorted(sorting=sorting)
+    # print(f'actual:\n{formatter.tostr(actual.inflate())}')
+    expected = cg_no_phase.sorted(sorting=sorting)
+    # print(f'expected:\n{formatter.tostr(expected.inflate())}')
+    # verify that the core matrices differ by phase
+    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
 def test_verify_phase_expand():
@@ -843,22 +839,36 @@ def test_verify_phase_expand():
     k = 3
     t = 1
     controls = random_control(k, t)
-    cu = CtrlGate(random_unitary(2), controls, phase=phase)
+    unitary = random_unitary(2)
+    cg_phase = CtrlGate(unitary, controls, phase=phase)
+    no_phase = CtrlGate(unitary, controls)
 
     # execute
-    actual = cu.expand([Qubit(k + 1)])
-    assert actual.phase == phase
+    actual = cg_phase.expand([Qubit(k + 1)])
+    # print(f'actual:\n{formatter.tostr(actual.inflate())}')
+    expected = no_phase.expand([Qubit(k + 1)])
+    # print(f'expected:\n{formatter.tostr(expected.inflate())}')
+    assert actual.qspace == expected.qspace
+    # verify that the core matrices differ by phase
+    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
 def test_verify_phase_promote():
     phase = random_phase()
     ctrls = [QType.CONTROL1, QType.TARGET]
-    cg = CtrlGate(random_unitary(2), ctrls, phase=phase)
-    qubit = cg.qspace[0]
+    unitary = random_unitary(2)
+    cg_phase = CtrlGate(unitary, ctrls, phase=phase)
+    no_phase = CtrlGate(unitary, ctrls)
+    qubit = cg_phase.qspace[0]
 
     # execute
-    actual = cg.promote([qubit])
-    assert actual.phase == phase
+    actual = cg_phase.promote([qubit])
+    expected = no_phase.promote([qubit])
+    assert actual.qspace == expected.qspace
+    # verify that the core matrices differ by phase
+    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
 def test_verify_phase_dela():
@@ -867,11 +877,13 @@ def test_verify_phase_dela():
     qspace = [Qubit(10), Qubit(12, ancilla=True), Qubit(7), Qubit(1, ancilla=True)]
     unitary = random_unitary(2)
     mat = mykron(np.eye(2), unitary, np.eye(2))
-    cg = CtrlGate(mat, ctrls, qspace=qspace, phase=phase)
+    cg_phase = CtrlGate(mat, ctrls, qspace=qspace, phase=phase)
+    no_phase = CtrlGate(mat, ctrls, qspace=qspace)
 
     # execute
-    actual = cg.dela()
+    actual = cg_phase.dela()
+    expected = no_phase.dela()
 
-    expected = CtrlGate(unitary, ctrls[:2], [qspace[0], qspace[2]])
     assert actual.qspace == expected.qspace
-    assert np.allclose(actual.inflate(), expected.inflate() * phase)
+    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)

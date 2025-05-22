@@ -22,13 +22,16 @@ class UnitaryM:
     The core indexes representing the mapping of the matrix elements to the inflated matrix.
     """
 
-    def __init__(self, dimension: int, core: Sequence[int], matrix: NDArray):
+    def __init__(self, dimension: int, core: Sequence[int], matrix: NDArray, phase=1):
         """
         Instantiate a unitary matrix. The inflate method creates the extended matrix. See mesh_product for the requirements on the core, eyes, and factors.
         :param dimension: dimension of the matrix. TODO remove dimension which is unnecessary.
         :param core: the row indexes occupied by the core submatrix. The total length of core must correspond to the shape of extended matrix.
         :param matrix: the core matrix.
+        :param phase: an overall phase to be multiplied unto the core matrix.
         """
+        assert np.isclose(np.linalg.norm(phase), 1), f'phase factor must be normalized.'
+        self.phase = phase
         s = matrix.shape
         assert len(s) == 2, f'Matrix must be 2D array but got {s}.'
         assert s[0] == s[1], f'Matrix must be square but got {s}.'
@@ -53,7 +56,7 @@ class UnitaryM:
         if self.dimension != other.dimension:
             raise ValueError('matmul: Input operands have dimension mismatch.')
         if self.core == other.core:
-            return UnitaryM(self.dimension, self.core, self.matrix @ other.matrix)
+            return UnitaryM(self.dimension, self.core, self.matrix @ other.matrix, self.phase * other.phase)
         # TODO this is a quick but slow implementation. May be improved by finding the union/intersection of indices
         return UnitaryM.deflate(self.inflate() @ other.inflate())
 
@@ -66,7 +69,7 @@ class UnitaryM:
         :return: The full-blown NDArray represented by UnitaryM.
         """
         result = np.eye(self.dimension, dtype=np.complexfloating)
-        result[np.ix_(self.core, self.core)] = self.matrix
+        result[np.ix_(self.core, self.core)] = self.matrix * self.phase
         return result
 
     @classmethod

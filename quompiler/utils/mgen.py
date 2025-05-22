@@ -24,16 +24,16 @@ def random_unitary(n) -> NDArray:
     return Q
 
 
-def random_UnitaryM_2l(n, r1, r2) -> UnitaryM:
+def random_UnitaryM_2l(n, r1, r2, phase=1) -> UnitaryM:
     u = unitary_group.rvs(2)
     r1, r2 = min(r1, r2), max(r1, r2)
-    return UnitaryM(n, (r1, r2), u)
+    return UnitaryM(n, (r1, r2), u, phase=phase)
 
 
-def random_UnitaryM(dim, indexes) -> UnitaryM:
+def random_UnitaryM(dim, indexes, phase=1) -> UnitaryM:
     cdim = len(indexes)
     u = unitary_group.rvs(cdim)
-    return UnitaryM(dim, indexes, u)
+    return UnitaryM(dim, indexes, u, phase=phase)
 
 
 def random_CtrlGate(controls: Sequence[QType], qubits: Sequence[Qubit] = None) -> CtrlGate:

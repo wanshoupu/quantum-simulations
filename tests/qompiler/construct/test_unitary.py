@@ -5,7 +5,7 @@ from quompiler.construct.types import UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mat_utils import coreindexes
-from quompiler.utils.mgen import random_unitary, cyclic_matrix
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_phase
 
 formatter = MatrixFormatter(precision=2)
 
@@ -27,11 +27,38 @@ def test_init():
     assert inflate[0, :].tolist() == inflate[:, 0].tolist() == [1, 0, 0]
 
 
+def test_init_with_phase():
+    phase = random_phase()
+    unitary = random_unitary(2)
+    cu = UnitaryM(3, (1, 2), unitary, phase=phase)
+    actual = cu.inflate()
+    # print(formatter.tostr(actual))
+    expected = np.eye(3, dtype=np.complexfloating)
+    expected[np.ix_(cu.core, cu.core)] = unitary * phase
+    assert np.allclose(actual, expected)
+
+
 def test_inflate():
-    cu = UnitaryM(3, (1, 2), random_unitary(2))
-    m = cu.inflate()
-    indxs = coreindexes(m)
+    unitary = random_unitary(2)
+    cu = UnitaryM(3, (1, 2), unitary)
+    actual = cu.inflate()
+    indxs = coreindexes(actual)
     assert indxs == (1, 2), f'Core indexes is unexpected {indxs}'
+    expected = np.eye(3, dtype=np.complexfloating)
+    expected[np.ix_(cu.core, cu.core)] = unitary
+    assert np.allclose(actual, expected)
+
+
+def test_inflate_with_phase():
+    phase = random_phase()
+    unitary = random_unitary(2)
+    cu = UnitaryM(3, (1, 2), unitary, phase=phase)
+    # execute
+    actual = cu.inflate()
+    # verify
+    expected = np.eye(3, dtype=np.complexfloating)
+    expected[np.ix_(cu.core, cu.core)] = unitary * phase
+    assert np.allclose(actual, expected)
 
 
 def test_inflate_shuffled_core():
@@ -56,12 +83,23 @@ def test_inflate_deflate():
     m = cu.inflate()
     u = UnitaryM.deflate(m)
     assert u.core == (1, 2), f'Core indexes is unexpected {u.core}'
+    assert np.allclose(u.matrix, cu.matrix), f'Core matrix is unexpected: {u.matrix}'
+
+
+def test_inflate_deflate_with_phase():
+    phase = random_phase()
+    um = UnitaryM(3, (1, 2), random_unitary(2), phase=phase)
+    mat = um.inflate()
+    actual = UnitaryM.deflate(mat)
+    assert actual.core == (1, 2), f'Core indexes is unexpected {actual.core}'
+    expected = um.matrix * phase
+    assert np.allclose(actual.matrix, expected), f'Core matrix is unexpected: {actual.matrix}'
 
 
 def test_matmul_identical_cores():
     core = (1, 2)
-    a = UnitaryM(3, core, random_unitary(2))
-    b = UnitaryM(3, core, random_unitary(2))
+    a = UnitaryM(3, core, random_unitary(2), 1.0)
+    b = UnitaryM(3, core, random_unitary(2), 1.0)
     c = a @ b
     assert c.core == core, f'Core indexes is unexpected {c.core}'
     assert np.allclose(c.matrix, a.matrix @ b.matrix)
@@ -81,9 +119,9 @@ def test_deflate_deficit_core():
 
 def test_matmul_eye_phase():
     core = (1, 3)
-    a = UnitaryM(4, core, UnivGate.I.matrix)
+    a = UnitaryM(4, core, UnivGate.I.matrix, 1.0)
     core2 = (0, 2)
-    b = UnitaryM(4, core2, UnivGate.S.matrix)
+    b = UnitaryM(4, core2, UnivGate.S.matrix, 1.0)
     c = a @ b
     assert c is not None
     assert len(c.core) == 2, f'Core indexes is unexpected {c.core}'
@@ -105,6 +143,25 @@ def test_matmul_diff_cores():
     assert np.allclose(c.matrix, expected)
 
 
+def test_matmul_with_phase():
+    phase1 = random_phase()
+    phase2 = random_phase()
+    dim = 3
+    a = UnitaryM(dim, (1, 2), random_unitary(2), phase=phase1)
+    b = UnitaryM(dim, (0, 2), random_unitary(2), phase=phase2)
+    c = a @ b
+    assert c.core == (0, 1, 2), f'Core indexes is unexpected {c.core}'
+    actual = c.matrix
+    # print(f'Actual:\n{formatter.tostr(actual)}')
+    a_expanded = np.eye(dim, dtype=np.complexfloating)
+    a_expanded[np.ix_(a.core, a.core)] = a.matrix * phase1
+    b_expanded = np.eye(dim, dtype=np.complexfloating)
+    b_expanded[np.ix_(b.core, b.core)] = b.matrix * phase2
+    expected = a_expanded @ b_expanded
+    # print(f'Expected:\n{formatter.tostr(expected)}')
+    assert np.allclose(actual, expected)
+
+
 @pytest.mark.parametrize("dim,core,size,expected", [
     [8, (3, 2), 2, True],
     [4, (2, 3), 2, True],
@@ -113,5 +170,5 @@ def test_matmul_diff_cores():
     [8, (0, 1, 2), 3, False],  # matrix takes more than one qubit
 ])
 def test_is_singlet(dim, core, size, expected):
-    u = UnitaryM(dim, core, random_unitary(size))
+    u = UnitaryM(dim, core, random_unitary(size), 1.0)
     assert u.issinglet() == expected, f'Unexpected {u}'
