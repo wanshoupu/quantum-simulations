@@ -1,7 +1,7 @@
 from typing_extensions import override
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.types import OptimizerLevel
+from quompiler.construct.types import OptLevel
 from quompiler.optimize.optimizer import Optimizer
 
 
@@ -20,8 +20,8 @@ class SlidingWindowOptimizer(Optimizer):
         self.window = window
 
     @override
-    def level(self) -> OptimizerLevel:
-        return OptimizerLevel.O0
+    def level(self) -> OptLevel:
+        return OptLevel.O0
 
     @override
     def optimize(self, code: Bytecode) -> Bytecode:
