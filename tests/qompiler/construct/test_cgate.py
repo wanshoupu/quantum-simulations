@@ -91,6 +91,7 @@ def test_init():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     cu = CtrlGate(m, controls)
     # print(formatter.tostr(cu.inflate()))
+    assert not cu.is_std()
     assert tuple(cu.core()) == (6, 7), f'Core indexes is unexpected {cu.core()}'
 
 

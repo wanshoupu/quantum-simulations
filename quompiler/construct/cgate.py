@@ -37,6 +37,7 @@ class CtrlGate:
             match = UnivGate.get_prop(gate)
             if match is None:
                 mat = gate
+                self.gate = None
             else:
                 g, f = match  # unpack to UnivGate, proportional factor (guaranteed norm-1)
                 self.gate = g
