@@ -13,4 +13,5 @@ def sk_approx(mat: NDArray, rtol=1.e-5, atol=1.e-8) -> list[UnivGate]:
     :param atol: optional, if provided, will be used as the absolute tolerance parameter.
     :return: a list of NDArrays whose product is an approximation to the input within the specified tolerance.
     """
-    pass
+    # make mat hashable using mat.tobytes()
+    return [UnivGate.Y, UnivGate.X]

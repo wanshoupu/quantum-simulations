@@ -5,7 +5,6 @@ from typing import Union, Sequence
 import numpy as np
 from numpy import kron
 from numpy.typing import NDArray
-from prompt_toolkit.layout import controls
 
 from quompiler.construct.qontroller import core2control, ctrl2core
 from quompiler.construct.qspace import Qubit
@@ -72,12 +71,21 @@ class CtrlGate:
         """
         return len(self.target_qids()) == 1
 
+    def core(self) -> tuple[int]:
+        return self._unitary.core
+
+    def matrix(self) -> NDArray:
+        return self._unitary.matrix
+
+    def phase(self):
+        return self._unitary.phase
+
     def __matmul__(self, other: 'CtrlGate') -> 'CtrlGate':
         if not isinstance(other, CtrlGate):
             return NotImplemented(f'cannot matmul with {type(other)}')
         # direct product
         if self.qspace == other.qspace and self.controls == other.controls:
-            return CtrlGate(self._unitary.matrix @ other._unitary.matrix, self.controls, self.qspace, self._unitary.phase * other._unitary.phase)
+            return CtrlGate(self.matrix() @ other.matrix(), self.controls, self.qspace, self.phase() * other.phase())
         # sort qspace
         if self._qlookup == other._qlookup:
             return self.sorted() @ other.sorted()
@@ -92,12 +100,12 @@ class CtrlGate:
         return self.expand(qspace1) @ other.expand(qspace2)
 
     def __copy__(self):
-        return CtrlGate(self._unitary.matrix, self.controls, self.qspace, self._unitary.phase)
+        return CtrlGate(self.matrix(), self.controls, self.qspace, self.phase())
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
-        new = CtrlGate(copy.deepcopy(self._unitary.matrix, memodict), copy.deepcopy(self.controls, memodict), copy.deepcopy(self.qspace, memodict), copy.deepcopy(self._unitary.phase))
+        new = CtrlGate(copy.deepcopy(self.matrix(), memodict), copy.deepcopy(self.controls, memodict), copy.deepcopy(self.qspace, memodict), copy.deepcopy(self.phase()))
         memodict[self] = new
         return new
 
@@ -150,8 +158,8 @@ class CtrlGate:
         new_targets = [qid for i, qid in enumerate(qspace) if controls[i] == QType.TARGET]
         perm = Permuter.from_permute(self.target_qids(), new_targets)
         indexes = perm.bitsortall(range(1 << len(new_targets)))
-        mat = self._unitary.matrix[np.ix_(indexes, indexes)]
-        return CtrlGate(mat, controls, qspace, self._unitary.phase)
+        mat = self.matrix()[np.ix_(indexes, indexes)]
+        return CtrlGate(mat, controls, qspace, self.phase())
 
     def qids(self) -> list[Qubit]:
         return self.qspace
@@ -180,13 +188,13 @@ class CtrlGate:
             assert all(c != QType.IDLER for c in ctrls)
             assert len(qspace) == len(ctrls)
 
-        mat = self._unitary.matrix
+        mat = self.matrix()
         for i, qid in enumerate(qspace):
             if ctrls[i] == QType.TARGET:
                 mat = kron(mat, np.eye(2))
         extended_ctrl = list(chain(self.controls, ctrls))
         extended_qspace = list(chain(self.qspace, qspace))
-        return CtrlGate(mat, extended_ctrl, extended_qspace, self._unitary.phase)
+        return CtrlGate(mat, extended_ctrl, extended_qspace, self.phase())
 
     def is_idler(self, qubit) -> bool:
         if qubit not in self._qlookup:
@@ -194,7 +202,7 @@ class CtrlGate:
         if self._qlookup[qubit] == QType.CONTROL1:
             return False
         idx = self.target_qids().index(qubit)
-        return is_idler(self._unitary.matrix, idx)
+        return is_idler(self.matrix(), idx)
 
     def project(self, qubit: Qubit, state: NDArray) -> 'CtrlGate':
         """
@@ -236,26 +244,26 @@ class CtrlGate:
         if ctrl == QType.IDLER:
             # nothing need to be changed but to eliminate the qubit
             raise NotImplementedError(f"CtrlGate {ctrl} not implemented.")
-            # return CtrlGate(self._unitary.matrix, new_ctrls, new_qspace)
+            # return CtrlGate(self.matrix(), new_ctrls, new_qspace)
 
         idx = self.qspace.index(qubit)
         new_ctrls = self.controls[:idx] + self.controls[idx + 1:]
         new_qspace = self.qspace[:idx] + self.qspace[idx + 1:]
         if ctrl in QType.CONTROL1 | QType.CONTROL0:
             a, b = state
-            u = self._unitary.matrix
+            u = self.matrix()
             e = np.eye(u.shape[0])
             u, e = (u, e) if ctrl == QType.CONTROL1 else (e, u)
             mat = abs(a) ** 2 * e + abs(b) ** 2 * u
-            return CtrlGate(mat, new_ctrls, new_qspace, self._unitary.phase)
+            return CtrlGate(mat, new_ctrls, new_qspace, self.phase())
 
         assert ctrl == QType.TARGET
         tq = self.target_qids()
         if len(tq) == 1:
-            return CtrlGate(UnivGate.I, [QType.TARGET], new_qspace, self._unitary.phase)
+            return CtrlGate(UnivGate.I, [QType.TARGET], new_qspace, self.phase())
 
-        mat = qproject(self._unitary.matrix, tq.index(qubit), state)
-        return CtrlGate(mat, new_ctrls, new_qspace, self._unitary.phase)
+        mat = qproject(self.matrix(), tq.index(qubit), state)
+        return CtrlGate(mat, new_ctrls, new_qspace, self.phase())
 
     def dela(self, state=None) -> 'CtrlGate':
         """
@@ -285,7 +293,7 @@ class CtrlGate:
             return self
         qubits = set(qubits)
         assert qubits <= set(self.qspace), f'Promoting qubits must be a subset of existing qspace.'
-        mat = self._unitary.matrix
+        mat = self.matrix()
         target_count = 0
         new_ctrls = []
         for i in range(len(self.qspace) - 1, -1, -1):
@@ -299,4 +307,4 @@ class CtrlGate:
                 new_ctrls.append(QType.TARGET)
             else:
                 new_ctrls.append(ctrl)
-        return CtrlGate(mat, new_ctrls[::-1], self.qspace, self._unitary.phase)
+        return CtrlGate(mat, new_ctrls[::-1], self.qspace, self.phase())

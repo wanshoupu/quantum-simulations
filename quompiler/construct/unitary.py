@@ -40,7 +40,7 @@ class UnitaryM:
         assert len(core) == s[0], f'The number of indexes must match the size of the expansion matrix.'
         assert len(set(core)) == len(core), f'The indexes in core must be unique.'
         self.dimension = dimension
-        self.core = core
+        self.core = tuple(core)
         self.matrix = matrix
 
     def order(self):

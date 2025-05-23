@@ -37,7 +37,7 @@ def test_convert_no_inflation():
 
         # execute
         c = CtrlGate.convert(u)
-        assert np.array_equal(c._unitary.matrix, u.matrix)
+        assert np.array_equal(c.matrix(), u.matrix)
 
 
 def test_convert_verify_dimension():
@@ -48,7 +48,7 @@ def test_convert_verify_dimension():
         indexes = random.sample(range(dim), core)
         u = random_UnitaryM(dim, indexes)
         c = CtrlGate.convert(u)
-        assert c._unitary.dimension == dim
+        assert c.order() == dim
 
 
 def test_convert_expansion():
@@ -91,7 +91,7 @@ def test_init():
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)
     cu = CtrlGate(m, controls)
     # print(formatter.tostr(cu.inflate()))
-    assert tuple(cu._unitary.core) == (6, 7), f'Core indexes is unexpected {cu._unitary.core}'
+    assert tuple(cu.core()) == (6, 7), f'Core indexes is unexpected {cu.core()}'
 
 
 def test_init_qspace_seq():
@@ -165,7 +165,7 @@ def test_sorted_2_targets():
     # print()
     # print(formatter.tostr(cu.inflate()))
     actual = cu.sorted()
-    assert tuple(cu._unitary.core) == tuple(range(4)), f'Core indexes is unexpected {cu._unitary.core}'
+    assert tuple(cu.core()) == tuple(range(4)), f'Core indexes is unexpected {cu.core()}'
     assert np.array_equal(cu.inflate(), m)
     # print()
     # print(formatter.tostr(cu.inflate()))
@@ -182,9 +182,9 @@ def test_sorted_with_ctrl():
     cu = CtrlGate(m, controls, qids)
     # print()
     # print(formatter.tostr(cu.inflate()))
-    assert tuple(cu._unitary.core) == (1, 3), f'Core indexes is unexpected {cu._unitary.core}'
+    assert tuple(cu.core()) == (1, 3), f'Core indexes is unexpected {cu.core()}'
     actual = cu.sorted()
-    assert tuple(actual._unitary.core) == (2, 3), f'Core indexes is unexpected {actual._unitary.core}'
+    assert tuple(actual.core()) == (2, 3), f'Core indexes is unexpected {actual.core()}'
 
     sh = Permuter(qids)
     indexes = sh.bitsortall(range(cu.order()))
@@ -207,12 +207,12 @@ def test_sorted_ctrl_2target():
 
     perm = Permuter.from_permute(qids, list(actual.qspace))
     eqiv_original = np.eye(original.order(), dtype=np.complexfloating)
-    eqiv_original[np.ix_(original._unitary.core, original._unitary.core)] = original._unitary.matrix
+    eqiv_original[np.ix_(original.core(), original.core())] = original.matrix()
     assert np.array_equal(eqiv_original, original.inflate())
 
-    permuted_core = perm.bitpermuteall(original._unitary.core)
+    permuted_core = perm.bitpermuteall(original.core())
     expected = np.eye(original.order(), dtype=np.complexfloating)
-    expected[np.ix_(permuted_core, permuted_core)] = original._unitary.matrix
+    expected[np.ix_(permuted_core, permuted_core)] = original.matrix()
     # print('expected\n')
     # print(formatter.tostr(expected))
     assert np.allclose(actual.inflate(), expected)
@@ -243,7 +243,7 @@ def test_expand_target_in_order():
     actual = cu.expand(extended_qspace).sorted()
     # print()
     # print(formatter.tostr(actual.inflate()))
-    expected = np.block([[np.eye(4), np.zeros((4, 4))], [np.zeros((4, 4)), kron(cu._unitary.matrix, np.eye(2))]])
+    expected = np.block([[np.eye(4), np.zeros((4, 4))], [np.zeros((4, 4)), kron(cu.matrix(), np.eye(2))]])
     # print()
     # print(formatter.tostr(expected))
     assert np.allclose(actual.inflate(), expected)
@@ -258,7 +258,7 @@ def test_expand_target_out_of_order():
     actual = cu.expand(extended_qspace)
     # print()
     # print(formatter.tostr(actual.inflate()))
-    expected = CtrlGate(np.kron(cu._unitary.matrix, np.eye(2)), list(controls) + [QType.TARGET], qids + extended_qspace)
+    expected = CtrlGate(np.kron(cu.matrix(), np.eye(2)), list(controls) + [QType.TARGET], qids + extended_qspace)
     # print()
     # print(formatter.tostr(expected.inflate()))
     assert np.allclose(actual.inflate(), expected.inflate())
@@ -426,7 +426,7 @@ def test_matmul_identical_controls():
     a = CtrlGate(random_unitary(1 << t), controls)
     b = CtrlGate(random_unitary(1 << t), controls)
     c = a @ b
-    assert np.allclose(c._unitary.matrix, a._unitary.matrix @ b._unitary.matrix)
+    assert np.allclose(c.matrix(), a.matrix() @ b.matrix())
     assert c.qspace == a.qspace == b.qspace
 
 
@@ -481,7 +481,7 @@ def test_matmul_qs_1_0_4_qs_1():
         actual = a @ b
         # print('actual\n')
         # print(formatter.tostr(actual.inflate()))
-        expected = a.sorted().inflate() @ mykron(np.eye(2), b._unitary.matrix, np.eye(2))
+        expected = a.sorted().inflate() @ mykron(np.eye(2), b.matrix(), np.eye(2))
         # print('expected\n')
         # print(formatter.tostr(expected))
         assert np.allclose(actual.sorted().inflate(), expected)
@@ -757,7 +757,7 @@ def test_project_4x4_base_states(ctrl, state, qidx):
     # print()
     # print(expected)
     assert actual.order() == 4
-    assert np.array_equal(actual._unitary.matrix, expected)
+    assert np.array_equal(actual.matrix(), expected)
 
 
 def test_invalid_phase():
@@ -809,7 +809,7 @@ def test_verify_phase_project():
     expected = cg_no_phase.project(Qubit(2), np.array([0, 1]))
     # print(f'expected:\n{formatter.tostr(expected.inflate())}')
     # verify that the core matrices differ by phase
-    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    cmp_indexes = np.ix_(actual.core(), actual.core())
     assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
@@ -830,7 +830,7 @@ def test_verify_phase_sorted():
     expected = cg_no_phase.sorted(sorting=sorting)
     # print(f'expected:\n{formatter.tostr(expected.inflate())}')
     # verify that the core matrices differ by phase
-    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    cmp_indexes = np.ix_(actual.core(), actual.core())
     assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
@@ -850,7 +850,7 @@ def test_verify_phase_expand():
     # print(f'expected:\n{formatter.tostr(expected.inflate())}')
     assert actual.qspace == expected.qspace
     # verify that the core matrices differ by phase
-    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    cmp_indexes = np.ix_(actual.core(), actual.core())
     assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
@@ -867,7 +867,7 @@ def test_verify_phase_promote():
     expected = no_phase.promote([qubit])
     assert actual.qspace == expected.qspace
     # verify that the core matrices differ by phase
-    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    cmp_indexes = np.ix_(actual.core(), actual.core())
     assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
 
 
@@ -885,5 +885,5 @@ def test_verify_phase_dela():
     expected = no_phase.dela()
 
     assert actual.qspace == expected.qspace
-    cmp_indexes = np.ix_(actual._unitary.core, actual._unitary.core)
+    cmp_indexes = np.ix_(actual.core(), actual.core())
     assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)

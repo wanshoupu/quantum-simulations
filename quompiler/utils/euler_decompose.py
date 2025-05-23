@@ -16,7 +16,7 @@ def euler_decompose(gate: CtrlGate) -> list[CtrlGate]:
     :return: a list of Euler gates that's equivalent to the controlled unitary matrix.
     """
     assert gate.issinglet()
-    a, b, c, d = euler_param(gate._unitary.matrix)
+    a, b, c, d = euler_param(gate.matrix())
     A = UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c / 2)
     B = UnivGate.Y.rotation(-c / 2) @ UnivGate.Z.rotation(-(d + b) / 2)
     C = UnivGate.Z.rotation((d - b) / 2)

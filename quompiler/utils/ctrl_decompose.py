@@ -40,5 +40,5 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
     tindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.TARGET]
     core_ctrl = [QType.TARGET] * len(tindexes) + [QType.CONTROL1]
     core_qspace = [qspace[i] for i in tindexes] + [aspace[-1]]
-    core = CtrlGate(gate._unitary.matrix, core_ctrl, core_qspace)
+    core = CtrlGate(gate.matrix(), core_ctrl, core_qspace)
     return coms + [core] + coms[::-1]

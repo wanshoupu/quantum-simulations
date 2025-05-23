@@ -33,7 +33,7 @@ class CirqBuilder(CircuitBuilder):
 
     def get_univ_gate(self, m: Union[UnitaryM, CtrlGate]) -> Optional[EigenGate]:
         if isinstance(m, CtrlGate):
-            matrix = m.gate.matrix if m.is_std() else m._unitary.matrix
+            matrix = m.gate.matrix if m.is_std() else m.matrix()
             univ_gate = UnivGate.get(matrix)
             if univ_gate:
                 return CirqBuilder.__UNIV_GATES[univ_gate]
@@ -41,7 +41,7 @@ class CirqBuilder(CircuitBuilder):
 
     def build_gate(self, m: Union[UnitaryM, CtrlGate]):
         if isinstance(m, CtrlGate):
-            gate = self.get_univ_gate(m) or cirq.MatrixGate(m._unitary.matrix)
+            gate = self.get_univ_gate(m) or cirq.MatrixGate(m.matrix())
             self._append_gate(m.controls, gate, m.qids())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
