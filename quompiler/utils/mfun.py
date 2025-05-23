@@ -2,6 +2,15 @@ import numpy as np
 from numpy.typing import NDArray
 
 
+# Helper function: Hermite transformation of matrix
+def herms(ms):
+    return [herm(g) for g in ms]
+
+
+def herm(m: NDArray) -> NDArray:
+    return np.conj(m.T)
+
+
 def allprop(a: NDArray, b: NDArray, rtol=1.e-5, atol=1.e-8, equal_nan=False) -> tuple[bool, any]:
     """
     This function tests if whether a is proportional to b such that a = λb with λ as a scalar.
