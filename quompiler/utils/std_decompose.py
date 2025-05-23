@@ -4,8 +4,16 @@ from quompiler.utils.euler_decompose import euler_decompose
 from quompiler.utils.solovay import sk_approx
 
 
-def cliffordt_decompose(gate: UnivGate) -> list[UnivGate]:
-    # TODO
+def cliffordt_decompose(gate: CtrlGate) -> list[CtrlGate]:
+    if gate.gate == UnivGate.Y:
+        return [
+            CtrlGate(UnivGate.X, gate.controls, gate.qspace, 1j * gate.phase()),
+            CtrlGate(UnivGate.S, gate.controls, gate.qspace, 1),
+            CtrlGate(UnivGate.S, gate.controls, gate.qspace, 1),
+        ]
+    if gate.gate == UnivGate.Z:
+        return [CtrlGate(UnivGate.S, gate.controls, gate.qspace, gate.phase()),
+                CtrlGate(UnivGate.S, gate.controls, gate.qspace, 1)]
     return [gate]
 
 
@@ -23,13 +31,13 @@ def std_decompose(gate: CtrlGate, univset: EmitType = EmitType.CLIFFORD_T, rtol=
     coms = euler_decompose(gate)
     result = []
     for g in coms:
-        if g.is_std() and univset == EmitType.UNIV_GATE:
-            result.append(g)
-        elif g.is_std():
-            cts = cliffordt_decompose(g.gate)
-            result.extend(CtrlGate(g, gate.controls, gate.qspace) for g in cts)
+        if g.is_std():
+            if univset == EmitType.UNIV_GATE or g.gate in UnivGate.cliffordt():
+                result.append(g)
+            else:
+                cts = cliffordt_decompose(g)
+                result.extend(cts)
         else:
-            mat = g._unitary.matrix
-            apprxs = sk_approx(mat, rtol=rtol, atol=atol)
-            result.extend(CtrlGate(g, gate.controls, gate.qspace) for g in apprxs)
+            sk_coms = sk_approx(g.matrix(), rtol=rtol, atol=atol)
+            result.extend(CtrlGate(g, gate.controls, gate.qspace) for g in sk_coms)
     return result
