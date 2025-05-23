@@ -47,6 +47,8 @@ class UnivGate(Enum):
         if m.shape != (2, 2) or not np.allclose(m.conj() @ m.T, np.eye(2)):
             return None
         for g in UnivGate:
+            if np.allclose(m, g.matrix):
+                return g, 1
             p, f = allprop(m, g.matrix)
             if p:
                 return g, f
