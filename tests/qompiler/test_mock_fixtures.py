@@ -1,7 +1,7 @@
 from tests.qompiler.mock_fixtures import mock_config, mock_factory_manager, mock_config_manager
 
 
-def test_mock_config(mocker):
+def test_mock_config():
     offset = 5
     emit = "MULTI_TARGET"
     target = "QUIMB"
@@ -12,7 +12,7 @@ def test_mock_config(mocker):
     assert device.ancilla_offset == offset
 
 
-def test_mock_config_manager(mocker):
+def test_mock_config_manager():
     offset = 5
     emit = "SINGLET"
     target = "QISKIT"
@@ -28,7 +28,7 @@ def test_mock_config_manager(mocker):
     assert device.ancilla_offset == offset
 
 
-def test_mock_factory(mocker):
+def test_mock_factory():
     emit_type = "CLIFFORD_T"
     offset = 51
     target_platform = "CIRQ"

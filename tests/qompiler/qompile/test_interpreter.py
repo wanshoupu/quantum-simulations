@@ -11,7 +11,7 @@ formatter = MatrixFormatter(precision=2)
 man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
 
 
-def test_interp_identity_matrix(mocker):
+def test_interp_identity_matrix():
     n = random.randint(1, 8)
     dim = 1 << n
     expected = np.eye(dim)
@@ -25,7 +25,7 @@ def test_interp_identity_matrix(mocker):
     assert circuit.to_text_diagram() == ''
 
 
-def test_interp_sing_qubit_circuit(mocker):
+def test_interp_sing_qubit_circuit():
     n = 1
     dim = 1 << n
     expected = random_unitary(dim)
@@ -50,7 +50,7 @@ def test_interp_sing_qubit_circuit(mocker):
     (3, 1, 14),
     (3, 2, 11),
 ])
-def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
+def test_interp_cyclic_matrix(n, k, expected_moments):
     dim = 1 << n
     expected = cyclic_matrix(dim, k)
 
@@ -69,7 +69,7 @@ def test_interp_cyclic_matrix(mocker, n, k, expected_moments):
     assert len(circuit.moments) == expected_moments
 
 
-def test_interp_random_unitary(mocker):
+def test_interp_random_unitary():
     for _ in range(10):
         # print(f'Test {_}th round')
         n = random.randint(1, 4)

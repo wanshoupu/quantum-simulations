@@ -13,7 +13,6 @@ def test_save_array(mocker):
     mat = random_unitary(n)
 
     mock_open = mocker.mock_open()
-    mocker.patch("quompiler.config.config_manager.open", mock_open)
     mocker.patch("builtins.open", mock_open)
     file_path = "tmp_config.npy"
 

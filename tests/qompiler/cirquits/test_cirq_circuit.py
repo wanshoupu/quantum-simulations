@@ -15,7 +15,7 @@ formatter = MatrixFormatter(precision=2)
 man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
 
 
-def test_create_builder(mocker):
+def test_create_builder():
     factory = man.create_factory()
     cirqC = factory.get_builder()
     phase = CtrlGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
@@ -29,7 +29,7 @@ def test_create_builder(mocker):
     print(formatter.tostr(u))
 
 
-def test_builder_standard_ctrlgate(mocker):
+def test_builder_standard_ctrlgate():
     for gate in UnivGate:
         # print(gate)
         n = random.randint(1, 4)
@@ -49,7 +49,7 @@ def test_builder_standard_ctrlgate(mocker):
         assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
 
-def test_builder_random_ctrlgate(mocker):
+def test_builder_random_ctrlgate():
     for _ in range(10):
         # print(f'\nTest round #{_} ...')
         n = random.randint(1, 4)
@@ -70,7 +70,7 @@ def test_builder_random_ctrlgate(mocker):
         assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
 
-def test_compile_cyclic_4_everything(mocker):
+def test_compile_cyclic_4_everything():
     n = 2
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
