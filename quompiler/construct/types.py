@@ -5,6 +5,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import expm
 
+from quompiler.utils.mfun import allprop
+
 
 class UnivGate(Enum):
     I = ('I', np.eye(2))
@@ -24,13 +26,30 @@ class UnivGate(Enum):
     @staticmethod
     def get(m: NDArray) -> Optional['UnivGate']:
         """
-        Attempt to match to a universal gate.
+        Attempt to match exactly a universal gate within certain tolerance.
         :param m:
         :return: the matching universal gate. None if no universal gate matches.
         """
+        if m.shape != (2, 2) or not np.allclose(m.conj() @ m.T, np.eye(2)):
+            return None
         for g in UnivGate:
-            if m.shape == g.matrix.shape and np.allclose(m, g.matrix):
+            if np.allclose(m, g.matrix):
                 return g
+        return None
+
+    @staticmethod
+    def get_prop(m: NDArray) -> Optional[tuple['UnivGate', complex]]:
+        """
+        Attempt to match a universal gate within certain tolerance other than a phase factor (of norm 1), e.g., m = λg with λ as a phase factor.
+        :param m:
+        :return: the matching universal gate and the phase factor, if any. None if no universal gate matches.
+        """
+        if m.shape != (2, 2) or not np.allclose(m.conj() @ m.T, np.eye(2)):
+            return None
+        for g in UnivGate:
+            p, f = allprop(m, g.matrix)
+            if p:
+                return g, f
         return None
 
     def rotation(self, theta) -> NDArray:

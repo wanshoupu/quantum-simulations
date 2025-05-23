@@ -6,7 +6,7 @@ import pytest
 
 from quompiler.construct.types import UnivGate, QType, QompilePlatform, EmitType
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_unitary
+from quompiler.utils.mgen import random_unitary, random_phase
 
 
 def test_univ_gate_X():
@@ -40,6 +40,44 @@ def test_univ_gate_get_H():
     mat = (UnivGate.Z.matrix + UnivGate.X.matrix) / np.sqrt(2)
     gate = UnivGate.get(mat)
     assert gate == UnivGate.H
+
+
+@pytest.mark.parametrize("arr", [
+    np.array([[1, 0]]),
+    np.array([[1, 0, 1], [0, 1j, 3]]),
+    np.array([[1, 0, 0, 1]]),
+])
+def test_get_prop_invalid_shape(arr):
+    pg = UnivGate.get_prop(arr)
+    assert pg is None
+
+
+@pytest.mark.parametrize("arr", [
+    np.array([[1, 0], [1, 1j]]),
+    np.array([[1, 0], [1, 0]]),
+    np.array([[1, 1], [1, 1j]]),
+    np.array([[1, -1], [1, 1]]),
+])
+def test_get_prop_non_unitary(arr):
+    pg = UnivGate.get_prop(arr)
+    assert pg is None
+
+
+def test_get_prop_random_unitary():
+    u = random_unitary(2)
+    pg = UnivGate.get_prop(u)
+    assert pg is None
+
+
+@pytest.mark.parametrize("gate", list(UnivGate))
+def test_get_prop_phase_factor(gate):
+    phase = random_phase()
+    mat = gate.matrix * phase
+    pg = UnivGate.get_prop(mat)
+    assert pg is not None
+    g, f = pg
+    assert g == gate
+    assert np.isclose(f, phase)
 
 
 @pytest.mark.parametrize('name,expected', [
