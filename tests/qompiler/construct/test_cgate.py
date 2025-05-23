@@ -144,6 +144,15 @@ def test_UnivGate_Z():
     assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
 
 
+@pytest.mark.parametrize("gate", list(UnivGate))
+def test_proportional_univ_gate(gate):
+    prop_factor = random_phase()
+    phase = random_phase()
+    actual = CtrlGate(gate.matrix * prop_factor, random_control(3, 1), phase=phase)
+    assert actual.is_std()
+    assert np.isclose(actual.phase(), phase * prop_factor)
+
+
 def test_sorted_noop():
     m = random_unitary(2)
     controls = (QType.CONTROL1, QType.CONTROL1, QType.TARGET)

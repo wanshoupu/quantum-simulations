@@ -30,11 +30,23 @@ class CtrlGate:
         assert all(isinstance(c, QType) for c in control), f'control contains non-QType items'
         self.controls = list(control)
         core = ctrl2core(control)
-        mat = gate.matrix if isinstance(gate, UnivGate) else gate
+        if isinstance(gate, UnivGate):
+            self.gate = gate
+            mat = gate.matrix
+        elif isinstance(gate, np.ndarray):
+            match = UnivGate.get_prop(gate)
+            if match is None:
+                mat = gate
+            else:
+                g, f = match  # unpack to UnivGate, proportional factor (guaranteed norm-1)
+                self.gate = g
+                mat = g.matrix
+                phase *= f
+        else:
+            raise NotImplementedError(f'unsupported gate type: {gate}')
         assert mat.shape[0] == len(core), f'matrix shape does not match the control sequence'
         dim = 1 << len(self.controls)
         self._unitary = UnitaryM(dim, core, mat, phase=phase)
-        self.gate = gate if isinstance(gate, UnivGate) else UnivGate.get(gate)
 
         if qspace is None:
             qspace = [Qubit(i) for i in range(len(self.controls))]
