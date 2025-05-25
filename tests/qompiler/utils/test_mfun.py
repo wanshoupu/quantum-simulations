@@ -1,8 +1,10 @@
+from functools import reduce
+
 import numpy as np
 import pytest
 
 from quompiler.construct.types import UnivGate
-from quompiler.utils.mfun import allprop, dist, herm
+from quompiler.utils.mfun import allprop, dist, herm, herms
 from quompiler.utils.mgen import random_unitary, random_phase, random_su2
 
 
@@ -126,3 +128,11 @@ def test_dist_std_gates(u, v, angle):
     actual = dist(u.matrix, v.matrix)
     expected = 2 * np.sin(angle / 4)
     assert np.isclose(actual, expected, rtol=1.e-4, atol=1.e-7), f'{actual} != {expected}'
+
+
+def test_herms_equality():
+    us = [random_unitary(2) for _ in range(3)]
+    vs = herms(us)
+    u = reduce(lambda x, y: x @ y, us)
+    v = reduce(lambda x, y: x @ y, vs)
+    assert np.allclose(u @ v, np.eye(2)), f'{u} != {v}'

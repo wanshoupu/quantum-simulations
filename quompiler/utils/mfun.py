@@ -2,11 +2,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-# Helper function: Hermite transformation of matrix
-def herms(ms):
-    return [herm(g) for g in ms]
-
-
 def dist(u: NDArray, v: NDArray) -> float:
     """
     Compute the trace distance between two unitary matrices of shape (2,2), e.g., for a single qubit.
@@ -34,9 +29,14 @@ def dist(u: NDArray, v: NDArray) -> float:
     return np.abs(result)
 
 
+# Helper function: Hermite transformation of matrix
+def herms(ms):
+    return [herm(g) for g in ms[::-1]]
+
+
 def herm(m: NDArray) -> NDArray:
     """
-    The Hermite of a unitary matrix, e.g., m†.
+    The Hermite of a unitary matrix, e.g., m†, (read as 'm dagger').
     :param m:
     :return:
     """
