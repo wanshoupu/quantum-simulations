@@ -42,6 +42,12 @@ def test_univ_gate_get_H():
     assert gate == UnivGate.H
 
 
+@pytest.mark.parametrize('u', list(UnivGate))
+def test_univ_gate_herm(u):
+    uh = UnivGate.herm(u)
+    assert np.allclose(uh.matrix @ u.matrix, np.eye(2))
+
+
 @pytest.mark.parametrize("arr", [
     np.array([[1, 0]]),
     np.array([[1, 0, 1], [0, 1j, 3]]),

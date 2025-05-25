@@ -16,8 +16,8 @@ class UnivGate(Enum):
     H = ('H', np.array([[1, 1], [1, -1]]) / np.sqrt(2))
     S = ('S', np.array([[1, 0j], [0j, 1j]]))
     T = ('T', np.array([[1, 0j], [0j, np.exp(1j * np.pi / 4)]]))
-    SD = ('S†', np.array([[1, 0j], [0j, -1j]]))
-    TD = ('T†', np.array([[1, 0j], [0j, np.exp(-1j * np.pi / 4)]]))
+    SD = ('SD', np.array([[1, 0j], [0j, -1j]]))
+    TD = ('TD', np.array([[1, 0j], [0j, np.exp(-1j * np.pi / 4)]]))
 
     def __init__(self, label, mat: NDArray):
         self.label = label
@@ -36,6 +36,17 @@ class UnivGate(Enum):
             if np.allclose(m, g.matrix):
                 return g
         return None
+
+    def herm(self):
+        if self == UnivGate.S:
+            return UnivGate.SD
+        if self == UnivGate.SD:
+            return UnivGate.S
+        if self == UnivGate.T:
+            return UnivGate.TD
+        if self == UnivGate.TD:
+            return UnivGate.T
+        return self
 
     @staticmethod
     def get_prop(m: NDArray) -> Optional[tuple['UnivGate', complex]]:
