@@ -11,6 +11,17 @@ from quompiler.construct.types import QType
 from quompiler.construct.unitary import UnitaryM
 
 
+def random_su2() -> NDArray:
+    u = random_unitary(2)
+    pc = u[0, 0] + u[1, 1]
+    ps = u[1, 0] - u[0, 1]
+    if np.abs(pc) < np.abs(ps):
+        phase = ps / np.abs(ps)
+    else:
+        phase = pc / np.abs(pc)
+    return u / phase
+
+
 def random_unitary(n) -> NDArray:
     """Generate a random n x n unitary matrix."""
     # Step 1: Generate a random complex matrix

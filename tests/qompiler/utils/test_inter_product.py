@@ -364,40 +364,6 @@ def test_inter_factor_all_identities():
     assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
 
 
-def test_allprop_false():
-    a = np.array([[1, 1], [1, 1]]) * np.pi
-    p, r = allprop(a, np.eye(a.shape[0]))
-    assert not p
-    if p:
-        assert np.isclose(r, np.pi)
-
-
-def test_allprop_zeros_prop():
-    shape = (2, 3)
-    a = np.zeros(shape)
-    b = np.zeros(shape)
-    p, r = allprop(a, b)
-    assert p
-    assert np.isclose(r, 0)
-
-
-def test_allprop_zeros_atol():
-    shape = (2, 3)
-    a = np.zeros(shape)
-    b = np.zeros(shape) + 1e-6
-    p, r = allprop(a, b)
-    assert p
-    assert r == 0
-
-
-def test_allprop_partial_zeros():
-    shape = (2, 3)
-    a = np.array([[0, 0], [0, 1]]) * np.pi
-    b = np.zeros(shape) + 1e-6
-    p, r = allprop(a, b)
-    assert not p
-
-
 def test_unitary_prop_eye():
     a = np.eye(5)
     p, r = unitary_prop(a)

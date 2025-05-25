@@ -7,7 +7,39 @@ def herms(ms):
     return [herm(g) for g in ms]
 
 
+def dist(u: NDArray, v: NDArray) -> float:
+    """
+    Compute the trace distance between two unitary matrices of shape (2,2), e.g., for a single qubit.
+    Distance of two unitary matrices is defined as
+    1. calculate the product Δ = u @ v†;
+    2. Model Δ as a rotation around certain axis and calculate the rotation angle θ ∈ [-π, π];
+    3. D(u,v) = 2 abs(sin(θ/4)).
+    :param u: unitary matrix.
+    :param v: another unitary matrix.
+    :return: trace distance as defined.
+    """
+    assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
+    delta = u @ herm(v)
+    assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
+    det = np.linalg.det(delta)
+    # we don't use operator `/=` to avoid `error cast from dtype('complex128') to dtype('float64')`
+    delta = delta / np.sqrt(np.complex128(det))
+    ct = delta[0, 0] + delta[1, 1]
+    assert np.isclose(ct.imag, 0)
+
+    # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
+    result = 2 * np.sqrt(np.complex128(.5 - ct / 4))
+
+    # sometimes the result is slightly complex. We take the abs
+    return np.abs(result)
+
+
 def herm(m: NDArray) -> NDArray:
+    """
+    The Hermite of a unitary matrix, e.g., m†.
+    :param m:
+    :return:
+    """
     return np.conj(m.T)
 
 
