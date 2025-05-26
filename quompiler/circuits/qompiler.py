@@ -11,14 +11,16 @@ from quompiler.circuits.qdevice import QDevice
 from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeRevIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import EmitType
+from quompiler.construct.solovay import SKDecomposer
+from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.optimize.optimizer import Optimizer
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.ctrl_decompose import ctrl_decompose
+from quompiler.utils.euler_decompose import euler_decompose
 from quompiler.utils.granularity import granularity
 from quompiler.utils.mat2l_decompose import mat2l_decompose
-from quompiler.utils.std_decompose import std_decompose
+from quompiler.utils.std_decompose import cliffordt_decompose
 
 
 class Qompiler:
@@ -30,6 +32,7 @@ class Qompiler:
         self.optimizers = optimizers or []
         self.emit = EmitType[config.emit]
         self.debug = self.config.debug
+        self.sk = SKDecomposer(config.rtol, config.atol)
 
     def interpret(self, u: NDArray):
         code = self.compile(u)
@@ -69,7 +72,7 @@ class Qompiler:
         if isinstance(data, UnitaryM):
             constituents, meta = self._decompose_unitary(grain, data)
         elif isinstance(data, CtrlGate):
-            constituents, meta = self._decompose_ctrl(grain, data)
+            constituents, meta = self._decompose_ctrlgate(grain, data)
         else:
             raise ValueError(f"Unrecognized gate of type {type(grain)}")
         if self.debug:
@@ -85,24 +88,32 @@ class Qompiler:
         return root
 
     def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
-        constituents = std_decompose(gate, self.emit, self.config.rtol, self.config.atol)
-        if self.debug:
-            meta = {'method': 'std_decompose', 'params': str(self.emit)}
-        else:
-            meta = dict()
+        if gate.is_std():
+            if self.emit == EmitType.UNIV_GATE or gate.gate in UnivGate.cliffordt():
+                return [gate], {}
+            else:
+                meta = {'method': 'cliffordt_decompose'} if self.debug else {}
+                return cliffordt_decompose(gate), meta
+        sk_coms = self.sk.approx(gate.matrix())
+        constituents = [CtrlGate(g, gate.controls, gate.qspace) for g in sk_coms]
+        meta = {'method': 'sk_approx'} if self.debug else {}
         return constituents, meta
 
-    def _decompose_ctrl(self, grain: EmitType, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
-        meta = dict()
+    def _decompose_ctrlgate(self, grain: EmitType, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
         # EmitType.MULTI_TARGET is disabled atm
         # if g < EmitType.MULTI_TARGET:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
         if grain < EmitType.CTRL_PRUNED:
             result = ctrl_decompose(gate, self.device, clength=1)
-            if self.debug:
-                meta['method'] = 'ctrl_decompose'
-        else:
-            result, meta1 = self._decompose_std(gate)
+            meta = {'method': 'ctrl_decompose'} if self.debug else {}
+            return result, meta
+
+        euler_coms = euler_decompose(gate)
+        result = []
+        meta = dict()
+        for com in euler_coms:
+            std_coms, meta1 = self._decompose_std(com)
+            result.extend(std_coms)
             if self.debug:
                 meta.update(meta1)
         return result, meta
