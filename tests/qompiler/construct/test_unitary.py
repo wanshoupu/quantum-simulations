@@ -162,6 +162,27 @@ def test_matmul_with_phase():
     assert np.allclose(actual, expected)
 
 
+def test_matmul_with_phase_verify_identity_rows_cols():
+    phase1 = random_phase()
+    phase2 = random_phase()
+    dim = 8
+    a = UnitaryM(dim, (1, 2), random_unitary(2), phase=phase1)
+    b = UnitaryM(dim, (0, 2), random_unitary(2), phase=phase2)
+    c = a @ b
+    actual = c.inflate()
+
+    # print(f'Actual:\n{formatter.tostr(c.inflate())}')
+    a_expanded = np.eye(3, dtype=np.complexfloating)
+    a_expanded[np.ix_(a.core, a.core)] = a.matrix * phase1
+    b_expanded = np.eye(3, dtype=np.complexfloating)
+    b_expanded[np.ix_(b.core, b.core)] = b.matrix * phase2
+    expected = a_expanded @ b_expanded
+    assert np.allclose(actual[:3, :3], expected)
+    assert np.allclose(actual[3:, 3:], np.eye(5))
+    assert np.allclose(actual[:3, 3:], np.zeros((3, 5)))
+    assert np.allclose(actual[3:, :3], np.zeros((5, 3)))
+
+
 @pytest.mark.parametrize("dim,core,size,expected", [
     [8, (3, 2), 2, True],
     [4, (2, 3), 2, True],

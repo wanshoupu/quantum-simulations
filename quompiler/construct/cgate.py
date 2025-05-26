@@ -306,7 +306,7 @@ class CtrlGate:
             return self
         qubits = set(qubits)
         assert qubits <= set(self.qspace), f'Promoting qubits must be a subset of existing qspace.'
-        mat = self.matrix()
+        mat = self.matrix() * self.phase()
         target_count = 0
         new_ctrls = []
         for i in range(len(self.qspace) - 1, -1, -1):
@@ -320,4 +320,4 @@ class CtrlGate:
                 new_ctrls.append(QType.TARGET)
             else:
                 new_ctrls.append(ctrl)
-        return CtrlGate(mat, new_ctrls[::-1], self.qspace, self.phase())
+        return CtrlGate(mat, new_ctrls[::-1], self.qspace)

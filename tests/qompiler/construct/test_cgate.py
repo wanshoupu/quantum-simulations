@@ -869,16 +869,20 @@ def test_verify_phase_promote():
     ctrls = [QType.CONTROL1, QType.TARGET]
     unitary = random_unitary(2)
     cg_phase = CtrlGate(unitary, ctrls, phase=phase)
-    no_phase = CtrlGate(unitary, ctrls)
     qubit = cg_phase.qspace[0]
 
     # execute
     actual = cg_phase.promote([qubit])
+    # print(f'actual:\n{formatter.tostr(actual.inflate())}')
+    no_phase = CtrlGate(unitary, ctrls)
     expected = no_phase.promote([qubit])
+    # print(f'expected:\n{formatter.tostr(expected.inflate())}')
     assert actual.qspace == expected.qspace
     # verify that the core matrices differ by phase
-    cmp_indexes = np.ix_(actual.core(), actual.core())
-    assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
+    assert np.allclose(actual.inflate()[2:, 2:], expected.inflate()[2:, 2:] * phase)
+    assert np.allclose(actual.inflate()[:2, :2], np.eye(2))
+    assert np.allclose(actual.inflate()[:2, 2:], np.zeros((2, 2)))
+    assert np.allclose(actual.inflate()[2:, :2], np.zeros((2, 2)))
 
 
 def test_verify_phase_dela():
