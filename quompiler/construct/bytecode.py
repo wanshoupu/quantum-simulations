@@ -1,12 +1,14 @@
 from dataclasses import dataclass, field
 from typing import List, Union
 
+import numpy as np
 from numpy.typing import NDArray
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.factor import FactoredM
 from quompiler.construct.types import UnivGate
 from quompiler.construct.unitary import UnitaryM
+from quompiler.utils.mfun import herm
 
 
 @dataclass
@@ -20,6 +22,23 @@ class Bytecode:
 
     def is_leaf(self) -> bool:
         return len(self.children) == 0
+
+    def herm(self) -> 'Bytecode':
+        """
+        Create a Bytecode representing the Hermite of self
+        :return: a new Bytecode representing the Hermite of self
+        """
+        if isinstance(self.data, np.ndarray):
+            data = herm(self.data)
+        elif isinstance(self.data, UnitaryM):
+            data = UnitaryM(self.data.dimension, herm(self.data.matrix), self.data.core, np.conj(self.data.phase))
+        elif isinstance(self.data, CtrlGate):
+            data = CtrlGate(herm(self.data.matrix()), self.data.controls, self.data.qspace, np.conj(self.data.phase()))
+        elif isinstance(self.data, UnivGate):
+            data = self.data.herm()
+        else:
+            raise NotImplementedError("Haven't implemented this yet.")
+        return Bytecode(data, [c.herm() for c in self.children[::-1]])
 
 
 class BytecodeIter:
