@@ -17,7 +17,7 @@ class SKDecomposer:
         :param rtol:
         :param atol:
         """
-        self.depth = int(max([0, -log(rtol, base=2), -log(atol, base=2)]))
+        self.depth = int(max([0, -log(rtol, 2), -log(atol, 2)]))
 
     def approx(self, mat: NDArray) -> list[UnivGate]:
         """
