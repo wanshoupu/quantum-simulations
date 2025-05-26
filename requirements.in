@@ -12,3 +12,5 @@ physics-tenpy
 quimb
 pytest
 pytest-mock
+pytest-cov
+future

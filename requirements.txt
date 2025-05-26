@@ -64,6 +64,8 @@ contourpy==1.3.0
     # via matplotlib
 cotengra==0.7.2
     # via quimb
+coverage[toml]==7.8.2
+    # via pytest-cov
 cycler==0.12.1
     # via matplotlib
 cytoolz==1.0.1
@@ -93,6 +95,8 @@ fonttools==4.56.0
     # via matplotlib
 fsspec==2025.2.0
     # via torch
+future==1.0.0
+    # via -r requirements.in
 google-api-core[grpc]==2.24.1
     # via cirq-google
 google-auth==2.38.0
@@ -272,7 +276,10 @@ pyrsistent==0.20.0
 pytest==8.3.5
     # via
     #   -r requirements.in
+    #   pytest-cov
     #   pytest-mock
+pytest-cov==6.1.1
+    # via -r requirements.in
 pytest-mock==3.14.0
     # via -r requirements.in
 python-dateutil==2.9.0.post0
@@ -360,7 +367,9 @@ tinycss2==1.4.0
 toml==0.10.2
     # via qcs-api-client
 tomli==2.2.1
-    # via pytest
+    # via
+    #   coverage
+    #   pytest
 toolz==1.0.0
     # via cytoolz
 torch==2.4.1
