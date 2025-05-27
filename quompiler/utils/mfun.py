@@ -102,10 +102,6 @@ def unitary_prop(a: NDArray, rtol=1.e-5, atol=1.e-8, equal_nan=False) -> tuple[b
 
 
 def gphase(u):
-    pc = u[0, 0] + u[1, 1]
-    ps = u[1, 0] - u[0, 1]
-    if np.abs(pc) < np.abs(ps):
-        phase = ps / np.abs(ps)
-    else:
-        phase = pc / np.abs(pc)
-    return phase
+    det = np.linalg.det(u)
+    # unit-magnitude complex number (e^{iϕ})
+    return np.sqrt(det, dtype=np.complex128)
