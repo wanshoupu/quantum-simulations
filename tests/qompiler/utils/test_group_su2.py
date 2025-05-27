@@ -45,12 +45,25 @@ def test_rangle_2pi():
     assert np.isclose(actual, 2 * np.pi), f'{actual} != {np.pi}'
 
 
-def test_gc_decompose():
+def test_gc_decompose_positive_trace():
     expected = random_su2()
+    expected = expected * np.sign(np.trace(expected))
     # print('expected')
     # print(formatter.tostr(expected))
-    v, w = gc_decompose(expected)
-    actual = -v @ w @ herm(v) @ herm(w)
+    v, w, sign = gc_decompose(expected)
+    actual = sign * v @ w @ herm(v) @ herm(w)
+    # print('actual')
+    # print(formatter.tostr(actual))
+    assert np.allclose(actual, expected)
+
+
+def test_gc_decompose_negative_trace():
+    expected = random_su2()
+    expected = expected * np.sign(np.trace(expected))
+    # print('expected')
+    # print(formatter.tostr(expected))
+    v, w, sign = gc_decompose(expected)
+    actual = sign * v @ w @ herm(v) @ herm(w)
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
