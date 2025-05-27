@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from quompiler.construct.bytecode import Bytecode, BytecodeIter
 from quompiler.construct.types import UnivGate
 from quompiler.utils.group_su2 import gc_decompose
-from quompiler.utils.mfun import herm, herms
+from quompiler.utils.mfun import herm
 
 
 class SKDecomposer:
@@ -54,7 +54,7 @@ def solovay_kitaev(U: NDArray, n: int) -> Bytecode:
     if n == 0:
         return _basic_lookup(U)
     node = solovay_kitaev(U, n - 1)
-    V, W = gc_decompose(U @ np.conj(node.data))
+    V, W = gc_decompose(U @ herm(node.data))
     vnode = solovay_kitaev(V, n - 1)
     wnode = solovay_kitaev(W, n - 1)
     data = vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
