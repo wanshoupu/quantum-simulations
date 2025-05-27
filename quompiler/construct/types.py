@@ -1,5 +1,5 @@
 from enum import Enum, IntFlag, IntEnum
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -36,6 +36,13 @@ class UnivGate(Enum):
             if np.allclose(m, g.matrix):
                 return g
         return None
+
+    def __array__(self):
+        return self.matrix
+
+    def __matmul__(self, other: Union[NDArray, 'UnivGate']) -> NDArray:
+        # 'other' may be np.ndarray
+        return self.matrix @ other
 
     def herm(self):
         if self == UnivGate.S:

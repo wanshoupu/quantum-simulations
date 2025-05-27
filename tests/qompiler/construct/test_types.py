@@ -48,6 +48,24 @@ def test_univ_gate_herm(u):
     assert np.allclose(uh.matrix @ u.matrix, np.eye(2))
 
 
+@pytest.mark.parametrize("gate", list(UnivGate))
+def test_univ_gate_matmul(gate):
+    # left matmul with NDArray
+    u = random_unitary(2)
+    actual = gate @ u
+    expected = gate.matrix @ u
+    assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize("gate", list(UnivGate))
+def test_univ_gate_rmatmul(gate):
+    # right matmul with NDArray
+    u = random_unitary(2)
+    actual = u @ gate
+    expected = u @ gate.matrix
+    assert np.allclose(actual, expected)
+
+
 @pytest.mark.parametrize("arr", [
     np.array([[1, 0]]),
     np.array([[1, 0, 1], [0, 1j, 3]]),
