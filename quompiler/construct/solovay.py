@@ -57,6 +57,7 @@ def solovay_kitaev(U: NDArray, n: int) -> Bytecode:
     V, W = gc_decompose(U @ herm(node.data))
     vnode = solovay_kitaev(V, n - 1)
     wnode = solovay_kitaev(W, n - 1)
-    data = vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
-    children = [vnode, wnode, vnode.herm(), wnode.herm(), node]
+    data = -vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
+    phase = Bytecode(-UnivGate.I.matrix)
+    children = [phase, vnode, wnode, vnode.herm(), wnode.herm(), node]
     return Bytecode(data, children=children)
