@@ -84,7 +84,7 @@ class Qompiler:
         if self.debug:
             root.metadata['fanout'] = len(constituents)
         for c in constituents:
-            root.append(self._decompose(c))
+            root.add_child(self._decompose(c))
         return root
 
     def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:

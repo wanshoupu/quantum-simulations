@@ -17,7 +17,7 @@ class Bytecode:
     children: List['Bytecode'] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
 
-    def append(self, child: 'Bytecode'):
+    def add_child(self, child: 'Bytecode'):
         self.children.append(child)
 
     def is_leaf(self) -> bool:

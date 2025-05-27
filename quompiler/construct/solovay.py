@@ -14,8 +14,8 @@ class SKDecomposer:
     def __init__(self, rtol=1.e-5, atol=1.e-8):
         """
         heuristic curve: based on the tolerance requirement, estimate the needed length of Solovay-Kitaev decomposition.
-        :param rtol:
-        :param atol:
+        :param rtol: optional, if provided, will be used as the relative tolerance parameter.
+        :param atol: optional, if provided, will be used as the absolute tolerance parameter.
         """
         self.depth = int(max([0, -log(rtol, 2), -log(atol, 2)]))
 
@@ -25,13 +25,11 @@ class SKDecomposer:
 
         Approximate a 2x2 unitary matrix with the product of UnivGate matrice, particularly H and X.
         :param mat: input 2x2 unitary matrix.
-        :param rtol: optional, if provided, will be used as the relative tolerance parameter.
-        :param atol: optional, if provided, will be used as the absolute tolerance parameter.
         :return: a list of NDArrays whose product is an approximation to the input within the specified tolerance.
         """
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
         assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
-        assert np.linalg.det(mat) == 1, f'Mat must have unit determinant.'
+        assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
 
         approx = solovay_kitaev(mat, self.depth)
         return [node.data for node in BytecodeIter(approx) if node.is_leaf()]
