@@ -2,10 +2,10 @@ from logging import warning
 
 import numpy as np
 from numpy._typing import NDArray
+from scipy.linalg import eig
 
 from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm
-from scipy.linalg import eig, inv
 
 
 def rangle(U: NDArray) -> float:
