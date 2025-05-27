@@ -15,11 +15,12 @@ def rangle(U: NDArray) -> float:
     :return: the rotation angle (alpha)
     """
     trace = np.trace(U)
-    if not np.isclose(np.imag(trace), 0):
-        warning("Warning: Trace has non-negligible imaginary part due to numerical error.")
-    trace_real = np.real(trace)
-    theta = 2 * np.arccos(np.clip(trace_real / 2, -1.0, 1.0))  # prevent domain error
-    return theta
+    if np.isclose(np.imag(trace), 0):
+        trace = np.real(trace)
+    else:
+        warning("Warning: Trace has non-negligible imaginary part.")
+        trace = np.linalg.norm(trace)
+    return 2 * np.arccos(trace / 2)
 
 
 def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
@@ -32,17 +33,24 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
     """
     alpha = rangle(U)
     beta = 2 * np.arccos(np.sqrt(1 - np.cos(alpha / 4)))
+
     assert np.isclose(np.sin(alpha / 2), 2 * np.sin(beta / 2) ** 2 * np.sqrt(1 - np.sin(beta / 2) ** 4))
+
     W = UnivGate.X.rotation(beta)
     V = UnivGate.Y.rotation(beta)
     U2 = -V @ W @ herm(V) @ herm(W)
+
     assert np.isclose(rangle(U2), alpha)
+
     eigU, simU = eig(U)
     eigU2, simU2 = eig(U2)
+
     assert np.allclose(eigU, eigU2)
+
     P = (simU) @ herm(simU2)
     WA = P @ W @ herm(P)
     VA = P @ V @ herm(P)
-    U3 = -VA @ WA @ herm(VA) @ herm(WA)
-    assert np.allclose(U3, U)
+
+    assert np.allclose(-VA @ WA @ herm(VA) @ herm(WA), U)
+
     return VA, WA
