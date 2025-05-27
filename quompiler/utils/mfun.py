@@ -99,3 +99,13 @@ def unitary_prop(a: NDArray, rtol=1.e-5, atol=1.e-8, equal_nan=False) -> tuple[b
     mat = a.conj() @ a.T
     prop, r = id_prop(mat, rtol=rtol, atol=atol, equal_nan=equal_nan)
     return prop, np.sqrt(r)
+
+
+def gphase(u):
+    pc = u[0, 0] + u[1, 1]
+    ps = u[1, 0] - u[0, 1]
+    if np.abs(pc) < np.abs(ps):
+        phase = ps / np.abs(ps)
+    else:
+        phase = pc / np.abs(pc)
+    return phase

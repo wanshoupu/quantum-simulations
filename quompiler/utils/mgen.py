@@ -9,16 +9,12 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType
 from quompiler.construct.unitary import UnitaryM
+from quompiler.utils.mfun import gphase
 
 
 def random_su2() -> NDArray:
     u = random_unitary(2)
-    pc = u[0, 0] + u[1, 1]
-    ps = u[1, 0] - u[0, 1]
-    if np.abs(pc) < np.abs(ps):
-        phase = ps / np.abs(ps)
-    else:
-        phase = pc / np.abs(pc)
+    phase = gphase(u)
     return u / phase
 
 
