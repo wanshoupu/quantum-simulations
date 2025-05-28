@@ -1,3 +1,5 @@
+from functools import reduce
+from itertools import product
 from logging import warning
 
 import numpy as np
@@ -6,6 +8,7 @@ from numpy.typing import NDArray
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm, dist
+from scipy.spatial import KDTree
 
 
 class SU2Net:
@@ -18,10 +21,11 @@ class SU2Net:
         """
         self.error = error
         self.depth = int(1 / self.error)
-        self._root = Bytecode(UnivGate.I)
+        self._kdtree = None
+        self._seqs = None
         self.constructed = False
 
-    def lookup(self, mat: NDArray) -> tuple[Bytecode, float]:
+    def lookup(self, mat: NDArray) -> Bytecode:
         """
         This is the nearest neighbor lookup function for the input matrix.
         :param mat: input 2x2 unitary matrix.
@@ -29,35 +33,35 @@ class SU2Net:
         """
         if not self.constructed:
             self.constructed = True
-            _grow_tree(self._root, self.depth)
+            seqs = cliffordt_seqs(self.depth)
+            self._seqs = seqs
+            self._kdtree = KDTree(np.array([u2key(u) for u, _ in self._seqs]))
 
         # only assert these when debugging and skip when running in optimized mode (python -O ...)
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
         assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
         assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
-        stack = [self._root]
-        product = np.eye(2)
-        error = dist(mat, product)
-        while error > self.error and not stack[-1].is_leaf():
-            candidates = [product @ np.array(c.data) for c in stack[-1].children]
-            i = np.argmin([dist(mat, c) for c in candidates])
-            stack.append(stack[-1].children[i])
-            product = candidates[i]
-            error = dist(mat, product)
-        return Bytecode(product, children=stack[1:]), error
+        key = u2key(mat)
+        _, index = self._kdtree.query([key], k=1)
+        approx_U, approx_seq = self._seqs[index[0]]
+        return Bytecode(approx_U, [Bytecode(g) for g in approx_seq])
 
 
-def _grow_tree(node: Bytecode, n: int):
+def cliffordt_seqs(depth: int) -> list[tuple]:
     """
     Grow the ε-bound tree rooted at `node` until the minimum distance between parent and child is less than `error`.
     We grow the subtree by gc_decompose the node into its commutators
     :param node: the root to begin with.
     """
-    queue = [node]
-    for i in range(n):
-        new = []
-        for node in queue:
-            # Add children to the tree: nodes from the Clifford+T set excluding the parent and identity.
-            node.children = [Bytecode(g) for g in UnivGate.cliffordt() if g != node.data and g != UnivGate.I]
-            new.extend(node.children)
-        queue = new
+    pairs = [(UnivGate.I.matrix, UnivGate.I)]
+    cliffordt = UnivGate.cliffordt()
+    cliffordt.remove(UnivGate.I)
+    for length in range(1, depth + 1):
+        for seq in product(cliffordt, repeat=length):
+            u = reduce(lambda a, b: a @ b, seq)
+            pairs.append((np.array(u), seq))
+    return pairs
+
+
+def u2key(u):
+    return u[0, 0].real, u[0, 0].imag, u[0, 1].real, u[0, 1].imag, u[1, 1].real, u[1, 1].imag
