@@ -142,6 +142,8 @@ jinja2==3.1.5
     # via
     #   nbconvert
     #   torch
+joblib==1.5.1
+    # via scikit-learn
 jsonschema==4.17.3
     # via nbformat
 jupyter-client==8.6.3
@@ -205,6 +207,7 @@ numpy==1.26.4
     #   qiskit
     #   quimb
     #   rustworkx
+    #   scikit-learn
     #   scipy
 packaging==24.2
     # via
@@ -328,6 +331,8 @@ ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
 rustworkx==0.16.0
     # via qiskit
+scikit-learn==1.6.1
+    # via -r requirements.in
 scipy==1.13.1
     # via
     #   -r requirements.in
@@ -336,6 +341,7 @@ scipy==1.13.1
     #   pyquil
     #   qiskit
     #   quimb
+    #   scikit-learn
 six==1.17.0
     # via
     #   python-dateutil
@@ -362,6 +368,8 @@ sympy==1.13.3
     #   torch
 tenacity==8.5.0
     # via pyquil
+threadpoolctl==3.6.0
+    # via scikit-learn
 tinycss2==1.4.0
     # via bleach
 toml==0.10.2
