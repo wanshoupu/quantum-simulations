@@ -37,6 +37,9 @@ class UnivGate(Enum):
                 return g
         return None
 
+    def __repr__(self):
+        return self.label
+
     def __array__(self):
         return self.matrix
 
@@ -82,7 +85,7 @@ class UnivGate(Enum):
 
     @staticmethod
     def cliffordt():
-        return [UnivGate.I, UnivGate.X, UnivGate.H, UnivGate.S, UnivGate.T, UnivGate.SD, UnivGate.TD]
+        return [UnivGate.I, UnivGate.X, UnivGate.H, UnivGate.Z, UnivGate.S, UnivGate.T, UnivGate.SD, UnivGate.TD]
 
 
 class QType(IntFlag):
