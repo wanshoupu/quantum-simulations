@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from quompiler.construct.types import UnivGate
-from quompiler.utils.mfun import allprop, dist, herm, herms
+from quompiler.utils.mfun import allprop, dist, herm, herms, gphase
 from quompiler.utils.mgen import random_unitary, random_phase, random_su2
 
 
@@ -136,3 +136,12 @@ def test_herms_equality():
     u = reduce(lambda x, y: x @ y, us)
     v = reduce(lambda x, y: x @ y, vs)
     assert np.allclose(u @ v, np.eye(2)), f'{u} != {v}'
+
+
+def test_gphase():
+    for _ in range(100):
+        u = random_unitary(2)
+        gp = gphase(u)
+        v = np.conj(gp) * u
+        assert np.isclose(np.linalg.det(v), 1)
+        assert np.trace(v) >= 0

@@ -2,10 +2,19 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def gphase(u):
+def gphase(u: NDArray):
+    """
+    Calculate the global phase of unitary matrix such that
+        up = np.conj(gp) * u
+    will be a positively traced matrix with unit determinant.
+    :param u: unitary matrix
+    :return:
+    """
     det = np.linalg.det(u)
     # unit-magnitude complex number (e^{iϕ})
-    return np.sqrt(det, dtype=np.complex128)
+    phase = np.sqrt(det, dtype=np.complex128)
+    sign = np.sign(np.trace(u))
+    return phase * sign
 
 
 def dist(u: NDArray, v: NDArray) -> float:
