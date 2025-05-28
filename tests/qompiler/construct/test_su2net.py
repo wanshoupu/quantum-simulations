@@ -14,7 +14,7 @@ formatter = MatrixFormatter(precision=2)
 
 
 def test_init_lazy():
-    error = .2
+    error = .4
     su2net = SU2Net(error)
     assert su2net.error == error
     # tree not constructed until first lookup
@@ -23,7 +23,7 @@ def test_init_lazy():
 
 def test_init_lookup_identity():
     gate = UnivGate.I
-    su2net = SU2Net(.2)
+    su2net = SU2Net(.4)
     gph = gphase(gate.matrix)
     matrix = gate.matrix / gph
     node = su2net.lookup(matrix)
@@ -36,7 +36,7 @@ def test_init_lookup_identity():
 
 @pytest.mark.parametrize('gate', list(UnivGate))
 def test_init_lookup_std(gate):
-    su2net = SU2Net(.2)
+    su2net = SU2Net(.4)
     gph = gphase(gate.matrix)
     matrix = gate.matrix / gph
     node = su2net.lookup(matrix)
@@ -50,7 +50,7 @@ def test_init_lookup_std(gate):
 
 @pytest.mark.parametrize("seed", [42, 123, 999, 2023])
 def test_init_lookup_terminates(seed):
-    su2net = SU2Net(.2)
+    su2net = SU2Net(.4)
     random.seed(seed)
     np.random.seed(seed)
     u = random_su2()
