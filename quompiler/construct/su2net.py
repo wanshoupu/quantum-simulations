@@ -1,14 +1,12 @@
-from functools import reduce
-from itertools import product
 from logging import warning
 
 import numpy as np
 from numpy.typing import NDArray
+from sklearn.neighbors import NearestNeighbors
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm, dist
-from sklearn.neighbors import NearestNeighbors
 
 
 class SU2Net:
@@ -16,12 +14,13 @@ class SU2Net:
     def __init__(self, error=.2):
         """
         A SU2 ε-net is a point cloud with distance between adjacent points no greater than `error`.
+        This works for U2 just as well because the distance function is phase agnostic.
         It's organized in nary-tree similar to Geohash: the longer the sequence, the more precise it is.
         :param error: optional, if provided, will be used as the error tolerance parameter.
         """
         self.error = error
         self.depth = int(1 / self.error) + 1
-        self._kdtree = None
+        self._root = None
         self._seqs = None
         self.constructed = False
 
@@ -35,15 +34,15 @@ class SU2Net:
             self.constructed = True
             seqs = cliffordt_seqs(self.depth)
             self._seqs = seqs
-            self._kdtree = NearestNeighbors(algorithm='brute', metric=lambda k1, k2: dist(key2u(k1), key2u(k2)))
-            self._kdtree.fit(np.array([u2key(u) for u, _ in self._seqs]))
+            self._root = NearestNeighbors(n_neighbors=1, algorithm='brute', metric=lambda k1, k2: dist(key2u(k1), key2u(k2)))
+            self._root.fit(np.array([u2key(u) for u, _ in self._seqs]))
 
         # only assert these when debugging and skip when running in optimized mode (python -O ...)
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
-        assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
-        assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
+        # assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
+        # assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
         key = u2key(mat)
-        distances, indices = self._kdtree.kneighbors([key], n_neighbors=1)
+        distances, indices = self._root.kneighbors([key], n_neighbors=1)
         error, index = distances[0][0], indices[0][0]
         if self.error < error:
             warning(f'Search for {mat} did not converge to within the error range: {self.error}.')

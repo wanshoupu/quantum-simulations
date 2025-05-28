@@ -2,6 +2,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 
+def gphase(u):
+    det = np.linalg.det(u)
+    # unit-magnitude complex number (e^{iϕ})
+    return np.sqrt(det, dtype=np.complex128)
+
+
 def dist(u: NDArray, v: NDArray) -> float:
     """
     Compute the trace distance between two unitary matrices of shape (2,2), e.g., for a single qubit.
@@ -13,17 +19,14 @@ def dist(u: NDArray, v: NDArray) -> float:
     :param v: another unitary matrix.
     :return: trace distance as defined.
     """
-    assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
+    # assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
     delta = u @ herm(v)
-    assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
-    det = np.linalg.det(delta)
-    # we don't use operator `/=` to avoid `error cast from dtype('complex128') to dtype('float64')`
-    delta = delta / np.sqrt(np.complex128(det))
-    ct = delta[0, 0] + delta[1, 1]
-    assert np.isclose(ct.imag, 0)
+    # assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
+    ct = np.trace(delta) / gphase(delta)
+    # assert np.isclose(ct.imag, 0)
 
     # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
-    result = 2 * np.sqrt(np.complex128(.5 - ct / 4))
+    result = 2 * np.sqrt(.5 - ct / 4, dtype=np.complex128)
 
     # sometimes the result is slightly complex. We take the abs
     return np.abs(result)
@@ -99,9 +102,3 @@ def unitary_prop(a: NDArray, rtol=1.e-5, atol=1.e-8, equal_nan=False) -> tuple[b
     mat = a.conj() @ a.T
     prop, r = id_prop(mat, rtol=rtol, atol=atol, equal_nan=equal_nan)
     return prop, np.sqrt(r)
-
-
-def gphase(u):
-    det = np.linalg.det(u)
-    # unit-magnitude complex number (e^{iϕ})
-    return np.sqrt(det, dtype=np.complex128)

@@ -9,7 +9,7 @@ from quompiler.construct.types import UnivGate
 from quompiler.utils.group_su2 import gc_decompose
 from quompiler.utils.mfun import herm
 
-MAX_ERROR = 1e-1
+MAX_ERROR = .15e-1
 
 
 class SKDecomposer:

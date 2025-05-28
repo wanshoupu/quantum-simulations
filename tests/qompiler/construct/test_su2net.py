@@ -7,8 +7,8 @@ import pytest
 from quompiler.construct.su2net import SU2Net, cliffordt_seqs
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mfun import dist, gphase
-from quompiler.utils.mgen import random_su2
+from quompiler.utils.mfun import dist, gphase, herm
+from quompiler.utils.mgen import random_su2, random_unitary
 
 formatter = MatrixFormatter(precision=2)
 
@@ -21,7 +21,7 @@ def test_init_lazy():
     assert not su2net.constructed
 
 
-def test_init_lookup_identity():
+def test_lookup_identity():
     gate = UnivGate.I
     su2net = SU2Net(.4)
     gph = gphase(gate.matrix)
@@ -35,8 +35,8 @@ def test_init_lookup_identity():
 
 
 @pytest.mark.parametrize('gate', list(UnivGate))
-def test_init_lookup_std(gate):
-    su2net = SU2Net(.4)
+def test_lookup_std(gate):
+    su2net = SU2Net(.2)
     gph = gphase(gate.matrix)
     matrix = gate.matrix / gph
     node = su2net.lookup(matrix)
@@ -49,7 +49,7 @@ def test_init_lookup_std(gate):
 
 
 @pytest.mark.parametrize("seed", [42, 123, 999, 2023])
-def test_init_lookup_terminates(seed):
+def test_lookup_terminates(seed):
     su2net = SU2Net(.4)
     random.seed(seed)
     np.random.seed(seed)
@@ -63,7 +63,7 @@ def test_init_lookup_terminates(seed):
 
 
 @pytest.mark.parametrize("seed", [42, 123, 999, 2023])
-def test_init_lookup_errors(seed: int):
+def test_lookup_random_su2(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     su2net = SU2Net()
@@ -73,6 +73,22 @@ def test_init_lookup_errors(seed: int):
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(u))
     # print(f'\n{formatter.tostr(u)}\nlookup error: {error}')
+    assert error < 2 * su2net.error
+
+
+@pytest.mark.parametrize("seed", [42, 123, 999, 2023])
+def test_lookup_random_u2(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    su2net = SU2Net()
+    u = random_unitary(2)
+    node = su2net.lookup(u)
+    v = reduce(lambda a, b: a @ b, [n.data for n in node.children], np.eye(2))
+    assert np.allclose(np.array(v), node.data)  # self-consistent
+    error = dist(np.array(v), np.array(u))
+    # print(f'\n{formatter.tostr(u)}\nlookup error: {error}')
+    gp = gphase(v @ herm(u))
+    print(f'gphase error: {gp}')
     assert error < 2 * su2net.error
 
 
