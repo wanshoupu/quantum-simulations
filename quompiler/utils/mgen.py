@@ -9,12 +9,15 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType
 from quompiler.construct.unitary import UnitaryM
-from quompiler.utils.mfun import gphase
 
 
 def random_su2() -> NDArray:
+    """
+    generate random SU(2) operator, i.e., det(u) = 1.
+    """
     u = random_unitary(2)
-    phase = gphase(u)
+    det = np.linalg.det(u)
+    phase = np.sqrt(det, dtype=np.complex128)
     return u / phase
 
 

@@ -6,7 +6,8 @@ from sklearn.neighbors import NearestNeighbors
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.types import UnivGate
-from quompiler.utils.mfun import herm, dist
+from quompiler.utils.mfun import herm
+from quompiler.utils.group_su2 import dist
 
 
 class SU2Net:

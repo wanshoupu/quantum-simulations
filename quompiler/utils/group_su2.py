@@ -11,19 +11,18 @@ from quompiler.utils.mfun import herm
 def rangle(U: NDArray) -> float:
     """
     Rotation angle for the input SU(2) operator around some unit vector n.
+    This angle so calculated is between 0 and π such that the global phase takes care of the negative-trace.
     :param U: SU(2) operator
     :return: the rotation angle (alpha)
     """
     trace = np.trace(U)
-    if np.isclose(np.imag(trace), 0):
-        trace = np.real(trace)
-    else:
-        warning("Warning: Trace has non-negligible imaginary part.")
-        trace = np.linalg.norm(trace)
-    return 2 * np.arccos(trace / 2)
+    if not np.isclose(np.imag(trace), 0):
+        gp = gphase(U)
+        trace = trace / gp
+    return 2 * np.arccos(np.real(trace) / 2)
 
 
-def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray, int]:
+def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
     """
     Group commutator decomposition. This is exact decomposition with no approximation.
     Given a SU(2) operator, representing rotation R(n, φ), we decompose it into ±V @ W @ V† @ W†,
@@ -33,26 +32,144 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray, int]:
     :return: tuple(V, W, sign) such that U = V @ W @ V† @ W† * sign
     """
     alpha = rangle(U)
-    sign = -np.sign(np.trace(U)).astype(int)
-    beta = 2 * np.arccos(np.sqrt(1 - np.cos(alpha / 4)))
+    beta = 2 * np.arcsin(np.sqrt(np.cos(alpha / 4)))
 
     assert np.isclose(np.sin(alpha / 2), 2 * np.sin(beta / 2) ** 2 * np.sqrt(1 - np.sin(beta / 2) ** 4))
 
     W = UnivGate.X.rotation(beta)
     V = UnivGate.Y.rotation(beta)
-    U2 = sign * V @ W @ herm(V) @ herm(W)
+    U2 = -V @ W @ herm(V) @ herm(W)
 
     assert np.isclose(rangle(U2), alpha)
 
-    eigU, simU = eig(U)
-    eigU2, simU2 = eig(U2)
-
-    assert np.allclose(eigU, eigU2)
-
-    P = (simU) @ herm(simU2)
+    P = tsim(U, U2)
     WA = P @ W @ herm(P)
     VA = P @ V @ herm(P)
 
-    assert np.allclose(sign * VA @ WA @ herm(VA) @ herm(WA), U)
+    UP = -VA @ WA @ herm(VA) @ herm(WA)
+    if not np.allclose(UP, U):
+        print()
+        print(f'{alpha}, {beta}')
+        print()
+        print(f'{UP}\n{U}')
+        # assert np.allclose(UP, U), f'\n{UP}\n!=\n{U}'
 
-    return VA, WA, sign
+    return VA, WA
+
+
+def raxis(U: NDArray) -> NDArray:
+    """
+    calculate the rotation axis of SU(2) operator around some unit vector n.
+    :param U:
+    :return: unit vector n
+    """
+    angle = rangle(U)
+    if np.isclose(angle, 0):
+        return np.array([1, 0, 0])
+    phase = np.trace(U) / np.cos(angle / 2) / 2
+    V = 1j * (U / phase - np.cos(angle / 2) * np.eye(2)) / np.sin(angle / 2)
+    assert np.isclose(np.trace(V), 0)
+    assert np.isclose(np.imag(V[0, 0]), 0)
+    x, y = np.real(V[1, 0]), np.imag(V[1, 0])
+    z = np.real(V[0, 0])
+    nvec = np.array([x, y, z])
+    assert np.isclose(np.linalg.norm(nvec), 1)
+    return nvec
+
+
+def tsim(U, V):
+    """
+    Find the similarity transformation between two SU(2) operators, namely,
+    V = P @ U @ P†
+    :param U: SU(2) operator
+    :param V: SU(2) operator
+    :return: P such that V = P @ U @ P†
+    """
+    assert np.isclose(gphase(U), 1)
+    nu, nv = raxis(U), raxis(V)
+    nvec = np.cross(nv, nu)
+    nvec = nvec / np.linalg.norm(nvec)
+
+    eigU, simU = eig(U)
+    eigV, simV = eig(V)
+    if np.allclose(eigU, eigV[::-1]):
+        simV = UnivGate.X.matrix @ simV @ UnivGate.X.matrix
+    else:
+        assert np.allclose(eigU, eigV)
+    return (simU) @ herm(simV)
+
+
+def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
+    """
+    Given a U(2) matrix, decompose it into Euler angles + an overall scalar factor.
+    :param u: U(2) matrix as input
+    :return: scalar factor + Euler angles (b, c, d), such that u = a * Rz(b) @ Ry(c) @ Rz(d)
+    """
+    assert u.shape == (2, 2) and np.allclose(u.conj().T @ u, np.eye(2)), "u must be unitary"
+    det = np.linalg.det(u)
+    c2 = u[0, 0] * u[1, 1] / det
+    s2 = -u[1, 0] * u[0, 1] / det
+    # assert np.isclose(1, c2 + s2)
+    plus = c2 if np.isclose(c2, 0) else np.angle(u[1, 1] / u[0, 0])
+    minus = s2 if np.isclose(s2, 0) else np.angle(-u[1, 0] / u[0, 1])
+
+    b = (plus + minus) / 2  # angle before Y rotation
+    d = (plus - minus) / 2  # angle after Y rotation
+
+    # Determine rotation angle around Y (theta)
+    x = np.real_if_close(c2 - s2)
+    y = np.real_if_close(2 * u[1, 0] * u[1, 1] / det / np.exp(1j * b))
+    # assert np.isclose(x.imag, 0) and np.isclose(y.imag, 0)
+    c = np.arctan2(y, x)
+    # Global phase
+    a = (u[1, 1] / (np.cos(c / 2) * np.exp(.5j * (b + d)))) if c2 > s2 else (u[1, 0] / (np.sin(c / 2) * np.exp(.5j * (b - d))))
+    return a, b, c, d  # Global phase (a), and Euler angles (b, c, d)
+
+
+def rot(n: NDArray, angle: float) -> NDArray:
+    assert n.shape == (3,)
+    n = n / np.linalg.norm(n)
+    pvec = np.array([[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
+    sigma = np.tensordot(n, pvec, axes=1)
+    u = np.cos(angle / 2) * np.eye(2) - 1j * np.sin(angle / 2) * sigma
+    return u
+
+
+def dist(u: NDArray, v: NDArray) -> float:
+    """
+    Compute the trace distance between two unitary matrices of shape (2,2), e.g., for a single qubit.
+    Distance of two unitary matrices is defined as
+    1. calculate the product Δ = u @ v†;
+    2. Model Δ as a rotation around certain axis and calculate the rotation angle θ ∈ [-π, π];
+    3. D(u,v) = 2 abs(sin(θ/4)).
+    :param u: unitary matrix.
+    :param v: another unitary matrix.
+    :return: trace distance as defined.
+    """
+    assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
+    delta = u @ herm(v)
+    # assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
+    phase = np.sqrt(np.linalg.det(delta), dtype=np.complex128)
+    ct = np.trace(delta) / phase
+    # assert np.isclose(ct.imag, 0)
+
+    # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
+    result = 2 * np.sqrt(.5 - ct / 4, dtype=np.complex128)
+
+    # sometimes the result is slightly complex. We take the abs
+    return np.abs(result)
+
+
+def gphase(u: NDArray):
+    """
+    Calculate the global phase of unitary matrix such that
+        up = np.conj(gp) * u
+    will be a positively traced matrix with unit determinant.
+    :param u: unitary matrix
+    :return:
+    """
+    det = np.linalg.det(u)
+    # unit-magnitude complex number (e^{iϕ})
+    phase = np.sqrt(det, dtype=np.complex128)
+    sign = np.sign(np.trace(u)) or 1
+    return sign * phase

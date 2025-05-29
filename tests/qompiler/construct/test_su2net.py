@@ -7,7 +7,8 @@ import pytest
 from quompiler.construct.su2net import SU2Net, cliffordt_seqs
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mfun import dist, gphase, herm
+from quompiler.utils.mfun import herm
+from quompiler.utils.group_su2 import dist, gphase
 from quompiler.utils.mgen import random_su2, random_unitary
 
 formatter = MatrixFormatter(precision=2)

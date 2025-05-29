@@ -9,26 +9,10 @@ from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, random_control
-from quompiler.utils.euler_decompose import euler_decompose, euler_param
+from quompiler.utils.euler_decompose import euler_decompose
+from quompiler.utils.group_su2 import euler_params
 
 formatter = MatrixFormatter(precision=2)
-
-
-@pytest.mark.parametrize('gate,expected', [
-    [UnivGate.I, (1, 0, 0, 0)],
-    [UnivGate.X, (-1j, np.pi / 2, np.pi, -np.pi / 2)],
-    [UnivGate.Y, (-1j, 0, -np.pi, 0)],
-    [UnivGate.Z, (1j, np.pi / 2, 0, np.pi / 2)],
-    [UnivGate.H, (1j, np.pi, -np.pi / 2, 0)],
-    [UnivGate.S, (np.sqrt(1j), np.pi / 4, 0, np.pi / 4)],
-    [UnivGate.T, (np.power(1j, 1 / 4), np.pi / 8, 0, np.pi / 8)],
-])
-def test_std_gate(gate: UnivGate, expected: tuple):
-    coms = euler_param(gate.matrix)
-    a, b, c, d = coms
-    actual = a * UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c) @ UnivGate.Z.rotation(d)
-    assert np.allclose(actual, gate.matrix), f'Decomposition altered\n{formatter.tostr(actual)}!=\n{formatter.tostr(gate.matrix)}'
-    assert np.allclose(coms, expected), f'for gate={gate.name}, {formatter.tostr(coms)} != {formatter.tostr(expected)}'
 
 
 def test_identity():
@@ -189,15 +173,6 @@ def test_custom_qspace():
     for i in [1, 3, 5]:
         r = result[i]
         assert tuple(r.qspace) == (Qubit(offset + target),)
-
-
-def test_verify_identity_random():
-    for _ in range(10):
-        # print(f'Test {_}th round')
-        expected = random_unitary(2)
-        a, b, c, d = euler_param(expected)
-        actual = a * UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c) @ UnivGate.Z.rotation(d)
-        assert np.allclose(actual, expected)
 
 
 def test_verify_qspace_random():

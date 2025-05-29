@@ -1,11 +1,11 @@
 import random
 
-import numpy as np
 from numpy import kron
 
+from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import inter_product, mykron
-from quompiler.utils.mgen import random_unitary
+from quompiler.utils.mgen import random_unitary, random_su2
 
 formatter = MatrixFormatter(precision=2)
 
@@ -66,3 +66,36 @@ def test_inter_product_singlet_qubit():
     result = mykron(*mats)
     print()
     print(formatter.tostr(result))
+
+
+def test_():
+    # Example usage
+    u = np.array([[0.15 - 0.51j, 0.51 - 0.68j],
+                  [-0.51 - 0.68j, 0.15 + 0.51j]])
+
+    V, W, u_reconstructed = construct_commutator_exact(u)
+
+    print("Error (Frobenius norm):",
+          np.linalg.norm(u - u_reconstructed))
+    print("U:\n", u)
+    print("Reconstructed U:\n", u_reconstructed)
+    assert np.allclose(u, u_reconstructed)
+
+
+import numpy as np
+from scipy.linalg import expm
+
+
+def construct_commutator_exact(u):
+    # Step 1: Extract rotation angle theta from u
+    cos_theta = np.real(np.trace(u) / 2)
+    theta = np.arccos(np.clip(cos_theta, -1, 1))
+
+    # Step 3: Construct v and w
+    v = expm(1j * (theta / 2) * UnivGate.X.matrix)
+    w = expm(1j * (theta / 2) * UnivGate.Y.matrix)
+
+    # Step 4: Compute u' = v w v† w†
+    u_reconstructed = v @ w @ v.conj().T @ w.conj().T
+
+    return v, w, u_reconstructed

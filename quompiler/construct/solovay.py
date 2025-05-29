@@ -6,21 +6,21 @@ from numpy.typing import NDArray
 from quompiler.construct.bytecode import Bytecode, BytecodeIter
 from quompiler.construct.su2net import SU2Net
 from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import gc_decompose
+from quompiler.utils.group_su2 import gc_decompose, gphase
 from quompiler.utils.mfun import herm
 
-MAX_ERROR = .15e-1
+MAX_ERROR = .5
 
 
 class SKDecomposer:
 
-    def __init__(self, rtol=1.e-5, atol=1.e-8):
+    def __init__(self, rtol=1.e-3, atol=1.e-5):
         """
         heuristic curve: based on the tolerance requirement, estimate the needed length of Solovay-Kitaev decomposition.
         :param rtol: optional, if provided, will be used as the relative tolerance parameter.
         :param atol: optional, if provided, will be used as the absolute tolerance parameter.
         """
-        self.depth = int(max([0, -log(rtol, 2), -log(atol, 2)]))
+        self.depth = int(max([0, -log(rtol), -log(atol)]))
         self.su2net = SU2Net(MAX_ERROR)
 
     def approx(self, mat: NDArray) -> list[UnivGate]:
@@ -55,5 +55,4 @@ class SKDecomposer:
         children = [vnode, wnode, vnode.herm(), wnode.herm(), node]
         if sign == -1:
             children.append(Bytecode(-UnivGate.I.matrix))
-
         return Bytecode(data, children=children)

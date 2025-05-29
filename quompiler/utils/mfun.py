@@ -2,45 +2,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def gphase(u: NDArray):
-    """
-    Calculate the global phase of unitary matrix such that
-        up = np.conj(gp) * u
-    will be a positively traced matrix with unit determinant.
-    :param u: unitary matrix
-    :return:
-    """
-    det = np.linalg.det(u)
-    # unit-magnitude complex number (e^{iϕ})
-    phase = np.sqrt(det, dtype=np.complex128)
-    sign = np.sign(np.trace(u))
-    return phase * sign
-
-
-def dist(u: NDArray, v: NDArray) -> float:
-    """
-    Compute the trace distance between two unitary matrices of shape (2,2), e.g., for a single qubit.
-    Distance of two unitary matrices is defined as
-    1. calculate the product Δ = u @ v†;
-    2. Model Δ as a rotation around certain axis and calculate the rotation angle θ ∈ [-π, π];
-    3. D(u,v) = 2 abs(sin(θ/4)).
-    :param u: unitary matrix.
-    :param v: another unitary matrix.
-    :return: trace distance as defined.
-    """
-    # assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
-    delta = u @ herm(v)
-    # assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
-    ct = np.trace(delta) / gphase(delta)
-    # assert np.isclose(ct.imag, 0)
-
-    # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
-    result = 2 * np.sqrt(.5 - ct / 4, dtype=np.complex128)
-
-    # sometimes the result is slightly complex. We take the abs
-    return np.abs(result)
-
-
 # Helper function: Hermite transformation of matrix
 def herms(ms):
     return [herm(g) for g in ms[::-1]]
