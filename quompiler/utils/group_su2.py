@@ -1,5 +1,3 @@
-from logging import warning
-
 import numpy as np
 from numpy._typing import NDArray
 from scipy.linalg import eig
@@ -45,20 +43,44 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
 
 def tsim(U, V):
     """
-    Find the similarity transformation between two unitary operators, namely,
-    V = P @ U @ P†
-    :param U: SU(2) operator
-    :param V: SU(2) operator
-    :return: P such that V = P @ U @ P†
+   Compute the similarity transformation matrix P such that V = P @ U @ P†, assuming such a transformation exists.
+
+    This function does not verify whether U and V are actually similar; it simply
+    attempts to compute a matrix P that satisfies the relation if possible.
+
+    Parameters:
+        U (np.ndarray): A 2×2 unitary matrix (e.g., an SU(2) operator).
+        V (np.ndarray): A 2×2 unitary matrix (e.g., an SU(2) operator).
+
+    Returns:
+        np.ndarray: A 2×2 unitary matrix P such that V = P @ U @ P†.
+
+    Note:
+        The function assumes U and V are both unitary, but does not check or enforce this.
+        The result may not be valid if U and V are not similar (i.e., do not have the same eigenvalues).
     """
-    uangle = rangle(U)
-    vangle = rangle(V)
-    assert np.isclose(uangle, vangle)
-    nu, nv = raxis(U), raxis(V)
-    alpha = np.arccos(np.dot(nu, nv))
-    nvec = np.cross(nu, nv)
-    nvec = nvec / np.linalg.norm(nvec)
-    return rot(nvec, -alpha)
+    uphase, uval, uvec = eigen_decompose(U)
+    vphase, vval, vvec = eigen_decompose(V)
+    X = UnivGate.X.matrix
+    if np.allclose(uval, vval[::-1]):
+        # swap the eigen values along with the eigenvectors
+        vvec = X @ vvec @ X
+    P = vvec @ herm(uvec)
+    invP = X @ P
+    if np.allclose(V, invP @ U @ herm(invP)):
+        return invP
+    return P
+
+
+def eigen_decompose(U: NDArray) -> tuple[np.complex128, NDArray, NDArray]:
+    """
+    Compute the eigenvalues and eigenvectors of a unitary matrix such that U V = V D
+    :param U:
+    :return: phase, D, V such that U = V @ D @ V† * phase
+    """
+    phase = gphase(U)
+    val, vec = eig(U / phase)
+    return phase, val, vec
 
 
 def rangle(U: NDArray) -> float:
@@ -68,11 +90,9 @@ def rangle(U: NDArray) -> float:
     :param U: SU(2) operator
     :return: the rotation angle (alpha)
     """
+    gp = gphase(U)
     trace = np.trace(U)
-    if not np.isclose(np.imag(trace), 0):
-        gp = gphase(U)
-        trace = trace / gp
-    return 2 * np.arccos(np.real(trace) / 2)
+    return 2 * np.arccos(np.real(trace / gp) / 2)
 
 
 def raxis(U: NDArray) -> NDArray:
@@ -83,15 +103,14 @@ def raxis(U: NDArray) -> NDArray:
     """
     U = U / gphase(U)
     angle = rangle(U)
-    if np.isclose(angle, 0):
-        return np.array([1, 0, 0])
+    if np.equal(angle, 0):
+        return np.array([0, 0, 1])
     V = 1j * (U - np.cos(angle / 2) * np.eye(2)) / np.sin(angle / 2)
     assert np.isclose(np.trace(V), 0)
     assert np.isclose(np.imag(V[0, 0]), 0)
     x, y = np.real(V[1, 0]), np.imag(V[1, 0])
     z = np.real(V[0, 0])
-    nvec = np.array([x, y, z])
-    return nvec
+    return np.array([x, y, z])
 
 
 def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
@@ -155,7 +174,7 @@ def dist(u: NDArray, v: NDArray) -> float:
     return np.abs(result)
 
 
-def gphase(u: NDArray):
+def gphase(u: NDArray) -> np.complex128:
     """
     Calculate the global phase of unitary matrix such that
         up = np.conj(gp) * u
@@ -166,4 +185,5 @@ def gphase(u: NDArray):
     det = np.linalg.det(u)
     # unit-magnitude complex number (e^{iϕ})
     phase = np.sqrt(det, dtype=np.complex128)
-    return phase
+    sign = np.sign(np.trace(u)) or 1
+    return sign * phase
