@@ -300,7 +300,7 @@ def test_eigen_decompose_recoverable(seed: int):
 
     u = random_unitary(2)
     phase, eigenval, eigenvec = eigen_decompose(u)
-    print(formatter.tostr(eigenval))
+    # print(formatter.tostr(eigenval))
     assert eigenval.shape == (2,)
     actual = eigenvec @ np.diag(eigenval) @ herm(eigenvec) * phase
     assert np.allclose(actual, u)
@@ -334,13 +334,38 @@ def test_tsim_similarity_su2(seed: int):
     vvec = np.random.standard_normal(3)
     u = rot(uvec, angle)
     v = rot(vvec, angle)
-    print('v')
-    print(formatter.tostr(v))
+    # print('v')
+    # print(formatter.tostr(v))
 
     # execute
     t = tsim(u, v)
 
     actual = t @ u @ herm(t)
-    print('actual')
-    print(formatter.tostr(actual))
+    # print('actual')
+    # print(formatter.tostr(actual))
     assert np.allclose(actual, v)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_tsim_similarity_unitary(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    angle = np.random.uniform(0, 2 * np.pi)
+    uvec = np.random.standard_normal(3)
+    vvec = np.random.standard_normal(3)
+    uphase = random_phase()
+    u = rot(uvec, angle) * uphase
+    vphase = random_phase()
+    v = rot(vvec, angle) * vphase
+    # print('v')
+    # print(formatter.tostr(v))
+
+    # execute
+    t = tsim(u, v)
+
+    actual = t @ u @ herm(t) * vphase / uphase
+    # print('actual')
+    # print(formatter.tostr(actual))
+    assert np.allclose(actual, v)
+
