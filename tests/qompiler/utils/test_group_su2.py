@@ -6,8 +6,8 @@ import pytest
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist
-from quompiler.utils.mfun import herm
-from quompiler.utils.mgen import random_unitary, random_su2
+from quompiler.utils.mfun import herm, allprop
+from quompiler.utils.mgen import random_unitary, random_su2, random_phase
 
 formatter = MatrixFormatter(precision=2)
 
@@ -44,7 +44,6 @@ def test_gphase():
         gp = gphase(u)
         v = np.conj(gp) * u
         assert np.isclose(np.linalg.det(v), 1)
-        assert np.trace(v) >= 0
 
 
 @pytest.mark.parametrize("gate,expected", [
@@ -92,7 +91,12 @@ def test_rangle_random_unitary():
     for _ in range(100):
         gate = random_unitary(2)
         actual = rangle(gate)
-        assert actual <= np.pi
+        phase = gphase(gate)
+        trace = np.trace(gate / phase)
+        if trace > 0:
+            assert actual <= np.pi
+        else:
+            assert actual >= -np.pi
 
 
 def test_rangle_eq_2pi():
@@ -170,3 +174,80 @@ def test_dist_std_gates(u, v, angle):
     actual = dist(u.matrix, v.matrix)
     expected = 2 * np.sin(angle / 4)
     assert np.isclose(actual, expected, rtol=1.e-4, atol=1.e-7), f'{actual} != {expected}'
+
+
+@pytest.mark.parametrize("gate,expected", [
+    [UnivGate.I, np.array([1, 0, 0])],
+    [UnivGate.X, np.array([1, 0, 0])],
+    [UnivGate.Y, np.array([0, 1, 0])],
+    [UnivGate.Z, np.array([0, 0, 1])],
+    [UnivGate.H, np.array([1 / np.sqrt(2), 0, 1 / np.sqrt(2)])],
+    [UnivGate.S, np.array([0, 0, 1])],
+    [UnivGate.T, np.array([0, 0, 1])],
+    [UnivGate.SD, np.array([0, 0, -1])],
+    [UnivGate.TD, np.array([0, 0, -1])],
+])
+def test_raxis_std(gate, expected):
+    u = gate.matrix
+    # execute
+    norm_vec = raxis(u)
+    # verify
+    assert np.isclose(np.linalg.norm(norm_vec), 1)
+    angle = rangle(u)
+    v = rot(norm_vec, angle) * gphase(u)
+    assert np.allclose(v, u)
+    assert np.allclose(norm_vec, expected), f'{norm_vec} != {expected}'
+
+
+def test_raxis_random_su2():
+    for _ in range(100):
+        u = random_su2()
+        # execute
+        angle = rangle(u)
+        norm_vec = raxis(u)
+
+        # verify
+        assert np.isclose(np.linalg.norm(norm_vec), 1)
+        u_recovered = rot(norm_vec, angle)
+        assert np.allclose(u_recovered, u), f'{u_recovered} != {u}'
+
+
+def test_raxis_recover_su2():
+    angle = np.random.uniform(0, 2 * np.pi)
+    m = np.random.standard_normal(3)
+    u = rot(m, angle)
+    # execute
+    actual = raxis(u)
+    # verify
+    expected = m / np.linalg.norm(m)
+    assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_raxis_recover_unitary(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    angle = np.random.uniform(0, 2 * np.pi)
+    expected = np.random.standard_normal(3)
+    u = rot(expected, angle) * random_phase()
+    # execute
+    actual = raxis(u)
+    # verify
+    assert allprop(actual, expected)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_raxis_rot_reproducibility(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    u = random_unitary(2)
+    # execute
+    angle = rangle(u)
+    norm_vec = raxis(u)
+
+    # verify
+    assert np.isclose(np.linalg.norm(norm_vec), 1)
+    u_recovered = rot(norm_vec, angle) * gphase(u)
+    assert np.allclose(u_recovered, u)

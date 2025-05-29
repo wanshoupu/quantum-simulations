@@ -8,20 +8,6 @@ from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm
 
 
-def rangle(U: NDArray) -> float:
-    """
-    Rotation angle for the input SU(2) operator around some unit vector n.
-    This angle so calculated is between 0 and π such that the global phase takes care of the negative-trace.
-    :param U: SU(2) operator
-    :return: the rotation angle (alpha)
-    """
-    trace = np.trace(U)
-    if not np.isclose(np.imag(trace), 0):
-        gp = gphase(U)
-        trace = trace / gp
-    return 2 * np.arccos(np.real(trace) / 2)
-
-
 def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
     """
     Group commutator decomposition. This is exact decomposition with no approximation.
@@ -57,46 +43,55 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
     return VA, WA
 
 
+def tsim(U, V):
+    """
+    Find the similarity transformation between two unitary operators, namely,
+    V = P @ U @ P†
+    :param U: SU(2) operator
+    :param V: SU(2) operator
+    :return: P such that V = P @ U @ P†
+    """
+    uangle = rangle(U)
+    vangle = rangle(V)
+    assert np.isclose(uangle, vangle)
+    nu, nv = raxis(U), raxis(V)
+    alpha = np.arccos(np.dot(nu, nv))
+    nvec = np.cross(nu, nv)
+    nvec = nvec / np.linalg.norm(nvec)
+    return rot(nvec, -alpha)
+
+
+def rangle(U: NDArray) -> float:
+    """
+    Rotation angle for the input SU(2) operator around some unit vector n.
+    This angle so calculated is between 0 and π such that the global phase takes care of the negative-trace.
+    :param U: SU(2) operator
+    :return: the rotation angle (alpha)
+    """
+    trace = np.trace(U)
+    if not np.isclose(np.imag(trace), 0):
+        gp = gphase(U)
+        trace = trace / gp
+    return 2 * np.arccos(np.real(trace) / 2)
+
+
 def raxis(U: NDArray) -> NDArray:
     """
     calculate the rotation axis of SU(2) operator around some unit vector n.
     :param U:
     :return: unit vector n
     """
+    U = U / gphase(U)
     angle = rangle(U)
     if np.isclose(angle, 0):
         return np.array([1, 0, 0])
-    phase = np.trace(U) / np.cos(angle / 2) / 2
-    V = 1j * (U / phase - np.cos(angle / 2) * np.eye(2)) / np.sin(angle / 2)
+    V = 1j * (U - np.cos(angle / 2) * np.eye(2)) / np.sin(angle / 2)
     assert np.isclose(np.trace(V), 0)
     assert np.isclose(np.imag(V[0, 0]), 0)
     x, y = np.real(V[1, 0]), np.imag(V[1, 0])
     z = np.real(V[0, 0])
     nvec = np.array([x, y, z])
-    assert np.isclose(np.linalg.norm(nvec), 1)
     return nvec
-
-
-def tsim(U, V):
-    """
-    Find the similarity transformation between two SU(2) operators, namely,
-    V = P @ U @ P†
-    :param U: SU(2) operator
-    :param V: SU(2) operator
-    :return: P such that V = P @ U @ P†
-    """
-    assert np.isclose(gphase(U), 1)
-    nu, nv = raxis(U), raxis(V)
-    nvec = np.cross(nv, nu)
-    nvec = nvec / np.linalg.norm(nvec)
-
-    eigU, simU = eig(U)
-    eigV, simV = eig(V)
-    if np.allclose(eigU, eigV[::-1]):
-        simV = UnivGate.X.matrix @ simV @ UnivGate.X.matrix
-    else:
-        assert np.allclose(eigU, eigV)
-    return (simU) @ herm(simV)
 
 
 def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
@@ -171,5 +166,4 @@ def gphase(u: NDArray):
     det = np.linalg.det(u)
     # unit-magnitude complex number (e^{iϕ})
     phase = np.sqrt(det, dtype=np.complex128)
-    sign = np.sign(np.trace(u)) or 1
-    return sign * phase
+    return phase
