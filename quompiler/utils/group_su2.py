@@ -59,20 +59,15 @@ def tsim(U, V):
         The function assumes U and V are both unitary, but does not check or enforce this.
         The result may not be valid if U and V are not similar (i.e., do not have the same eigenvalues).
     """
-    uphase, uval, uvec = eigen_decompose(U)
-    vphase, vval, vvec = eigen_decompose(V)
-    X = UnivGate.X.matrix
+    uval, uvec = eigen_decompose(U)
+    vval, vvec = eigen_decompose(V)
     if np.allclose(uval, vval[::-1]):
         # swap the eigen values along with the eigenvectors
-        vvec = X @ vvec @ X
-    P = vvec @ herm(uvec)
-    invP = X @ P
-    if np.allclose(V, invP @ U @ herm(invP)):
-        return invP
-    return P
+        return vvec @ UnivGate.X.matrix @ herm(uvec)
+    return vvec @ herm(uvec)
 
 
-def eigen_decompose(U: NDArray) -> tuple[np.complex128, NDArray, NDArray]:
+def eigen_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
     """
     Compute the eigenvalues and eigenvectors of a unitary matrix such that U V = V D
     :param U:
@@ -80,7 +75,7 @@ def eigen_decompose(U: NDArray) -> tuple[np.complex128, NDArray, NDArray]:
     """
     phase = gphase(U)
     val, vec = eig(U / phase)
-    return phase, val, vec
+    return phase * val, vec
 
 
 def rangle(U: NDArray) -> float:
