@@ -299,10 +299,10 @@ def test_eigen_decompose_recoverable(seed: int):
     np.random.seed(seed)
 
     u = random_unitary(2)
-    eigenval, eigenvec = eigen_decompose(u)
+    phase, eigenval, eigenvec = eigen_decompose(u)
     print(formatter.tostr(eigenval))
     assert eigenval.shape == (2,)
-    actual = eigenvec @ np.diag(eigenval) @ herm(eigenvec)
+    actual = eigenvec @ np.diag(eigenval) @ herm(eigenvec) * phase
     assert np.allclose(actual, u)
 
 
@@ -317,11 +317,11 @@ def test_eigen_decompose_tsim_verify(seed: int):
     vvec = np.random.standard_normal(3)
     u = rot(uvec, angle)
     v = rot(vvec, angle)
-    uval, uvec = eigen_decompose(u)
-    vval, vvec = eigen_decompose(v)
+    uphase, uval, uvec = eigen_decompose(u)
+    vphase, vval, vvec = eigen_decompose(v)
     assert np.allclose(uval, vval) or np.allclose(uval, vval[::-1])
-    assert np.allclose(np.diag(uval), herm(uvec) @ u @ uvec)
-    assert np.allclose(np.diag(vval), herm(vvec) @ v @ vvec)
+    assert np.allclose(np.diag(uval) * uphase, herm(uvec) @ u @ uvec)
+    assert np.allclose(np.diag(vval) * vphase, herm(vvec) @ v @ vvec)
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
