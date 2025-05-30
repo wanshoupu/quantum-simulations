@@ -162,7 +162,7 @@ def test_dist_zero(seed):
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
-def test_dist_negation_max_dist(seed: int):
+def test_dist_negation_zero_distance(seed: int):
     """
     The maximum distance between two unitary matrices is 2 which can only be achieved between u and -u.
     """
@@ -171,7 +171,7 @@ def test_dist_negation_max_dist(seed: int):
 
     u = random_unitary(2)
     d = dist(u, -u)
-    assert np.isclose(d, 4)
+    assert np.isclose(d, 0)
 
 
 @pytest.mark.parametrize("u,v,angle", [
@@ -199,6 +199,13 @@ def test_dist_std_gates(u, v, angle):
     actual = dist(u.matrix, v.matrix)
     expected = 2 * (1 - np.cos(angle / 2))
     assert np.isclose(actual, expected, rtol=1.e-4, atol=1.e-7), f'{actual} != {expected}'
+
+
+def test_dist_phase_agnostic():
+    u = random_unitary(2)
+    v = random_unitary(2)
+    w = random_phase() * v
+    assert np.isclose(dist(u, v), dist(u, w))
 
 
 @pytest.mark.parametrize("gate,expected", [

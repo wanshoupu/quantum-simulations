@@ -50,8 +50,8 @@ class SKDecomposer:
         :param n: recursion depth.
         :return: a Bytecode tree whose leaf nodes are universal gates.
         """
-        if n == 0:
-            node, _ = self.su2net.lookup(U)
+        node, error = self.su2net.lookup(U)
+        if n == 0 or np.isclose(error, 0):
             return node
         node = self._sk_decompose(U, n - 1)
         V, W = gc_decompose(U @ herm(node.data))
