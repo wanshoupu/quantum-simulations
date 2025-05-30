@@ -77,7 +77,7 @@ def test_lookup_random_su2(seed: int):
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
-def test_lookup_random_u2(seed: int):
+def test_lookup_random_unitary(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     su2net = SU2Net()
@@ -91,6 +91,24 @@ def test_lookup_random_u2(seed: int):
     gp = gphase(v @ herm(u))
     print(f'gphase error: {gp}')
     assert error < 2 * su2net.error
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
+def test_lookup_verify_unitary(seed: int):
+    """
+    Verify that the result of lookup is still unitary with unit absolute det
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    su2net = SU2Net(.4)
+    u = random_unitary(2)
+    node, lookup_error = su2net.lookup(u)
+    det = np.abs(np.linalg.det(node.data))
+    # print(f'det: {det}')
+    assert np.isclose(det, 1)
+    unitarity = np.sqrt(np.sum((node.data @ herm(node.data) - np.eye(2)) ** 2))
+    print(f'unitarity error: {unitarity}')
+    assert np.isclose(unitarity, 0)
 
 
 def test_cliffordt_seqs():

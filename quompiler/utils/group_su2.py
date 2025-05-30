@@ -6,7 +6,7 @@ from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm
 
 
-def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray, np.complex128]:
+def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
     """
     Group commutator decomposition. This is exact decomposition with no approximation.
     Given a SU(2) operator, representing rotation R(n, φ), we decompose it into ±V @ W @ V† @ W†,
@@ -15,8 +15,6 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray, np.complex128]:
     :param U: input 2x2 unitary matrix.
     :return: tuple(V, W, sign) such that U = V @ W @ V† @ W† * sign
     """
-    phase = gphase(U)
-    U = U / phase
     alpha = rangle(U)
     beta = 2 * np.arcsin(np.sqrt(np.cos(alpha / 4)))
     # assert np.isclose(np.sin(alpha / 2), 2 * np.sin(beta / 2) ** 2 * np.sqrt(1 - np.sin(beta / 2) ** 4))
@@ -28,8 +26,7 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray, np.complex128]:
     P = tsim(U2, U)
     WA = P @ W @ herm(P)
     VA = P @ V @ herm(P)
-    sign = 1 if np.trace(U) < 0 else -1
-    return VA, WA, sign * phase
+    return VA, WA
 
 
 def tsim(U, V):
@@ -149,16 +146,9 @@ def dist(u: NDArray, v: NDArray) -> float:
     """
     assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
     delta = u @ herm(v)
-    # assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
-    phase = np.sqrt(np.linalg.det(delta), dtype=np.complex128)
-    ct = np.trace(delta) / phase
-    # assert np.isclose(ct.imag, 0)
-
-    # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
-    result = 2 * np.sqrt(.5 - ct / 4, dtype=np.complex128)
-
-    # sometimes the result is slightly complex. We take the abs
-    return np.abs(result)
+    angle = rangle(delta)
+    # Take the abs because sometimes the result is slightly complex.
+    return 2 * np.abs(np.sin(angle / 4))
 
 
 def gphase(u: NDArray) -> np.complex128:

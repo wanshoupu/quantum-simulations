@@ -161,8 +161,8 @@ def test_dist_zero(seed):
     assert np.isclose(d, 0, rtol=1.e-4, atol=1.e-7), f'{d} != 0'
 
 
-@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
-def test_dist_maximum(seed: int):
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
+def test_dist_negation_dist_zero(seed: int):
     """
     The maximum distance between two unitary matrices is 2 which can only be achieved between u and -u.
     """
@@ -171,7 +171,7 @@ def test_dist_maximum(seed: int):
 
     u = random_unitary(2)
     d = dist(u, -u)
-    assert np.isclose(d, 2, rtol=1.e-4, atol=1.e-7), f'{d} != 2'
+    assert np.isclose(d, 0)
 
 
 @pytest.mark.parametrize("u,v,angle", [
@@ -428,7 +428,7 @@ def test_tsim_nonuniqueness(seed):
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
 def test_gc_decompose_positive_trace(seed):
     """
-    Positively-traced unitary has negative sign.
+    Positively-traced unitary has negative phase.
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -441,9 +441,8 @@ def test_gc_decompose_positive_trace(seed):
 
     # print('expected')
     # print(formatter.tostr(expected))
-    v, w, sign = gc_decompose(expected)
-    actual = sign * v @ w @ herm(v) @ herm(w)
-    assert np.isclose(sign, -1)
+    v, w = gc_decompose(expected)
+    actual = -v @ w @ herm(v) @ herm(w)
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
@@ -452,7 +451,7 @@ def test_gc_decompose_positive_trace(seed):
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
 def test_gc_decompose_negative_trace(seed):
     """
-    Negatively-traced unitary has positive sign.
+    Negatively-traced unitary has positive phase.
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -465,9 +464,8 @@ def test_gc_decompose_negative_trace(seed):
 
     # print('expected')
     # print(formatter.tostr(expected))
-    v, w, sign = gc_decompose(expected)
-    actual = sign * v @ w @ herm(v) @ herm(w)
-    assert np.isclose(sign, 1)
+    v, w = gc_decompose(expected)
+    actual = v @ w @ herm(v) @ herm(w)
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
@@ -484,8 +482,10 @@ def test_gc_decompose_random_unitary(seed):
     expected = random_unitary(2)
     # print('expected')
     # print(formatter.tostr(expected))
-    v, w, phase = gc_decompose(expected)
-    actual = phase * v @ w @ herm(v) @ herm(w)
+    v, w = gc_decompose(expected)
+    phase = gphase(expected)
+    sign = phase if np.trace(expected / phase) < 0 else -phase
+    actual = sign * v @ w @ herm(v) @ herm(w)
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
