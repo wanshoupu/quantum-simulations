@@ -25,21 +25,25 @@ class SKDecomposer:
 
     def approx(self, mat: NDArray) -> list[UnivGate]:
         """
-        This is an implementation of an algorithm based on the Solovay-Kitaev theorem (SK).
+        Approximate a 2×2 unitary matrix using a sequence of universal quantum gates,
+        based on the Solovay-Kitaev (SK) theorem.
 
-        Approximate a 2x2 unitary matrix with the product of UnivGate matrice, particularly H and X.
-        :param mat: input 2x2 unitary matrix.
-        :return: a list of NDArrays whose product is an approximation to the input within the specified tolerance.
+        The algorithm constructs a product of UnivGate matrices (e.g., H, X, T) that approximates
+        the input matrix to within a specified tolerance. The approximation is up to a global phase,
+        which is physically unobservable and thus ignored.
+
+        Parameters:
+            mat (NDArray): A 2×2 unitary matrix to approximate.
+
+        Returns:
+            list[UnivGate]: A list of gates whose product approximates the input unitary matrix.
         """
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
         assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
-        phase = gphase(mat)
-        sk_node = self._sk_decompose(mat / phase, self.depth)
-        if not np.isclose(phase, 1):
-            phase_node = phase * UnivGate.I.matrix
+        sk_node = self._sk_decompose(mat, self.depth)
         return [node.data for node in BytecodeIter(sk_node) if node.is_leaf()]
 
-    def _sk_decompose(self, U: NDArray, n: int) -> tuple[Bytecode, complex]:
+    def _sk_decompose(self, U: NDArray, n: int) -> Bytecode:
         """
         This implements the main Solovay-Kitaev decomposition algorithm.
         :param U: input 2x2 unitary matrix.
@@ -48,12 +52,11 @@ class SKDecomposer:
         """
         if n == 0:
             node, _ = self.su2net.lookup(U)
-            return node, 1
-        node, _ = self._sk_decompose(U, n - 1)
-        V, W, gc_phase = gc_decompose(U @ herm(node.data))
-        vnode, vphase = self._sk_decompose(V, n - 1)
-        wnode, wphase = self._sk_decompose(W, n - 1)
-        phase = gc_phase * vphase * wphase
-        data = phase * vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
+            return node
+        node = self._sk_decompose(U, n - 1)
+        V, W = gc_decompose(U @ herm(node.data))
+        vnode = self._sk_decompose(V, n - 1)
+        wnode = self._sk_decompose(W, n - 1)
+        data = vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
         children = [vnode, wnode, vnode.herm(), wnode.herm(), node]
-        return Bytecode(data, children=children), phase
+        return Bytecode(data, children=children)

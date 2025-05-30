@@ -1,9 +1,12 @@
 from functools import reduce
 
 import numpy as np
+import pytest
 
 from quompiler.construct.solovay import SKDecomposer
+from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.group_su2 import dist
 from quompiler.utils.mfun import herm
 from quompiler.utils.mgen import random_su2
 
@@ -26,6 +29,30 @@ def test_approx():
     gates = sk.approx(original)
     assert np.log(len(gates)).astype(int) == 10
     approx = reduce(lambda x, y: x @ y, gates)
+    error = dist(original, approx)
+    print(f'\nGate {original} decomposed into {len(gates)} gates, with error {error}.')
     print(f'approx: \n{formatter.tostr(approx)}')
-    error = original @ herm(approx)
-    print(f'error: \n{formatter.tostr(error)}')
+
+
+@pytest.mark.parametrize("gate", [
+    # UnivGate.I,
+    # UnivGate.X,
+    # UnivGate.Y,
+    # UnivGate.Z,
+    UnivGate.H,
+    # UnivGate.S,
+    # UnivGate.T,
+    # UnivGate.SD,
+    # UnivGate.TD,
+])
+def test_approx_std(gate):
+    rtol = 1.e-2
+    atol = 1.e-3
+    sk = SKDecomposer(rtol=rtol, atol=atol)
+    original = np.array(gate)
+    gates = sk.approx(original)
+    approx = reduce(lambda x, y: x @ y, gates)
+    error = dist(original, approx)
+    print(f'\nGate {gate} decomposed into {len(gates)} gates, with error {error}.')
+    print(f'approx: \n{formatter.tostr(approx)}')
+    # assert np.isclose(error, 0)
