@@ -6,7 +6,7 @@ from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm
 
 
-def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
+def gc_decompose(U: NDArray) -> tuple[float, NDArray, NDArray]:
     """
     Group commutator decomposition. This is exact decomposition with no approximation.
     Given a SU(2) operator, representing rotation R(n, φ), we decompose it into ±V @ W @ V† @ W†,
@@ -22,23 +22,15 @@ def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray]:
 
     W = UnivGate.X.rotation(beta)
     V = UnivGate.Y.rotation(beta)
-    U2 = -V @ W @ herm(V) @ herm(W)
+    U2 = V @ W @ herm(V) @ herm(W)
 
     assert np.isclose(rangle(U2), alpha)
 
-    P = tsim(U, U2)
+    P = tsim(U2, U)
     WA = P @ W @ herm(P)
     VA = P @ V @ herm(P)
-
-    UP = -VA @ WA @ herm(VA) @ herm(WA)
-    if not np.allclose(UP, U):
-        print()
-        print(f'{alpha}, {beta}')
-        print()
-        print(f'{UP}\n{U}')
-        # assert np.allclose(UP, U), f'\n{UP}\n!=\n{U}'
-
-    return VA, WA
+    sign = 1 if np.trace(U) < 0 else -1
+    return sign, VA, WA
 
 
 def tsim(U, V):
@@ -181,5 +173,5 @@ def gphase(u: NDArray) -> np.complex128:
     det = np.linalg.det(u)
     # unit-magnitude complex number (e^{iϕ})
     phase = np.sqrt(det, dtype=np.complex128)
-    sign = np.sign(np.trace(u)) or 1
+    sign = -1 if np.trace(u) < 0 else 1
     return sign * phase

@@ -48,7 +48,7 @@ class SKDecomposer:
         if n == 0:
             return self.su2net.lookup(U)
         node = self._sk_decompose(U, n - 1)
-        V, W, sign = gc_decompose(U @ herm(node.data))
+        sign, V, W = gc_decompose(U @ herm(node.data))
         vnode = self._sk_decompose(V, n - 1)
         wnode = self._sk_decompose(W, n - 1)
         data = sign * vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data

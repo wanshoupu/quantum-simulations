@@ -394,7 +394,9 @@ def test_tsim_nonuniqueness(seed):
     np.random.seed(seed)
 
     """
-    Similarity transformation are not unique. p @ u @ p† = q @ u @ q† does not necessarily mean p = q
+    Similarity transformation are not unique. p @ u @ p† = q @ u @ q† does not necessarily mean p = q.
+    In fact, suppose u is a rotation about an axis n. For any rotation, r, about the same axis, let q = p @ r.
+    Then p @ u @ p† = q @ u @ q†.
     """
 
     u = random_unitary(2)
@@ -416,3 +418,50 @@ def test_tsim_nonuniqueness(seed):
 
     assert not np.allclose(p, q)
 
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_gc_decompose_positive_trace(seed):
+    """
+    Positively-traced unitary has negative sign.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+
+    expected = random_su2()
+    expected = expected / gphase(expected)
+    assert np.isclose(np.linalg.det(expected), 1)
+    assert np.isclose(gphase(expected), 1)
+    assert np.trace(expected) > 0
+
+    # print('expected')
+    # print(formatter.tostr(expected))
+    sign, v, w = gc_decompose(expected)
+    actual = sign * v @ w @ herm(v) @ herm(w)
+    assert sign == -1
+    # print('actual')
+    # print(formatter.tostr(actual))
+    assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
+def test_gc_decompose_negative_trace(seed):
+    """
+    Negatively-traced unitary has positive sign.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+
+    expected = random_su2()
+    expected = -expected / gphase(expected)
+    assert np.isclose(np.linalg.det(expected), 1)
+    assert np.isclose(gphase(expected), -1)
+    assert np.trace(expected) < 0
+
+    # print('expected')
+    # print(formatter.tostr(expected))
+    sign, v, w = gc_decompose(expected)
+    actual = sign * v @ w @ herm(v) @ herm(w)
+    assert sign == 1
+    # print('actual')
+    # print(formatter.tostr(actual))
+    assert np.allclose(actual, expected)
