@@ -11,7 +11,7 @@
     "ancilla_offset": 100
   },
   "target": "CIRQ",
-  "emit": "CTRL_PRUNED",
+  "emit": "UNIV_GATE",
   "rtol": 1e-6,
   "atol": 1e-9
 }
