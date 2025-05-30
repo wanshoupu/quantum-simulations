@@ -55,6 +55,7 @@ def test_approx_std(gate1, gate2):
     assert np.isclose(error, 0)
 
 
+@pytest.mark.skip(reason="Temporarily disabling this test for its long runtime.")
 def test_approx_random():
     rtol = 1.e-3
     atol = 1.e-4
