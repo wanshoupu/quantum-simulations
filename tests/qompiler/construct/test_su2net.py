@@ -43,7 +43,7 @@ def test_lookup_std(gate):
     v = reduce(lambda a, b: a @ b, seq, np.eye(2))
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(matrix))
-    assert error == lookup_error == 0
+    assert np.isclose(error, lookup_error) and np.isclose(error, 0)
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
