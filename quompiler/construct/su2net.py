@@ -6,7 +6,6 @@ from sklearn.neighbors import NearestNeighbors
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.types import UnivGate
-from quompiler.utils.mfun import herm
 from quompiler.utils.group_su2 import dist
 
 
@@ -25,7 +24,7 @@ class SU2Net:
         self._seqs = None
         self.constructed = False
 
-    def lookup(self, mat: NDArray) -> Bytecode:
+    def lookup(self, mat: NDArray) -> tuple[Bytecode, float]:
         """
         This is the nearest neighbor lookup function for the input matrix.
         :param mat: input 2x2 unitary matrix.
@@ -48,7 +47,7 @@ class SU2Net:
         if self.error < error:
             warning(f'Search for {mat} did not converge to within the error range: {self.error}.')
         approx_U, approx_seq = self._seqs[index]
-        return Bytecode(approx_U, [Bytecode(g) for g in approx_seq])
+        return Bytecode(approx_U, [Bytecode(g) for g in approx_seq]), error
 
 
 def cliffordt_seqs(depth: int) -> list[tuple]:

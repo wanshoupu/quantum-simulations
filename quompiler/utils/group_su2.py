@@ -6,7 +6,7 @@ from quompiler.construct.types import UnivGate
 from quompiler.utils.mfun import herm
 
 
-def gc_decompose(U: NDArray) -> tuple[float, NDArray, NDArray]:
+def gc_decompose(U: NDArray) -> tuple[NDArray, NDArray, np.complex128]:
     """
     Group commutator decomposition. This is exact decomposition with no approximation.
     Given a SU(2) operator, representing rotation R(n, φ), we decompose it into ±V @ W @ V† @ W†,
@@ -15,6 +15,8 @@ def gc_decompose(U: NDArray) -> tuple[float, NDArray, NDArray]:
     :param U: input 2x2 unitary matrix.
     :return: tuple(V, W, sign) such that U = V @ W @ V† @ W† * sign
     """
+    phase = gphase(U)
+    U = U / phase
     alpha = rangle(U)
     beta = 2 * np.arcsin(np.sqrt(np.cos(alpha / 4)))
     # assert np.isclose(np.sin(alpha / 2), 2 * np.sin(beta / 2) ** 2 * np.sqrt(1 - np.sin(beta / 2) ** 4))
@@ -27,7 +29,7 @@ def gc_decompose(U: NDArray) -> tuple[float, NDArray, NDArray]:
     WA = P @ W @ herm(P)
     VA = P @ V @ herm(P)
     sign = 1 if np.trace(U) < 0 else -1
-    return sign, VA, WA
+    return VA, WA, sign * phase
 
 
 def tsim(U, V):
@@ -75,9 +77,9 @@ def rangle(U: NDArray) -> float:
     :param U: SU(2) operator
     :return: the rotation angle (alpha)
     """
-    gp = gphase(U)
-    trace = np.trace(U)
-    return 2 * np.arccos(np.real(trace / gp) / 2)
+    trace = np.trace(U) / gphase(U)
+    arg = np.real(trace) / 2
+    return 2 * np.arccos(np.clip(arg, -1.0, 1.0))
 
 
 def raxis(U: NDArray) -> NDArray:

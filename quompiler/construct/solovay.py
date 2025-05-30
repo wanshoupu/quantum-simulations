@@ -33,26 +33,27 @@ class SKDecomposer:
         """
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
         assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
-        assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
-
-        sk_node = self._sk_decompose(mat, self.depth)
+        phase = gphase(mat)
+        sk_node = self._sk_decompose(mat / phase, self.depth)
+        if not np.isclose(phase, 1):
+            phase_node = phase * UnivGate.I.matrix
         return [node.data for node in BytecodeIter(sk_node) if node.is_leaf()]
 
-    def _sk_decompose(self, U: NDArray, n: int) -> Bytecode:
+    def _sk_decompose(self, U: NDArray, n: int) -> tuple[Bytecode, complex]:
         """
         This implements the main Solovay-Kitaev decomposition algorithm.
         :param U: input 2x2 unitary matrix.
         :param n: recursion depth.
-        :return: a tuple of the approximation of the input matrix and the decomposed component universal gates.
+        :return: a Bytecode tree whose leaf nodes are universal gates.
         """
         if n == 0:
-            return self.su2net.lookup(U)
-        node = self._sk_decompose(U, n - 1)
-        sign, V, W = gc_decompose(U @ herm(node.data))
-        vnode = self._sk_decompose(V, n - 1)
-        wnode = self._sk_decompose(W, n - 1)
-        data = sign * vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
+            node, _ = self.su2net.lookup(U)
+            return node, 1
+        node, _ = self._sk_decompose(U, n - 1)
+        V, W, gc_phase = gc_decompose(U @ herm(node.data))
+        vnode, vphase = self._sk_decompose(V, n - 1)
+        wnode, wphase = self._sk_decompose(W, n - 1)
+        phase = gc_phase * vphase * wphase
+        data = phase * vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
         children = [vnode, wnode, vnode.herm(), wnode.herm(), node]
-        if sign == -1:
-            children.append(Bytecode(-UnivGate.I.matrix))
-        return Bytecode(data, children=children)
+        return Bytecode(data, children=children), phase

@@ -105,6 +105,12 @@ def test_rangle_random_unitary(seed: int):
     assert 0 <= angle <= np.pi
 
 
+def test_rangle_slightly_gt_1():
+    u = np.array([[(1.1588050842982336e-09 - 1j), (-7.003656213895806e-19 - 2.6411242922624396e-08j)], [(7.655884777871032e-18 - 2.8728853450477398e-08j), (-1.158805074151697e-09 - 1j)]])
+    actual = rangle(u)
+    assert np.isclose(actual, 0), f'{actual} != 0'
+
+
 def test_rangle_eq_0():
     gate = -UnivGate.I.matrix
     actual = rangle(gate)
@@ -435,9 +441,9 @@ def test_gc_decompose_positive_trace(seed):
 
     # print('expected')
     # print(formatter.tostr(expected))
-    sign, v, w = gc_decompose(expected)
+    v, w, sign = gc_decompose(expected)
     actual = sign * v @ w @ herm(v) @ herm(w)
-    assert sign == -1
+    assert np.isclose(sign, -1)
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
@@ -459,9 +465,27 @@ def test_gc_decompose_negative_trace(seed):
 
     # print('expected')
     # print(formatter.tostr(expected))
-    sign, v, w = gc_decompose(expected)
+    v, w, sign = gc_decompose(expected)
     actual = sign * v @ w @ herm(v) @ herm(w)
-    assert sign == 1
+    assert np.isclose(sign, 1)
+    # print('actual')
+    # print(formatter.tostr(actual))
+    assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_gc_decompose_random_unitary(seed):
+    """
+    Positively-traced unitary has negative sign.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+
+    expected = random_unitary(2)
+    # print('expected')
+    # print(formatter.tostr(expected))
+    v, w, phase = gc_decompose(expected)
+    actual = phase * v @ w @ herm(v) @ herm(w)
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
