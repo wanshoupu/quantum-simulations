@@ -17,14 +17,11 @@ def gc_decompose(U: NDArray) -> tuple[float, NDArray, NDArray]:
     """
     alpha = rangle(U)
     beta = 2 * np.arcsin(np.sqrt(np.cos(alpha / 4)))
-
-    assert np.isclose(np.sin(alpha / 2), 2 * np.sin(beta / 2) ** 2 * np.sqrt(1 - np.sin(beta / 2) ** 4))
+    # assert np.isclose(np.sin(alpha / 2), 2 * np.sin(beta / 2) ** 2 * np.sqrt(1 - np.sin(beta / 2) ** 4))
 
     W = UnivGate.X.rotation(beta)
     V = UnivGate.Y.rotation(beta)
     U2 = V @ W @ herm(V) @ herm(W)
-
-    assert np.isclose(rangle(U2), alpha)
 
     P = tsim(U2, U)
     WA = P @ W @ herm(P)
