@@ -123,7 +123,7 @@ def test_rangle_sim(seed):
     np.random.seed(seed)
 
     angle = np.random.uniform(0, 2 * np.pi)
-    print(angle)
+    # print(angle)
 
     uvec = np.random.standard_normal(3)
     u = rot(uvec, angle) * random_phase()
@@ -368,4 +368,51 @@ def test_tsim_similarity_unitary(seed: int):
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, v)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_tsim_random_unitary_random_unitary(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    u = random_unitary(2)
+    p = random_unitary(2)
+    v = p @ u @ herm(p)
+
+    # execute
+    q = tsim(u, v)
+
+    actual = q @ u @ herm(q)
+    # print('actual')
+    # print(formatter.tostr(actual))
+    assert np.allclose(actual, v)
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_tsim_nonuniqueness(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    """
+    Similarity transformation are not unique. p @ u @ p† = q @ u @ q† does not necessarily mean p = q
+    """
+
+    u = random_unitary(2)
+    p = random_unitary(2)
+    # print('p')
+    # print(formatter.tostr(p))
+    v = p @ u @ herm(p)
+
+    # execute
+    q = tsim(u, v)
+    # print('q')
+    # print(formatter.tostr(q))
+
+    # verify
+    actual = q @ u @ herm(q)
+    assert np.allclose(actual, v)
+    # sim transformation is not unique
+    assert np.allclose(p @ u @ herm(p), q @ u @ herm(q))
+
+    assert not np.allclose(p, q)
 
