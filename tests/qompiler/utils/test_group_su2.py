@@ -164,7 +164,8 @@ def test_dist_zero(seed):
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
 def test_dist_negation_zero_distance(seed: int):
     """
-    The maximum distance between two unitary matrices is 2 which can only be achieved between u and -u.
+    Depending on the definition of distance function, the distance between two unitary matrices, u and -u, may be maximum or zero.
+    Because our definition is phase agnostic, so the distance of two additive inverse is zero.
     """
     random.seed(seed)
     np.random.seed(seed)
