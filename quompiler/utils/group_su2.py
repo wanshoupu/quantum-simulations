@@ -150,14 +150,9 @@ def dist(u: NDArray, v: NDArray) -> float:
     assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
     delta = u @ herm(v)
     # assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
-    phase = np.sqrt(np.linalg.det(delta), dtype=np.complex128)
-    ct = np.trace(delta) / phase
-    # assert np.isclose(ct.imag, 0)
-
-    # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
-    # result =  (1 - ct / 2)
-
+    ct = np.trace(delta) / gphase(delta)
     # sometimes the result is slightly complex. We take the real part
+    # assert np.isclose(ct.imag, 0)
     return 2 - np.real(ct)
 
 

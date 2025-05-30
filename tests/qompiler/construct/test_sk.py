@@ -25,26 +25,16 @@ def test_approx():
     atol = 1.e-3
     sk = SKDecomposer(rtol=rtol, atol=atol)
     original = random_su2()
-    print(f'original: \n{formatter.tostr(original)}')
+    # print(f'original: \n{formatter.tostr(original)}')
     gates = sk.approx(original)
     assert np.log(len(gates)).astype(int) == 10
     approx = reduce(lambda x, y: x @ y, gates)
     error = dist(original, approx)
-    print(f'\nGate {original} decomposed into {len(gates)} gates, with error {error}.')
-    print(f'approx: \n{formatter.tostr(approx)}')
+    # print(f'\nGate {original} decomposed into {len(gates)} gates, with error {error}.')
+    # print(f'approx: \n{formatter.tostr(approx)}')
 
 
-@pytest.mark.parametrize("gate", [
-    # UnivGate.I,
-    # UnivGate.X,
-    # UnivGate.Y,
-    # UnivGate.Z,
-    UnivGate.H,
-    # UnivGate.S,
-    # UnivGate.T,
-    # UnivGate.SD,
-    # UnivGate.TD,
-])
+@pytest.mark.parametrize('gate', list(UnivGate))
 def test_approx_std(gate):
     rtol = 1.e-2
     atol = 1.e-3
