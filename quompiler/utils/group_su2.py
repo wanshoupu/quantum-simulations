@@ -140,15 +140,25 @@ def dist(u: NDArray, v: NDArray) -> float:
     1. calculate the product Δ = u @ v†;
     2. Model Δ as a rotation around certain axis and calculate the rotation angle θ ∈ [-π, π];
     3. D(u,v) = 2 abs(sin(θ/4)).
+
+    The canonical definition of distance is cumbersome in practice, so we simplified it for ease of calculation.
+    We adopted a simplified version, dist = 4 (sin(θ/4))^2.
     :param u: unitary matrix.
     :param v: another unitary matrix.
     :return: trace distance as defined.
     """
     assert u.shape == v.shape == (2, 2), "operators must have shape (2, 2)"
     delta = u @ herm(v)
-    angle = rangle(delta)
-    # Take the abs because sometimes the result is slightly complex.
-    return 2 * np.abs(np.sin(angle / 4))
+    # assert np.allclose(delta @ herm(delta), np.eye(2)), "matmul product must be unitary"
+    phase = np.sqrt(np.linalg.det(delta), dtype=np.complex128)
+    ct = np.trace(delta) / phase
+    # assert np.isclose(ct.imag, 0)
+
+    # sometimes the argument is slightly negative, so we cast as complex type before sqrt to prevent NAN.
+    # result =  (1 - ct / 2)
+
+    # sometimes the result is slightly complex. We take the real part
+    return 2 - np.real(ct)
 
 
 def gphase(u: NDArray) -> np.complex128:
