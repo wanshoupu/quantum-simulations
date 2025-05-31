@@ -2,11 +2,12 @@ from logging import warning
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.spatial import KDTree
 from sklearn.neighbors import NearestNeighbors
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import dist
+from quompiler.utils.group_su2 import dist, vec
 
 
 class SU2Net:
@@ -16,6 +17,7 @@ class SU2Net:
         A SU2 ε-net is a point cloud with distance between adjacent points no greater than `error`.
         This works for U2 just as well because the distance function is phase agnostic.
         It's organized in nary-tree similar to Geohash: the longer the sequence, the more precise it is.
+        Implementation uses KDTree with `group_su2.vec` as the vectorization method.
         :param error: optional, if provided, will be used as the error tolerance parameter.
         """
         self.error = error
@@ -34,16 +36,15 @@ class SU2Net:
             self.constructed = True
             seqs = cliffordt_seqs(self.depth)
             self._seqs = seqs
-            self._root = NearestNeighbors(n_neighbors=1, algorithm='brute', metric=lambda k1, k2: dist(key2u(k1), key2u(k2)))
-            self._root.fit(np.array([u2key(u) for u, _ in self._seqs]))
+            self._root = KDTree(np.array([vec(u) for u, _ in self._seqs]))
 
         # only assert these when debugging and skip when running in optimized mode (python -O ...)
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
         # assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
         # assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
-        key = u2key(mat)
-        distances, indices = self._root.kneighbors([key], n_neighbors=1)
-        error, index = distances[0][0], indices[0][0]
+        key = vec(mat)
+        distances, indices = self._root.query([key], k=1)
+        error, index = distances[0], indices[0]
         if self.error < error:
             warning(f'Search for {mat} did not converge to within the error range: {self.error}.')
         approx_U, approx_seq = self._seqs[index]
@@ -72,12 +73,3 @@ def cliffordt_seqs(depth: int) -> list[tuple]:
             pairs.append((mat @ c, tuple(new_seq)))
             stack.append((mat @ c, new_seq))
     return pairs
-
-
-def u2key(u):
-    return u[0, 0].real, u[0, 0].imag, u[0, 1].real, u[0, 1].imag, u[1, 0].real, u[1, 0].imag, u[1, 1].real, u[1, 1].imag
-
-
-def key2u(key):
-    return np.array([[complex(key[0], key[1]), complex(key[2], key[3])],
-                     [complex(key[4], key[5]), complex(key[6], key[7])]])

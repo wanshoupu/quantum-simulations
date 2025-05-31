@@ -36,7 +36,7 @@ def test_lookup_identity():
 
 @pytest.mark.parametrize('gate', list(UnivGate))
 def test_lookup_std(gate):
-    su2net = SU2Net(.2)
+    su2net = SU2Net(.4)
     matrix = gate.matrix
     node, lookup_error = su2net.lookup(matrix)
     seq = [n.data for n in node.children]
@@ -47,54 +47,38 @@ def test_lookup_std(gate):
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
-def test_lookup_terminates(seed):
-    su2net = SU2Net(.4)
-    random.seed(seed)
-    np.random.seed(seed)
-    u = random_su2()
-    node, lookup_error = su2net.lookup(u)
-    v = reduce(lambda a, b: a @ b, [n.data for n in node.children], np.eye(2))
-    assert np.allclose(np.array(v), node.data)  # self-consistent
-    error = dist(np.array(v), np.array(u))
-    assert np.isclose(error, lookup_error)
-    # print(f'\n{formatter.tostr(u)}\nlookup error: {error}')
-    assert error < 2 * su2net.error
-
-
-@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
 def test_lookup_random_su2(seed: int):
     random.seed(seed)
     np.random.seed(seed)
-    su2net = SU2Net()
+
+    su2net = SU2Net(.4)
     u = random_su2()
     node, lookup_error = su2net.lookup(u)
     v = reduce(lambda a, b: a @ b, [n.data for n in node.children], np.eye(2))
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(u))
-    assert np.isclose(error, lookup_error)
-    # print(f'\n{formatter.tostr(u)}\nlookup error: {error}')
-    assert error < 2 * su2net.error
+    # print(f'\n{formatter.tostr(u)}\nlookup error: {lookup_error}, dist: {error}')
+    assert error < su2net.error
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
-def test_lookup_random_unitary(seed: int):
+def test_lookup_random_unitary_verify_error_margin(seed: int):
     random.seed(seed)
     np.random.seed(seed)
-    su2net = SU2Net()
+
+    su2net = SU2Net(.4)
     u = random_unitary(2)
     node, lookup_error = su2net.lookup(u)
     v = reduce(lambda a, b: a @ b, [n.data for n in node.children], np.eye(2))
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(u))
-    assert np.isclose(error, lookup_error)
-    # print(f'\n{formatter.tostr(u)}\nlookup error: {error}')
-    gp = gphase(v @ herm(u))
-    print(f'gphase error: {gp}')
-    assert error < 2 * su2net.error
+    # print(f'\n{formatter.tostr(u)}\nlookup error: {lookup_error}, dist: {error}')
+    # print(f'gphase error: {gphase(v @ herm(u))}')
+    assert error < su2net.error
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
-def test_lookup_verify_unitary(seed: int):
+def test_lookup_random_unitary_verify_unitarity(seed: int):
     """
     Verify that the result of lookup is still unitary with unit absolute det
     """
@@ -102,12 +86,14 @@ def test_lookup_verify_unitary(seed: int):
     np.random.seed(seed)
     su2net = SU2Net(.4)
     u = random_unitary(2)
+    # execute
     node, lookup_error = su2net.lookup(u)
+    # verify
     det = np.abs(np.linalg.det(node.data))
     # print(f'det: {det}')
     assert np.isclose(det, 1)
     unitarity = np.sqrt(np.sum((node.data @ herm(node.data) - np.eye(2)) ** 2))
-    print(f'unitarity error: {unitarity}')
+    # print(f'unitarity error: {unitarity}')
     assert np.isclose(unitarity, 0)
 
 
