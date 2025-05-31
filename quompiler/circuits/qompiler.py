@@ -4,7 +4,7 @@ If needed, it may make distinctions between target qubits and ancilla qubits.
 """
 from typing import Union
 
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 
 from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.circuits.qdevice import QDevice
