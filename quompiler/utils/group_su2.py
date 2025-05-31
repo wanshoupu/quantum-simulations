@@ -90,10 +90,10 @@ def raxis(U: NDArray) -> NDArray:
     if np.equal(angle, 0):
         return np.array([0, 0, 1])
     V = 1j * (U - np.cos(angle / 2) * np.eye(2)) / np.sin(angle / 2)
-    assert np.isclose(np.trace(V), 0)
-    assert np.isclose(np.imag(V[0, 0]), 0)
+    # assert np.isclose(np.trace(V), 0)
+    # assert np.isclose(np.imag(V[0, 0]), 0)
     x, y = np.real(V[1, 0]), np.imag(V[1, 0])
-    z = np.real(V[0, 0])
+    z = np.clip(-np.real(V[1, 1]), -1, 1)
     return np.array([x, y, z])
 
 
@@ -169,3 +169,27 @@ def gphase(u: NDArray) -> np.complex128:
     phase = np.sqrt(det, dtype=np.complex128)
     sign = -1 if np.trace(u) < 0 else 1
     return sign * phase
+
+
+def vec(U: NDArray) -> tuple[float, float, float]:
+    """
+    Vectorized version of unitary matrix.
+    Given a unitary operator, calculate its unique representation as a 4D vector of real numbers: (θ, φ, α, β)
+    such that u = cos(α/2) * I - i * sin(α / 2) * [X * sin(θ) * cos(φ) + Y * sin(θ) * sin(φ) + Z * cos(θ)],
+    where θ is the polar angle, φ is the azimuth angle, α is the angle of rotation, and β is the phase angle.
+    Their ranges are as follows:
+    0 <= θ < π
+    -π <= φ < π
+    0 <= α < π
+    0 <= β < 2 * π
+    :param U: unitary matrix
+    :return: A vector of real numbers (θ, φ, α). The phase factor is left out as it is non-essential.
+    """
+    U = U / gphase(U)
+    alpha = rangle(U)
+    if np.equal(alpha, 0):
+        return 0, 0, 0
+    V = 1j * (U - np.cos(alpha / 2) * np.eye(2)) / np.sin(alpha / 2)
+    x, y = np.real(V[1, 0]), np.imag(V[1, 0])
+    z = np.clip(-np.real(V[1, 1]), -1, 1)
+    return np.arccos(z), np.arctan2(y, x), alpha

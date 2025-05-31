@@ -5,7 +5,7 @@ import pytest
 
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose
+from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose, vec
 from quompiler.utils.mfun import herm, allprop
 from quompiler.utils.mgen import random_unitary, random_su2, random_phase
 
@@ -497,3 +497,104 @@ def test_gc_decompose_random_unitary(seed):
     # print('actual')
     # print(formatter.tostr(actual))
     assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize("x,y,expected", [
+    # [-1j, 1j, 5 / 4 * np.pi],  # invalid input
+    [0, 0, 0],
+    [0, 1, np.pi / 2],
+    [1, 0, 0],
+    [1, 1, np.pi / 4],
+    [-1, 1, 3 / 4 * np.pi],
+    [1, -1, -np.pi / 4],
+    [-1, -1, -3 / 4 * np.pi],
+    [-10, 10, 3 / 4 * np.pi],
+])
+def test_tan2(x, y, expected):
+    angle = np.arctan2(y, x)
+    assert angle == expected
+
+
+@pytest.mark.parametrize("gate,expected", [
+    [UnivGate.I, (0, 0, 0)],
+    [UnivGate.X, (np.pi / 2, 0, np.pi)],
+    [UnivGate.Y, (np.pi / 2, np.pi / 2, np.pi)],
+    [UnivGate.Z, (0, 0, np.pi)],
+    [UnivGate.H, (np.pi / 4, 0, np.pi)],
+    [UnivGate.S, (0, 0, np.pi / 2)],
+    [UnivGate.T, (0, 0, np.pi / 4)],
+    [UnivGate.SD, (np.pi, 0, np.pi / 2)],
+    [UnivGate.TD, (np.pi, 0, np.pi / 4)],
+])
+def test_vec_std(gate, expected):
+    angle_vec = vec(gate.matrix)
+    assert np.allclose(angle_vec, expected), f"{angle_vec} != {expected}"
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_vec_negation(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    u = random_unitary(2)
+    v = -u
+
+    # execute
+    theta1, phi1, alpha1 = vec(u)
+    theta2, phi2, alpha2 = vec(v)
+
+    # verify
+    assert theta1 == theta2
+    assert phi1 == phi2
+    assert alpha1 == alpha2
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_vec_hermite(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    u = random_unitary(2)
+    v = herm(u)
+
+    # execute
+    theta1, phi1, alpha1 = vec(u)
+    theta2, phi2, alpha2 = vec(v)
+
+    # verify axis are opposite to one another
+    assert np.isclose(alpha1, alpha2)
+    assert np.isclose(theta1 + theta2, np.pi)
+    assert np.isclose(np.abs(phi1 - phi2), np.pi), f"{phi1 - phi2} != π"
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_vec_reproducibility(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    angle = np.random.uniform(0, np.pi)
+    uvec = np.random.standard_normal(3)
+    u = rot(uvec, angle) * random_phase()
+
+    # execute
+    theta, phi, alpha = vec(u)
+    # verify
+    assert np.isclose(alpha, angle)
+    assert np.isclose(theta, np.arccos(uvec[2] / np.linalg.norm(uvec)))
+    assert np.isclose(phi, np.arctan2(uvec[1], uvec[0]))
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_vec_random(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    u = random_unitary(2)
+    # execute
+    actual = vec(u)
+
+    # verify
+    assert np.isclose(actual[2], rangle(u))
+    x, y, z = raxis(u)
+    assert np.isclose(actual[0], np.arccos(z))
+    assert np.isclose(actual[1], np.arctan2(y, x))
