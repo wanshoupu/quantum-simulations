@@ -40,16 +40,61 @@ def test_euler_params_verify_identity_random(seed: int):
     assert np.allclose(actual, expected)
 
 
+@pytest.mark.parametrize("gate,phase,expected", [
+    [UnivGate.I, 1, 1],
+    [UnivGate.I, -1, -1],
+    [UnivGate.I, 1j, 1j],
+    [UnivGate.I, -1j, -1j],
+    [UnivGate.X, 1, 1j],
+    [UnivGate.X, -1, 1j],
+    [UnivGate.X, 1j, 1],
+    [UnivGate.X, -1j, 1],
+    [UnivGate.Y, 1, 1j],
+    [UnivGate.Y, -1, 1j],
+    [UnivGate.Y, 1j, 1],
+    [UnivGate.Y, -1j, 1],
+    [UnivGate.Z, 1, 1j],
+    [UnivGate.Z, -1, 1j],
+    [UnivGate.Z, 1j, 1],
+    [UnivGate.Z, -1j, 1],
+    [UnivGate.H, 1, 1j],
+    [UnivGate.H, -1, 1j],
+    [UnivGate.H, 1j, 1],
+    [UnivGate.H, -1j, 1],
+    [UnivGate.S, 1, np.exp(1j * np.pi / 4)],
+    [UnivGate.S, -1, -np.exp(1j * np.pi / 4)],
+    [UnivGate.S, 1j, 1j * np.exp(1j * np.pi / 4)],
+    [UnivGate.S, -1j, -1j * np.exp(1j * np.pi / 4)],
+    [UnivGate.T, 1, np.exp(1j * np.pi / 8)],
+    [UnivGate.T, -1, -np.exp(1j * np.pi / 8)],
+    [UnivGate.T, 1j, 1j * np.exp(1j * np.pi / 8)],
+    [UnivGate.T, -1j, -1j * np.exp(1j * np.pi / 8)],
+])
+def test_gphase_std(gate: UnivGate, phase, expected):
+    """
+    There is a special phase 1j on standard UnivGate that demands special attention.
+    Instead of being zero, the distance is 4.
+    """
+    u = np.array(gate) * phase
+    # execute
+    actual = gphase(u)
+    # verify
+    assert np.isclose(actual, expected), f"{actual} != {expected}"
+    assert np.isclose(np.linalg.det(u / gphase(u)), 1)
+    assert np.trace(u / actual) >= 0
+
+
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
-def test_gphase(seed: int):
+def test_gphase_random(seed: int):
     random.seed(seed)
     np.random.seed(seed)
 
     u = random_unitary(2)
-    gp = gphase(u)
-    v = np.conj(gp) * u
-    assert np.isclose(np.linalg.det(v), 1)
-    assert np.trace(v) >= 0
+    # execute
+    phase = gphase(u)
+    # verify
+    assert np.isclose(np.linalg.det(u / phase), 1)
+    assert np.trace(u / phase) >= 0
 
 
 @pytest.mark.parametrize("gate,expected", [
@@ -158,7 +203,8 @@ def test_dist_zero(seed):
 
     u = random_unitary(2)
     d = dist(u, u)
-    assert np.isclose(d, 0, rtol=1.e-4, atol=1.e-7), f'{d} != 0'
+    # print(f'distance: {d}')
+    assert np.isclose(d, 0), f'{d} != 0'
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
@@ -172,6 +218,7 @@ def test_dist_negation_zero_distance(seed: int):
 
     u = random_unitary(2)
     d = dist(u, -u)
+    # print(f'distance: {d}')
     assert np.isclose(d, 0)
 
 
@@ -184,7 +231,7 @@ def test_dist_negation_zero_distance(seed: int):
 def test_dist_real_unitary(u, v, angle):
     actual = dist(u.matrix, v.matrix)
     expected = 2 * (1 - np.cos(angle / 2))
-    assert np.isclose(actual, expected, rtol=1.e-4, atol=1.e-7), f'{actual} != {expected}'
+    assert np.isclose(actual, expected), f'{actual} != {expected}'
 
 
 @pytest.mark.parametrize("u,v,angle", [
@@ -199,10 +246,28 @@ def test_dist_real_unitary(u, v, angle):
 def test_dist_std_gates(u, v, angle):
     actual = dist(u.matrix, v.matrix)
     expected = 2 * (1 - np.cos(angle / 2))
-    assert np.isclose(actual, expected, rtol=1.e-4, atol=1.e-7), f'{actual} != {expected}'
+    assert np.isclose(actual, expected), f'{actual} != {expected}'
 
 
-def test_dist_phase_agnostic():
+@pytest.mark.parametrize("gate", list(UnivGate))
+def test_dist_std_special_phase(gate):
+    """
+    There is a special phase 1j on standard UnivGate that demands special attention.
+    Instead of being zero, the distance is 4.
+    """
+    gate = UnivGate.X
+    u = gate.matrix
+    assert dist(u, u) == 0
+    assert dist(u, 1j * u) == 0
+    assert dist(u, -1 * u) == 0
+    assert dist(u, -1j * u) == 0
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
+def test_dist_phase_agnostic(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
     u = random_unitary(2)
     v = random_unitary(2)
     w = random_phase() * v

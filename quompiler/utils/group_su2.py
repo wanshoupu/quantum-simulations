@@ -1,5 +1,5 @@
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 from scipy.linalg import eig
 
 from quompiler.construct.types import UnivGate
@@ -167,8 +167,9 @@ def gphase(u: NDArray) -> np.complex128:
     det = np.linalg.det(u)
     # unit-magnitude complex number (e^{iϕ})
     phase = np.sqrt(det, dtype=np.complex128)
-    sign = -1 if np.trace(u) < 0 else 1
-    return sign * phase
+    if np.trace(u / phase) < 0:
+        return -phase
+    return phase
 
 
 def vec(U: NDArray) -> tuple[float, float, float]:
