@@ -1,27 +1,36 @@
-from math import log
-
 import numpy as np
 from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode, BytecodeIter
 from quompiler.construct.su2net import SU2Net
 from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import gc_decompose, gphase
+from quompiler.utils.group_su2 import gc_decompose
 from quompiler.utils.mfun import herm
-
-MAX_ERROR = .5
 
 
 class SKDecomposer:
 
-    def __init__(self, rtol=1.e-3, atol=1.e-5):
+    def __init__(self, rtol=1, atol=1, lookup_error=.16):
         """
-        heuristic curve: based on the tolerance requirement, estimate the needed length of Solovay-Kitaev decomposition.
+        Solovay-Kitaev decomposition using a heuristic curve based on the specified tolerance.
+
+        Adjusts the recursion depth according to the relative and absolute error tolerances to ensure
+        that the decomposition scales its precision appropriately with the desired accuracy.
+
         :param rtol: optional, if provided, will be used as the relative tolerance parameter.
         :param atol: optional, if provided, will be used as the absolute tolerance parameter.
         """
-        self.depth = int(max([0, -log(rtol), -log(atol)]))
-        self.su2net = SU2Net(MAX_ERROR)
+        # controls how deep recursion goes
+        self.offset = 0
+        self.rtol = rtol
+        self.atol = atol
+        self.rtol_coef = 2
+        self.atol_coef = 2
+        self.depth = int(max([0, -np.log(rtol) * self.rtol_coef, -np.log(atol) * self.atol_coef])) + self.offset
+
+        # controls the initial lookup error margin needed by the SK algorithm.
+        self.lookup_error = lookup_error
+        self.su2net = SU2Net(self.lookup_error)
 
     def approx(self, mat: NDArray) -> list[UnivGate]:
         """
@@ -51,7 +60,7 @@ class SKDecomposer:
         :return: a Bytecode tree whose leaf nodes are universal gates.
         """
         node, error = self.su2net.lookup(U)
-        if n == 0 or np.isclose(error, 0):
+        if n == 0 or np.isclose(error, 0, atol=self.rtol, rtol=self.atol):
             return node
         node = self._sk_decompose(U, n - 1)
         V, W = gc_decompose(U @ herm(node.data))

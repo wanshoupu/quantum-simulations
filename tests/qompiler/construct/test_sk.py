@@ -1,3 +1,4 @@
+import random
 from functools import reduce
 
 import numpy as np
@@ -7,23 +8,25 @@ from quompiler.construct.solovay import SKDecomposer
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.group_su2 import dist
-from quompiler.utils.mgen import random_su2, cyclic_matrix
+from quompiler.utils.mgen import random_su2
 
-formatter = MatrixFormatter(precision=2)
+formatter = MatrixFormatter(precision=3)
 
 
-def test_init_verify_depth():
-    rtol = 1.e-3
-    atol = 1.e-5
+@pytest.mark.parametrize('rtol, atol, depth', [
+    [1.e3, 1.e5, 0],
+    [1.e-3, 1.e-5, 23],
+    [1.e-5, 1.e-8, 36],
+    [1, 1, 0],
+])
+def test_init_verify_depth(rtol, atol, depth):
     sk = SKDecomposer(rtol=rtol, atol=atol)
-    assert sk.depth == 11
+    assert sk.depth == depth
 
 
 @pytest.mark.parametrize('gate', list(UnivGate))
 def test_approx_std(gate):
-    rtol = 1.e-2
-    atol = 1.e-3
-    sk = SKDecomposer(rtol=rtol, atol=atol)
+    sk = SKDecomposer(rtol=1.e-2, atol=1.e-3, lookup_error=.2)
     original = np.array(gate)
     gates = sk.approx(original)
     approx = np.array(reduce(lambda x, y: x @ y, gates))
@@ -43,9 +46,7 @@ def test_approx_std(gate):
     [UnivGate.TD, UnivGate.H],
 ])
 def test_approx_std(gate1, gate2):
-    rtol = 1.e-2
-    atol = 1.e-3
-    sk = SKDecomposer(rtol=rtol, atol=atol)
+    sk = SKDecomposer(rtol=1.e-1, atol=1.e-2, lookup_error=.3)
     original = np.array(gate1 @ gate2)
     gates = sk.approx(original)
     approx = np.array(reduce(lambda x, y: x @ y, gates))
@@ -55,18 +56,35 @@ def test_approx_std(gate1, gate2):
     assert np.isclose(error, 0)
 
 
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
+def test_approx_random(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    sk = SKDecomposer(lookup_error=.3)
+    original = random_su2()
+    # print(f'original: \n{formatter.tostr(original)}')
+    gates = sk.approx(original)
+    # print(gates)
+    approx = np.array(reduce(lambda x, y: x @ y, gates))
+    error = dist(original, approx)
+    print(f'\nLookup_error={sk.lookup_error}: Gate {original} decomposed with error {formatter.nformat(error)}, into gates: {gates}')
+    print(f'approx:\n{formatter.tostr(approx)}')
+    assert np.isclose(error, 0, rtol=sk.rtol, atol=sk.atol)
+
+
 @pytest.mark.skip(reason="Temporarily disabling this test for its long runtime.")
-def test_approx_random():
-    rtol = 1.e-3
-    atol = 1.e-4
-    sk = SKDecomposer(rtol=rtol, atol=atol)
-    for _ in range(3):
-        print(f'Test round {_}')
-        original = random_su2()
-        # print(f'original: \n{formatter.tostr(original)}')
-        gates = sk.approx(original)
-        assert np.log(len(gates)).astype(int) == 10
-        approx = np.array(reduce(lambda x, y: x @ y, gates))
-        error = dist(original, approx)
-        print(f'\nGate {original} decomposed into {len(gates)} gates, with error {error}.')
-        print(f'approx: \n{formatter.tostr(approx)}')
+@pytest.mark.parametrize("atol", [1, 0.1, 1e-2])
+def test_approx_scalability(atol: float):
+    rtol = 1.e8
+
+    sk = SKDecomposer(rtol=rtol, atol=atol, lookup_error=.2)
+    original = random_su2()
+    # print(f'original: \n{formatter.tostr(original)}')
+    gates = sk.approx(original)
+    # print(gates)
+    approx = np.array(reduce(lambda x, y: x @ y, gates))
+    error = dist(original, approx)
+    met = 'met' if np.isclose(error, 0, atol=atol, rtol=rtol) else 'unmet'
+    print()
+    print(f'\natol={atol}: Gate {original} decomposed into {len(gates)} gates, with error {formatter.nformat(error)}. requirement {met}.')

@@ -1,17 +1,16 @@
+from abc import ABC
 from logging import warning
 
-import numpy as np
-from numpy.typing import NDArray
-from scipy.spatial import KDTree
+from numpy._typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import vec
+from quompiler.construct.nn.abstract import create_qnn
+from quompiler.construct.types import SU2NetType
 
 
-class SU2Net:
+class SU2Net(ABC):
 
-    def __init__(self, error):
+    def __init__(self, error, impl_type=SU2NetType.KDTreeNN):
         """
         A SU2 ε-net is a point cloud with distance between adjacent points no greater than `error`.
         This works for U2 just as well because the distance function is phase agnostic.
@@ -21,9 +20,9 @@ class SU2Net:
         """
         self.error = error
         self.length = int(1 / self.error) + 2
-        self._root = None
-        self._seqs = None
         self.constructed = False
+        self._type = impl_type
+        self._root = None
 
     def lookup(self, mat: NDArray) -> tuple[Bytecode, float]:
         """
@@ -33,41 +32,13 @@ class SU2Net:
         """
         if not self.constructed:
             self.constructed = True
-            self._seqs = cliffordt_seqs(self.length)
-            self._root = KDTree(np.array([vec(u) for u, _ in self._seqs]))
+            self._root = create_qnn(self.length, self._type)
 
         # only assert these when debugging and skip when running in optimized mode (python -O ...)
         assert mat.shape == (2, 2), f'Mat must be a single-qubit operator: mat.shape = (2, 2)'
         # assert np.allclose(mat @ herm(mat), np.eye(2)), f'mat must be unitary.'
         # assert np.isclose(np.linalg.det(mat), 1), f'Mat must have unit determinant.'
-        key = vec(mat)
-        distances, indices = self._root.query([key], k=1)
-        error, index = distances[0], indices[0]
+        node, error = self._root.lookup(mat)
         if self.error < error:
             warning(f'Search for {mat} did not converge to within the error range: {self.error}.')
-        approx_U, approx_seq = self._seqs[index]
-        return Bytecode(approx_U, [Bytecode(g) for g in approx_seq]), error
-
-
-def cliffordt_seqs(length: int) -> list[tuple]:
-    """
-    Grow the ε-bound tree rooted at `node` until the minimum distance between parent and child is less than `error`.
-    We grow the subtree by gc_decompose the node into its commutators
-    :param node: the root to begin with.
-    """
-    pairs = [(UnivGate.I.matrix, (UnivGate.I,))]  # start with identity
-    cliffordt = UnivGate.cliffordt()
-    cliffordt.remove(UnivGate.I)
-
-    stack = [(np.eye(2), list())]
-    while stack:
-        mat, seq = stack.pop(0)
-        if len(seq) == length:
-            continue
-        for c in cliffordt:
-            if seq and seq[-1] == c:  # avoid consecutive repeat
-                continue
-            new_seq = seq + [c]
-            pairs.append((mat @ c, tuple(new_seq)))
-            stack.append((mat @ c, new_seq))
-    return pairs
+        return node, error

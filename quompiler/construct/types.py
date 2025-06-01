@@ -148,3 +148,13 @@ class OptLevel(Enum):
     O1 = 'O1'  # mild optimization
     O2 = 'O2'  # advanced optimization
     O3 = 'O3'  # bold optimization
+
+
+class SU2NetType(Enum):
+    """
+    Implementations of SU2Net.
+    """
+    BruteNN = 1
+    AutoNN = 2
+    BallTreeNN = 3
+    KDTreeNN = 4
