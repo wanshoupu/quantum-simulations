@@ -40,6 +40,9 @@ class UnivGate(Enum):
     def __repr__(self):
         return self.label
 
+    def __lt__(self, other):
+        return self.label < other.label
+
     def __array__(self):
         return self.matrix
 

@@ -7,7 +7,7 @@ from scipy.stats import unitary_group
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
-from quompiler.construct.types import QType
+from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 
 
@@ -142,3 +142,15 @@ def random_state(dimension) -> NDArray:
 
 def random_phase():
     return np.exp(1j * np.random.uniform(0, 2 * np.pi))
+
+
+def random_gate_seq(length, pop: Sequence[UnivGate] = None):
+    if not pop:
+        pop = list(UnivGate)
+    else:
+        assert 1 < len(pop)
+    result = [random.choice(pop)]
+    for i in range(length):
+        c = random.choice(sorted(set(pop) - {result[-1]}))
+        result.append(c)
+    return result
