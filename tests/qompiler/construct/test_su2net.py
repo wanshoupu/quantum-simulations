@@ -54,7 +54,10 @@ def test_lookup_random_su2(seed: int):
     su2net = SU2Net(.4)
     u = random_su2()
     node, lookup_error = su2net.lookup(u)
-    v = reduce(lambda a, b: a @ b, [n.data for n in node.children], np.eye(2))
+    leaves = [n for n in node.children]
+    assert all(l.is_leaf() for l in leaves)
+    coms = [l.data for l in leaves]
+    v = reduce(lambda a, b: a @ b, coms, np.eye(2))
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(u))
     # print(f'\n{formatter.tostr(u)}\nlookup error: {lookup_error}, dist: {error}')
@@ -69,7 +72,8 @@ def test_lookup_random_unitary_verify_error_margin(seed: int):
     su2net = SU2Net(.4)
     u = random_unitary(2)
     node, lookup_error = su2net.lookup(u)
-    v = reduce(lambda a, b: a @ b, [n.data for n in node.children], np.eye(2))
+    coms = [n.data for n in node.children]
+    v = reduce(lambda a, b: a @ b, coms, np.eye(2))
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(u))
     # print(f'\n{formatter.tostr(u)}\nlookup error: {lookup_error}, dist: {error}')
@@ -84,6 +88,7 @@ def test_lookup_random_unitary_verify_unitarity(seed: int):
     """
     random.seed(seed)
     np.random.seed(seed)
+
     su2net = SU2Net(.4)
     u = random_unitary(2)
     # execute

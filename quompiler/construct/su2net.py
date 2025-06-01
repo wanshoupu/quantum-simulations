@@ -3,16 +3,15 @@ from logging import warning
 import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import KDTree
-from sklearn.neighbors import NearestNeighbors
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import dist, vec
+from quompiler.utils.group_su2 import vec
 
 
 class SU2Net:
 
-    def __init__(self, error=.2):
+    def __init__(self, error):
         """
         A SU2 ε-net is a point cloud with distance between adjacent points no greater than `error`.
         This works for U2 just as well because the distance function is phase agnostic.
@@ -21,7 +20,7 @@ class SU2Net:
         :param error: optional, if provided, will be used as the error tolerance parameter.
         """
         self.error = error
-        self.depth = int(1 / self.error) + 1
+        self.length = int(1 / self.error) + 2
         self._root = None
         self._seqs = None
         self.constructed = False
@@ -34,8 +33,7 @@ class SU2Net:
         """
         if not self.constructed:
             self.constructed = True
-            seqs = cliffordt_seqs(self.depth)
-            self._seqs = seqs
+            self._seqs = cliffordt_seqs(self.length)
             self._root = KDTree(np.array([vec(u) for u, _ in self._seqs]))
 
         # only assert these when debugging and skip when running in optimized mode (python -O ...)
@@ -51,7 +49,7 @@ class SU2Net:
         return Bytecode(approx_U, [Bytecode(g) for g in approx_seq]), error
 
 
-def cliffordt_seqs(depth: int) -> list[tuple]:
+def cliffordt_seqs(length: int) -> list[tuple]:
     """
     Grow the ε-bound tree rooted at `node` until the minimum distance between parent and child is less than `error`.
     We grow the subtree by gc_decompose the node into its commutators
@@ -64,7 +62,7 @@ def cliffordt_seqs(depth: int) -> list[tuple]:
     stack = [(np.eye(2), list())]
     while stack:
         mat, seq = stack.pop(0)
-        if len(seq) == depth:
+        if len(seq) == length:
             continue
         for c in cliffordt:
             if seq and seq[-1] == c:  # avoid consecutive repeat
