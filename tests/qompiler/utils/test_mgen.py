@@ -63,3 +63,16 @@ def test_random_control():
         control = random_control(n, size)
         assert len(control) == n, f'Length of control {len(control)} is not {n}'
         assert control.count(QType.TARGET) == size, f'Number of target bits, {control.count(QType.TARGET)}, does not equal to the expected {size}'
+
+
+def test_gen_gate_seq_default_set():
+    seq = random_gate_seq(15)
+    expected = [UnivGate[l] for l in 'X,H,TD,SD,T,S,I,S,Y,H,I,S,T,SD,H,T'.split(',')]
+    assert seq == expected
+
+
+def test_gen_gate_seq_custom_candidates():
+    cands = UnivGate.cliffordt()
+    seq = random_gate_seq(15, cands)
+    expected = [UnivGate[l] for l in 'X,H,X,S,I,S,I,X,H,X,TD,T,H,TD,SD,H'.split(',')]
+    assert seq == expected
