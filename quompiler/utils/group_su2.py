@@ -197,8 +197,25 @@ def vec(U: NDArray) -> tuple[float, float, float]:
         return 0, 0, 0
     V = 1j * (U - np.cos(alpha / 2) * np.eye(2)) / np.sin(alpha / 2)
     x, y = np.real(V[1, 0]), np.imag(V[1, 0])
-    z = np.clip(-np.real(V[1, 1]), -1, 1)
-    return np.arccos(z), np.arctan2(y, x), alpha
+    z = -np.real(V[1, 1])
+    return np.arccos(np.clip(z, -1, 1)), np.arctan2(y, x), alpha
+
+
+def vec4su2net(U: NDArray) -> tuple[float, float, float]:
+    """
+    This is a simplified version of `vec` whose sole purpose is for SU2Net. Difference between the two are the scaled theta and phi because
+    1. as alpha -> 0 or π, the significance of the spherical params decrease.
+    2. as theta -> 0 or π, the significance of the φ decreases.
+    """
+    U = U / gphase(U)
+    cosa = np.real(np.trace(U)) / 2
+    alpha = 2 * np.arccos(np.clip(cosa, -1.0, 1.0))
+    if np.isclose(cosa, 1):
+        return 0, 0, alpha
+    V = 1j * (U - np.cos(alpha / 2) * np.eye(2)) / np.sin(alpha / 2)
+    x, y = np.real(V[1, 0]), np.imag(V[1, 0])
+    z = -np.real(V[1, 1])
+    return cosa * np.arccos(np.clip(z, -1, 1)), cosa * z * np.arctan2(y, x), alpha
 
 
 def mod_dist(x, y):

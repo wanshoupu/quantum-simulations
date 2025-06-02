@@ -5,7 +5,7 @@ import pytest
 
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose, vec, mod_dist, rota
+from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose, vec, mod_dist, rota, vec4su2net
 from quompiler.utils.mfun import herm, allprop
 from quompiler.utils.mgen import random_unitary, random_su2, random_phase
 
@@ -679,9 +679,14 @@ def test_mod_dist(x, y, expected):
 ANGLE_RANGES = np.array([[0, np.pi], [-np.pi, np.pi], [0, np.pi]])
 
 
+@pytest.mark.skip(reason="These tests are for manual run only)")
 def test_boundary_vec():
-    # Specify resolution (number of steps per axis)
-    res = np.array([3, 3, 3])  # nx, ny, nz
+    """
+    This test studies the distortion in the vectorized unitary operation using the spherical coordinate + rotation angle (θ, φ, α)
+    when used as Euclidean coordinates such as KDTree or NearestNeighbors.
+    Out of this research, we came up with a scaled coordinate system, i.e., `vec4su2net` for unitary to reduce distortion under certain circumference.
+    """
+    res = np.array([5, 5, 5])  # nx, ny, nz
 
     # Generate linspaces per axis (excluding upper bound)
     axes = [
@@ -691,14 +696,17 @@ def test_boundary_vec():
     # Generate grid
     mesh = np.meshgrid(*axes, indexing='ij')  # shape: (3 arrays of shape [nx, ny, nz])
     grid = np.stack(mesh, axis=-1).reshape(-1, 3)  # (N, 3)
-    print(grid)
+    # print(grid)
     us = [rota(*v) for v in grid]
     # print(us)
     nvecs = [vec(u) for u in us]
-    comparison = np.hstack([grid, nvecs])
-    idx = np.argsort(comparison[:, ::-1])
+    netvecs = [vec4su2net(u) for u in us]
+    dists = [[dist(u, np.eye(2))] for u in us]
+    comparison = np.hstack([grid, nvecs, netvecs, dists])
+    idx = np.lexsort((comparison[:, -4], comparison[:, -3], comparison[:, -2], comparison[:, -1]))
     print()
-    print(comparison[idx])
+    np.set_printoptions(suppress=True, threshold=np.inf)
+    print(comparison[idx, :])
 
 
 def test_verify_eq():
