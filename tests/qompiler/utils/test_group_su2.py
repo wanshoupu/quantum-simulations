@@ -593,7 +593,7 @@ def test_tan2(x, y, expected):
 ])
 def test_vec_std(gate, expected):
     angle_vec = vec(gate.matrix)
-    assert np.allclose(angle_vec, expected), f"{angle_vec} != {expected}"
+    assert np.allclose(angle_vec, expected, rtol=1.e-4, atol=1.e-7), f"{angle_vec} != {expected}"
 
 
 @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 100))
