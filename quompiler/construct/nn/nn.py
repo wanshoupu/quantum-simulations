@@ -1,14 +1,13 @@
 from abc import abstractmethod
 
 import numpy as np
-from typing_extensions import override
 from numpy.typing import NDArray
+from sklearn.neighbors import NearestNeighbors
+from typing_extensions import override
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.nn.abstract import QNN
 from quompiler.construct.types import UnivGate
-from sklearn.neighbors import NearestNeighbors
-
 from quompiler.utils.group_su2 import vec
 
 

@@ -124,6 +124,11 @@ def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
     return a, b, c, d  # Global phase (a), and Euler angles (b, c, d)
 
 
+def rota(theta: float, phi: float, alpha: float) -> NDArray:
+    nvec = np.sin(theta) * np.cos(phi), np.cos(theta) * np.cos(phi), np.cos(theta)
+    return rot(np.array(nvec), alpha)
+
+
 def rot(n: NDArray, angle: float) -> NDArray:
     assert n.shape == (3,)
     n = n / np.linalg.norm(n)
@@ -194,3 +199,16 @@ def vec(U: NDArray) -> tuple[float, float, float]:
     x, y = np.real(V[1, 0]), np.imag(V[1, 0])
     z = np.clip(-np.real(V[1, 1]), -1, 1)
     return np.arccos(z), np.arctan2(y, x), alpha
+
+
+def mod_dist(x, y):
+    """
+    I hope to use this as a topological metric to help improve the SU2Net lookup accuracy.
+    :param x:
+    :param y:
+    :return:
+    """
+    d = np.abs(x - y)
+    d2 = np.array([d[0], 2 * np.pi - d[1], d[2]])
+    d3 = np.array([np.pi - d[0], (d[1] + np.pi) % (2 * np.pi), np.pi - d[2]])
+    return np.minimum(sum(d), sum(d2), sum(d3))

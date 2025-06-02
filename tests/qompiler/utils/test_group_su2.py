@@ -5,7 +5,7 @@ import pytest
 
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose, vec
+from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose, vec, mod_dist, rota
 from quompiler.utils.mfun import herm, allprop
 from quompiler.utils.mgen import random_unitary, random_su2, random_phase
 
@@ -663,3 +663,47 @@ def test_vec_random(seed):
     x, y, z = raxis(u)
     assert np.isclose(actual[0], np.arccos(z))
     assert np.isclose(actual[1], np.arctan2(y, x))
+
+
+@pytest.mark.skip(reason="These tests are not finished yet)")
+@pytest.mark.parametrize('x,y,expected', [
+    [[1e-1, 1e-1 - np.pi, 1e-1], [np.pi, np.pi, np.pi], 3e-1],
+    [[1, 1, 1], [1, 1, 1], 0],
+    [[np.pi - 1e-1, np.pi - 1e-1, 0], [0, -np.pi, np.pi - 1e-1], 3e-1],
+])
+def test_mod_dist(x, y, expected):
+    d = mod_dist(np.array(x), np.array(y))
+    assert np.isclose(d, expected), f'{d} != {expected}'
+
+
+ANGLE_RANGES = np.array([[0, np.pi], [-np.pi, np.pi], [0, np.pi]])
+
+
+def test_boundary_vec():
+    # Specify resolution (number of steps per axis)
+    res = np.array([3, 3, 3])  # nx, ny, nz
+
+    # Generate linspaces per axis (excluding upper bound)
+    axes = [
+        np.linspace(start, stop, num=n, endpoint=True)
+        for (start, stop), n in zip(ANGLE_RANGES, res)
+    ]
+    # Generate grid
+    mesh = np.meshgrid(*axes, indexing='ij')  # shape: (3 arrays of shape [nx, ny, nz])
+    grid = np.stack(mesh, axis=-1).reshape(-1, 3)  # (N, 3)
+    print(grid)
+    us = [rota(*v) for v in grid]
+    # print(us)
+    nvecs = [vec(u) for u in us]
+    comparison = np.hstack([grid, nvecs])
+    idx = np.argsort(comparison[:, ::-1])
+    print()
+    print(comparison[idx])
+
+
+def test_verify_eq():
+    scoord = np.array([np.pi / 2, 0, np.pi])
+    r = rota(*scoord)
+    nvec = vec(r)
+    print()
+    print(nvec)

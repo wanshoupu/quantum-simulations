@@ -3,14 +3,14 @@ from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode, BytecodeIter
 from quompiler.construct.su2net import SU2Net
-from quompiler.construct.types import UnivGate
+from quompiler.construct.types import UnivGate, SU2NetType
 from quompiler.utils.group_su2 import gc_decompose
 from quompiler.utils.mfun import herm
 
 
 class SKDecomposer:
 
-    def __init__(self, rtol=1, atol=1, lookup_error=.16):
+    def __init__(self, rtol=1, atol=1, lookup_error=.4):
         """
         Solovay-Kitaev decomposition using a heuristic curve based on the specified tolerance.
 
@@ -26,7 +26,8 @@ class SKDecomposer:
         self.atol = atol
         self.rtol_coef = 2
         self.atol_coef = 2
-        self.depth = int(max([0, -np.log(rtol) * self.rtol_coef, -np.log(atol) * self.atol_coef])) + self.offset
+        # bypass the recursion part for now as the errors are diverging.
+        self.depth = self.offset  # + int(max([0, -np.log(rtol) * self.rtol_coef, -np.log(atol) * self.atol_coef]))
 
         # controls the initial lookup error margin needed by the SK algorithm.
         self.lookup_error = lookup_error
@@ -54,6 +55,11 @@ class SKDecomposer:
 
     def _sk_decompose(self, U: NDArray, n: int) -> Bytecode:
         """
+        TODO:
+         1. the Bytecode.herm may have a bug
+         2. Also minimal testing may be a try approximate a sequence of length + 1
+         3. can test _sk_decompose directly with n = 0 and n = 1 and compare the errors
+         4. SU2Net may put on 3D ring topology: use modulo on the nearest neighbor metric for parameters: theta, phi, and alpha
         This implements the main Solovay-Kitaev decomposition algorithm.
         :param U: input 2x2 unitary matrix.
         :param n: recursion depth.
@@ -66,6 +72,6 @@ class SKDecomposer:
         V, W = gc_decompose(U @ herm(node.data))
         vnode = self._sk_decompose(V, n - 1)
         wnode = self._sk_decompose(W, n - 1)
-        data = vnode.data @ wnode.data @ herm(vnode.data) @ herm(wnode.data) @ node.data
         children = [vnode, wnode, vnode.herm(), wnode.herm(), node]
+        data = children[0].data @ children[1].data @ children[2].data @ children[3].data @ children[4].data
         return Bytecode(data, children=children)

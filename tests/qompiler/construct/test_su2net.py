@@ -6,10 +6,10 @@ import pytest
 
 from quompiler.construct.su2net import SU2Net
 from quompiler.construct.types import SU2NetType, UnivGate
+from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.group_su2 import dist
 from quompiler.utils.mfun import herm
 from quompiler.utils.mgen import random_su2, random_unitary
-from quompiler.utils.format_matrix import MatrixFormatter
 
 formatter = MatrixFormatter(precision=2)
 
@@ -39,7 +39,8 @@ class SU2NetTestTemplate:
         v = reduce(lambda a, b: a @ b, seq, np.eye(2))
         assert np.allclose(np.array(v), node.data)  # self-consistent
         error = dist(np.array(v), np.array(matrix))
-        assert np.isclose(error, lookup_error) and np.isclose(error, 0)
+        assert np.isclose(error, lookup_error)
+        assert np.isclose(error, 0)
 
     @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
     def test_lookup_random_su2(self, seed: int):
