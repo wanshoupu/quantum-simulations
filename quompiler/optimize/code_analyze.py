@@ -1,31 +1,18 @@
-from quompiler.circuits.factory_manager import FactoryManager
-from quompiler.construct.cgate import CtrlGate
-from quompiler.utils.mgen import random_unitary, cyclic_matrix
 from collections import Counter, namedtuple
 
 from quompiler.construct.bytecode import Bytecode
-
-
-def analyze(root: Bytecode) -> bool:
-    if root is None:
-        return False
-    print()
-    print(root.metadata)
-    if root.is_leaf() and len(root.data.controls) > 1:
-        return True
-    return any(analyze(c) for c in root.children)
-
+from quompiler.construct.cgate import CtrlGate
 
 # Named tuple to hold stats
-Stats = namedtuple(
+CodeMetadata = namedtuple(
     "Stats", [
         "num_nodes",
         "num_leaves",
         "height",
-        "trunk",
-        "degree_freq",
-        "depth_freq",
+        "fanout_distr",
+        "depth_distr",
         "num_nonstd",
+        "qubit_distr",
     ])
 
 
@@ -47,45 +34,46 @@ def ctrl_len(node: Bytecode) -> int:
     return len(data.controls)
 
 
-def tree_stats(node: Bytecode):
+def gen_stats(node: Bytecode) -> CodeMetadata:
     """
     collect tree statistics recursively
     """
     if node is None:
-        return Stats(num_nodes=0,
-                     num_leaves=0,
-                     height=0,
-                     trunk=[],
-                     degree_freq=Counter(),
-                     depth_freq=Counter(),
-                     num_nonstd=0,
-                     )
+        return CodeMetadata(num_nodes=0,
+                            num_leaves=0,
+                            height=0,
+                            fanout_distr=Counter(),
+                            depth_distr=Counter(),
+                            num_nonstd=0,
+                            qubit_distr=Counter(),
+                            )
 
     num_nodes = 1
     num_leaves = 1 if node.is_leaf() else 0
     num_nonstd = 0 if is_std(node) else 1
-    degree_freq = Counter({len(node.children): 1})
-    depth_freq = Counter() if node.children else Counter({0: 1})
+    fanout_distr = Counter({len(node.children): 1})
+    depth_distr = Counter() if node.children else Counter({0: 1})
+    qubit_distr = Counter({str(q): 1 for q in node.data.qspace}) if isinstance(node.data, CtrlGate) else Counter()
 
-    height, trunk = 0, []
+    height = 0
     for child in node.children:
-        stats = tree_stats(child)
+        stats = gen_stats(child)
         num_nodes += stats.num_nodes
         num_leaves += stats.num_leaves
         num_nonstd += stats.num_nonstd
-        degree_freq.update(stats.degree_freq)
-        depth_freq.update(stats.depth_freq)
+        fanout_distr.update(stats.fanout_distr)
+        depth_distr.update(stats.depth_distr)
         if stats.height > height:
             height = stats.height
-            trunk = stats.trunk
-    return Stats(
+        qubit_distr.update(stats.qubit_distr)
+    return CodeMetadata(
         num_nodes=num_nodes,
         num_leaves=num_leaves,
         height=(1 + height),
-        degree_freq=degree_freq,
-        trunk=([node] + trunk),
-        depth_freq=Counter({k + 1: v for k, v in depth_freq.items()}),
+        fanout_distr=fanout_distr,
+        depth_distr=Counter({k + 1: v for k, v in depth_distr.items()}),
         num_nonstd=num_nonstd,
+        qubit_distr=qubit_distr,
     )
 
 
@@ -123,26 +111,12 @@ def print_stats(stats):
     print(f"- Non-standard Gates: {stats.num_nonstd}")
     print(f"- Tree Height: {stats.height}")
     print()
-    print(f"- Degree Distribution: {dict(stats.degree_freq.most_common())}")
-    print(f"- Max Degree: {max(stats.degree_freq)}")
-    print(f"- Average Degree: {average(stats.degree_freq) :.2f}")
-    print(f"- Median Degree: {percentile(stats.degree_freq, 50) :.2f}")
+    print(f"- Degree Distribution: {dict(stats.fanout_distr.most_common())}")
+    print(f"- Max Degree: {max(stats.fanout_distr)}")
+    print(f"- Average Degree: {average(stats.fanout_distr) :.2f}")
+    print(f"- Median Degree: {percentile(stats.fanout_distr, 50) :.2f}")
     print()
-    print(f"- Depth Distribution: {dict((stats.depth_freq.most_common()))}")
-    print(f"- Max Depth: {max(stats.depth_freq)}")
-    print(f"- Average Depth: {average(stats.depth_freq) :.2f}")
-    print(f"- Median Depth: {percentile(stats.depth_freq, 50) :.2f}")
-
-
-if __name__ == '__main__':
-    n = 5
-    dim = 1 << n
-    u = cyclic_matrix(dim, 1)
-    # u = random_unitary(dim)
-
-    factory = FactoryManager().create_factory()
-    compiler = factory.get_qompiler()
-    code = compiler.compile(u)
-    # Print the statistics
-    stats = tree_stats(code)
-    print_stats(stats)
+    print(f"- Depth Distribution: {dict((stats.depth_distr.most_common()))}")
+    print(f"- Max Depth: {max(stats.depth_distr)}")
+    print(f"- Average Depth: {average(stats.depth_distr) :.2f}")
+    print(f"- Median Depth: {percentile(stats.depth_distr, 50) :.2f}")
