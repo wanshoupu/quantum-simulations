@@ -2,6 +2,7 @@ import random
 from functools import reduce
 
 import numpy as np
+import pytest
 
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
@@ -13,8 +14,8 @@ formatter = MatrixFormatter(precision=2)
 
 def test_compile_identity_matrix():
     from tests.qompiler.mock_fixtures import mock_factory_manager
-    man = mock_factory_manager(emit="SINGLET")
     n = 3
+    man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
     dim = 1 << n
     u = np.eye(dim)
     factory = man.create_factory()
@@ -29,8 +30,8 @@ def test_compile_identity_matrix():
 
 def test_compile_sing_qubit_circuit():
     from tests.qompiler.mock_fixtures import mock_factory_manager
-    man = mock_factory_manager(emit="SINGLET")
     n = 1
+    man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
     dim = 1 << n
     u = random_unitary(dim)
     factory = man.create_factory()
@@ -45,10 +46,22 @@ def test_compile_sing_qubit_circuit():
     assert isinstance(data, CtrlGate)
 
 
+def test_compile_insufficient_qspace_error():
+    from tests.qompiler.mock_fixtures import mock_factory_manager
+    u = cyclic_matrix(8, 1)
+    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=1)
+    factory = man.create_factory()
+    interp = factory.get_qompiler()
+
+    # execute
+    with pytest.raises(EnvironmentError):
+        interp.compile(u)
+
+
 def test_compile_cyclic_8_ctrl_prune():
     from tests.qompiler.mock_fixtures import mock_factory_manager
     u = cyclic_matrix(8, 1)
-    man = mock_factory_manager(emit="CTRL_PRUNED")
+    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=2)
     factory = man.create_factory()
     interp = factory.get_qompiler()
 
@@ -59,14 +72,16 @@ def test_compile_cyclic_8_ctrl_prune():
     data = [a.data for a in BytecodeIter(bc)]
     assert len(data) == 559
     leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
-    v = reduce(lambda a, b: a @ b, leaves).dela().inflate()
+    v1 = reduce(lambda a, b: a @ b, leaves)
+    v = v1.dela().inflate()
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 
 
 def test_compile_cyclic_8():
     from tests.qompiler.mock_fixtures import mock_factory_manager
-    man = mock_factory_manager(emit="SINGLET")
-    u = cyclic_matrix(8, 1)
+    n = 3
+    man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
+    u = cyclic_matrix(1 << n, 1)
     factory = man.create_factory()
     interp = factory.get_qompiler()
 
@@ -102,12 +117,12 @@ def test_compile_cyclic_4():
 
 def test_interp_random_unitary():
     from tests.qompiler.mock_fixtures import mock_factory_manager
-    man = mock_factory_manager(emit="SINGLET")
     for _ in range(10):
         # print(f'Test {_}th round')
         n = random.randint(1, 4)
         dim = 1 << n
         u = random_unitary(dim)
+        man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
         factory = man.create_factory()
         interp = factory.get_qompiler()
 

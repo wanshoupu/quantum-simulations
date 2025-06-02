@@ -55,9 +55,11 @@ class Qompiler:
     def compile(self, u: NDArray) -> Bytecode:
         s = u.shape
         um = UnitaryM(s[0], tuple(range(s[0])), u)
-        return self._decompose(um)
+        qnum = um.order().bit_length() - 1
+        qspace = self.device.alloc_qubit(qnum)
+        return self._decompose(um, qspace)
 
-    def _decompose(self, data: Union[UnitaryM, CtrlGate]) -> Bytecode:
+    def _decompose(self, data: Union[UnitaryM, CtrlGate], qspace) -> Bytecode:
         root = Bytecode(data)
         if self.debug:
             if isinstance(data, UnitaryM):
@@ -70,7 +72,7 @@ class Qompiler:
             return root
 
         if isinstance(data, UnitaryM):
-            constituents, meta = self._decompose_unitary(grain, data)
+            constituents, meta = self._decompose_unitary(grain, data, qspace)
         elif isinstance(data, CtrlGate):
             constituents, meta = self._decompose_ctrlgate(grain, data)
         else:
@@ -84,7 +86,7 @@ class Qompiler:
         if self.debug:
             root.metadata['fanout'] = len(constituents)
         for c in constituents:
-            root.add_child(self._decompose(c))
+            root.add_child(self._decompose(c, qspace))
         return root
 
     def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
@@ -118,8 +120,7 @@ class Qompiler:
                 meta.update(meta1)
         return result, meta
 
-    @staticmethod
-    def _decompose_unitary(grain: EmitType, u: UnitaryM) -> tuple[list[Union[UnitaryM, CtrlGate]], dict]:
+    def _decompose_unitary(self, grain: EmitType, u: UnitaryM, qspace) -> tuple[list[Union[UnitaryM, CtrlGate]], dict]:
         meta = dict()
 
         if grain < EmitType.TWO_LEVEL:
@@ -127,7 +128,7 @@ class Qompiler:
             meta['method'] = 'mat2l_decompose'
         else:
             assert u.is2l()
-            result = cnot_decompose(u)
+            result = cnot_decompose(u, qspace)
             meta['method'] = 'cnot_decompose'
         return result, meta
 
