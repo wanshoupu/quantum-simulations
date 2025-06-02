@@ -86,9 +86,9 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[Qubit] = None) -> Tuple[CtrlGat
     :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
     :return: a tuple of ControlledGate objects.
     """
-    if m.dimension & (m.dimension - 1):
+    if m.order() & (m.order() - 1):
         raise ValueError(f'The dimension of the unitary matrix is not power of 2: {m.dimension}')
-    n = m.dimension.bit_length() - 1
+    n = m.order().bit_length() - 1
     if m.isid():
         return tuple()
     if not m.is2l():

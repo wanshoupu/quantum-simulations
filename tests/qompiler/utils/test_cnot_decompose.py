@@ -4,6 +4,7 @@ from functools import reduce
 import numpy as np
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -75,3 +76,13 @@ def test_cnot_decompose_random():
         recovered = reduce(lambda x, y: x @ y, ms)
         assert np.allclose(recovered.inflate(), m.inflate()), f'recovered != expected: \n{formatter.tostr(recovered.inflate())},\n\n{formatter.tostr(m.inflate())}'
         assert all(isinstance(v, CtrlGate) for v in ms)
+
+
+def test_cnot_decompose_qspace():
+    n = 4
+    m = random_UnitaryM_2l(1 << n, 1, 2)
+    # print(f'test = \n{formatter.tostr(m.inflate())}')
+    qspace = [Qubit(i) for i in random.sample(range(100), n)]
+    cgates = cnot_decompose(m, qspace)
+
+    assert all(cg.qspace == qspace for cg in cgates)
