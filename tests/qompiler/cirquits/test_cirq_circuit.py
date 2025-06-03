@@ -18,9 +18,10 @@ man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
 def test_create_builder():
     factory = man.create_factory()
     cirqC = factory.get_builder()
-    phase = CtrlGate(UnivGate.S.matrix, (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
+    phase = CtrlGate(np.array(UnivGate.S), (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
     # print()
     # print(formatter.tostr(phase.inflate()))
+    cirqC.register(phase.qspace)
     cirqC.build_gate(phase)
     circuit = cirqC.finish()
     # print(circuit.all_qubits())
@@ -35,12 +36,13 @@ def test_builder_standard_ctrlgate():
         n = random.randint(1, 4)
         control = random_control(n, 1)
         # print(f'n={n}, control={control}')
-        cu = CtrlGate(gate.matrix, control)
+        cu = CtrlGate(np.array(gate), control)
         man = mock_factory_manager(emit="SINGLET", ancilla_offset=100)
         factory = man.create_factory()
         cirqC = factory.get_builder()
 
         # execution
+        cirqC.register(cu.qspace)
         cirqC.build_gate(cu)
         circuit = cirqC.finish()
         # print(circuit)
@@ -62,6 +64,7 @@ def test_builder_random_ctrlgate():
         cirqC = factory.get_builder()
 
         # execution
+        cirqC.register(cu.qspace)
         cirqC.build_gate(cu)
         circuit = cirqC.finish()
         # print(circuit)
@@ -78,7 +81,7 @@ def test_compile_cyclic_4_everything():
     interp = factory.get_qompiler()
 
     # execute
-    bc = interp.compile(u)
+    bc = interp.decompose(u)
     # print(bc)
     assert len([a for a in BytecodeIter(bc)]) == 7
     # we need to revert the order bc the last element appears first in the circuit
@@ -89,6 +92,7 @@ def test_compile_cyclic_4_everything():
 
     # execution
     for cu in leaves:
+        cirqC.register(cu.qspace)
         cirqC.build_gate(cu)
     circuit = cirqC.finish()
     # print(circuit)

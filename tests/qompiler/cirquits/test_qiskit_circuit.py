@@ -12,4 +12,4 @@ def test_create_builder():
 
     factory = man.create_factory()
     qiskitC = factory.get_qompiler()
-    assert qiskitC is None
+    assert qiskitC is not None

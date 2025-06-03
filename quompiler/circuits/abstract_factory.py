@@ -13,6 +13,7 @@ class QFactory(ABC):
     def __init__(self, config: QompilerConfig):
         self._config = config
         self._qompiler = None
+        self._renderer = None
 
     def get_config(self):
         return self._config
@@ -22,9 +23,13 @@ class QFactory(ABC):
             self._qompiler = Qompiler(self._config, self.get_builder(), self.get_device(), self.get_optimizers())
         return self._qompiler
 
-    @abstractmethod
+    def get_render(self) -> QRenderer:
+        if self._renderer is None:
+            self._renderer = QRenderer(self._config, self.get_builder())
+        return self._renderer
+
     def get_device(self) -> QDevice:
-        pass
+        return QDevice(self._config.device)
 
     @abstractmethod
     def get_builder(self) -> CircuitBuilder:
@@ -32,8 +37,4 @@ class QFactory(ABC):
 
     @abstractmethod
     def get_optimizers(self) -> list[Optimizer]:
-        pass
-
-    @abstractmethod
-    def get_render(self) -> QRenderer:
         pass

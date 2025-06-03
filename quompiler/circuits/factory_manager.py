@@ -10,6 +10,9 @@ class FactoryManager:
     def __init__(self, config: ConfigManager = None):
         self.config_man = config or ConfigManager()
 
+    def parse_args(self):
+        self.config_man.parse_args()
+
     def create_factory(self) -> QFactory:
         config = self.config_man.create_config()
         platform = QompilePlatform[config.target]

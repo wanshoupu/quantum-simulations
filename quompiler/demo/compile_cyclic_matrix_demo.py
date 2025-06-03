@@ -9,10 +9,15 @@ if __name__ == '__main__':
     u = cyclic_matrix(dim, 1)
     print(formatter.tostr(u))
     fman = FactoryManager()
+    fman.parse_args()
+
     factory = fman.create_factory()
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
+    render = factory.get_render()
 
     # execute
-    interp.interpret(u)
-    circuit = interp.finish()
+    compiler.compile(u)
+
+    codefile = factory.get_config().output
+    circuit = render.render(codefile)
     print(circuit)

@@ -10,14 +10,6 @@ from quompiler.construct.unitary import UnitaryM
 class CircuitBuilder(ABC):
 
     @abstractmethod
-    def __init__(self, deviceConfig: DeviceConfig):
-        """
-        Create a circuit builder of a linear array of qubits.
-        :param deviceConfig: the device configuration.
-        """
-        pass
-
-    @abstractmethod
     def build_gate(self, m: Union[UnitaryM, CtrlGate]) -> None:
         """
         Build a unitary gate out of the matrix m
@@ -42,18 +34,14 @@ class CircuitBuilder(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_univ_gate(self, m: Union[UnitaryM, CtrlGate]) -> Optional[UnivGate]:
-        """
-        Subclass return a universal gate out of a set, which is to be used as the building blocks.
-        :return: The universal gate, if any, for the input m. Return None if not found.
-        """
-        pass
-
     def build_group(self, m: Union[UnitaryM, CtrlGate]):
         """
         This method allows builder to group multiple gates together to represent, e.g., a hierarchy.
         Overriding this is optional for subclasses.
         :param m: the root UnitaryM for this group.
         """
+        pass
+
+    @abstractmethod
+    def register(self, qspace):
         pass

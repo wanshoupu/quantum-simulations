@@ -36,7 +36,7 @@ def ctrl_len(node: Bytecode) -> int:
     return len(data.controls)
 
 
-def extract_qspace(stats: CodeMetadata) -> Sequence[Qubit]:
+def collect_qspace(stats: CodeMetadata) -> Sequence[Qubit]:
     qspace = []
     for q in stats.qubit_distr:
         prefix = q[0]

@@ -12,10 +12,16 @@ if __name__ == '__main__':
     dim = 1 << n
     u = random_unitary(dim)
 
-    factory = FactoryManager().create_factory()
-    interp = factory.get_qompiler()
-    interp.interpret(u)
-    circuit = interp.finish(optimized=True)
+    man = FactoryManager()
+    man.parse_args()
+
+    factory = man.create_factory()
+    compiler = factory.get_qompiler()
+    compiler.compile(u)
+
+    render = factory.get_render()
+    codefile = factory.get_config().output
+    circuit = render.render(codefile)
     print(circuit)
     moments = circuit.moments
     # for m in moments:

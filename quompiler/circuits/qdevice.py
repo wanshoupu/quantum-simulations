@@ -1,12 +1,10 @@
-from abc import ABC, abstractmethod
-
 from quompiler.config.construct import DeviceConfig
 from quompiler.construct.qspace import Qubit
 
 
-class QDevice(ABC):
+class QDevice:
     """
-    Represent an abstract Quantum Device.
+    Represent an virtual Quantum Device.
     """
 
     def __init__(self, config: DeviceConfig):
@@ -31,20 +29,4 @@ class QDevice(ABC):
         while len(self.aspace) < n:
             self.aoffset += 1
             self.aspace.append(Qubit(self.aoffset, ancilla=True))
-        result = self.aspace[:n]
-        for a in result:
-            self.reset(a)
-        return result
-
-    @abstractmethod
-    def reset(self, qubit: Qubit):
-        pass
-
-    @abstractmethod
-    def map(self, qid: Qubit):
-        """
-        Create the physical qubits for the given qid.
-        :param qid:
-        :return:
-        """
-        pass
+        return self.aspace[:n]
