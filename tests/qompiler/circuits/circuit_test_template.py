@@ -1,4 +1,6 @@
+import os
 import random
+import tempfile
 from abc import abstractmethod, ABC
 
 import numpy as np
@@ -8,6 +10,7 @@ from quompiler.circuits.factory_manager import FactoryManager
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
+from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_control, random_unitary, cyclic_matrix
 
@@ -95,6 +98,22 @@ class CircuitTestTemplate(ABC):
         circuit = builder.finish()
         assert circuit is not None
         self.verify_circuit(u, builder, circuit)
+
+    def test_builder_random_end_2_end(self):
+        from tests.qompiler.mock_fixtures import mock_factory_manager
+        n = 1
+        dim = 1 << n
+        u = random_unitary(dim)
+        factory = self.man.create_factory()
+        interp = factory.get_qompiler()
+
+        # execute
+        interp.compile(u)
+        render = factory.get_render()
+        codefile = factory.get_config().output
+        circuit = render.render(codefile)
+        assert circuit is not None
+        self.verify_circuit(u, render.builder, circuit)
 
     @abstractmethod
     def verify_circuit(self, unitary, builder, circuit):

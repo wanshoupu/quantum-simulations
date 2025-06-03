@@ -13,5 +13,6 @@
   "target": "CIRQ",
   "emit": "UNIV_GATE",
   "rtol": 1e-2,
-  "atol": 1e-3
+  "atol": 1e-3,
+  "lookup_tol": 0.4
 }

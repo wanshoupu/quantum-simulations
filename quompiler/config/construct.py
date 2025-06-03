@@ -29,8 +29,8 @@ class QompilerWarnings:
     @staticmethod
     def from_dict(data: Dict) -> "QompilerWarnings":
         return QompilerWarnings(
-            all=data.get("all", False),
-            as_errors=data.get("as_errors", False)
+            all=data["all"],
+            as_errors=data["as_errors"]
         )
 
     def to_dict(self) -> Dict:
@@ -48,7 +48,7 @@ class DeviceConfig:
     @staticmethod
     def from_dict(data: Dict) -> "DeviceConfig":
         return DeviceConfig(
-            ancilla_offset=data.get("ancilla_offset", 1),
+            ancilla_offset=data["ancilla_offset"],
         )
 
     def to_dict(self) -> Dict:
@@ -68,6 +68,7 @@ class QompilerConfig:
     :param emit: specifies the output building blocks the compiler should generate after processing the source
     :param rtol: relative tolerance allows for proportional error
     :param atol: absolute tolerance allows for fixed error
+    :param lookup_tol: SU2Net lookup tolerance for Solovay-Kitaev decomposition
     """
     source: str
     output: str
@@ -79,23 +80,25 @@ class QompilerConfig:
     emit: str
     rtol: float
     atol: float
+    lookup_tol: float
 
     @staticmethod
     def from_dict(data: Dict) -> "QompilerConfig":
         validate_config(data)
-        device = DeviceConfig.from_dict(data.get("device"))
-        warnings = QompilerWarnings.from_dict(data.get("warnings", {}))
+        device = DeviceConfig.from_dict(data["device"])
+        warnings = QompilerWarnings.from_dict(data["warnings"])
         return QompilerConfig(
-            source=data.get("source"),
-            output=data.get("output"),
-            optimization=data.get("optimization"),
-            debug=data.get("debug", False),
+            source=data["source"],
+            output=data["output"],
+            optimization=data["optimization"],
+            debug=data["debug"],
             warnings=warnings,
-            target=data.get("target"),
-            emit=data.get("emit", "SINGLET"),
+            target=data["target"],
+            emit=data["emit"],
             device=device,
-            rtol=float(data.get("rtol", "1.e-5")),
-            atol=float(data.get("atol", "1.e-8")),
+            rtol=float(data["rtol"]),
+            atol=float(data["atol"]),
+            lookup_tol=float(data["lookup_tol"]),
         )
 
     def to_dict(self) -> Dict:

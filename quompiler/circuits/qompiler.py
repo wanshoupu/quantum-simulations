@@ -34,7 +34,7 @@ class Qompiler:
         self.optimizers = optimizers or []
         self.emit = EmitType[config.emit]
         self.debug = self.config.debug
-        self.sk = SKDecomposer(config.rtol, config.atol)
+        self.sk = SKDecomposer(config.rtol, config.atol, config.lookup_tol)
 
     def compile(self, u: NDArray):
         code = self.decompose(u)

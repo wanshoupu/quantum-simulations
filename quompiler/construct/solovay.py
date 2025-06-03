@@ -26,7 +26,7 @@ class SKDecomposer:
         self.atol = atol
         self.rtol_coef = 2
         self.atol_coef = 2
-        # bypass the recursion part for now as the errors are diverging.
+        # bypass the recursion part for now because of the approximation requires lookup_error < 0.025 which is very expensive in memory and runtime.
         self.depth = self.offset  # + int(max([0, -np.log(rtol) * self.rtol_coef, -np.log(atol) * self.atol_coef]))
 
         # controls the initial lookup error margin needed by the SK algorithm.

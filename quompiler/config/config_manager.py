@@ -73,6 +73,7 @@ class ConfigManager:
                             choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "UNIV_GATE", "CLIFFORD_T"])
         parser.add_argument("--rtol", help="Relative tolerance — allows for proportional error")
         parser.add_argument("--atol", help="Absolute tolerance — allows for fixed error")
+        parser.add_argument("--lookup_tol", help="SU2Net lookup tolerance for Solovay-Kitaev decomposition.")
         parser.add_argument("--ancilla_offset", help="The qubit space offset for ancilla qubits")
         return parser
 

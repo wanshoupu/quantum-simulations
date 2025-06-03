@@ -67,6 +67,10 @@
     "atol": {
       "type": "number",
       "exclusiveMinimum": 0
+    },
+    "lookup_tol": {
+      "type": "number",
+      "exclusiveMinimum": 0
     }
   }
 }

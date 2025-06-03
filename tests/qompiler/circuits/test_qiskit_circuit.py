@@ -23,7 +23,7 @@ def test_create_builder():
 
 
 class TestQiskitCircuit(CircuitTestTemplate):
-    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=100, target="QISKIT")
+    man = mock_factory_manager(emit="CLIFFORD_T", ancilla_offset=100, target="QISKIT")
 
     @override
     def verify_circuit(self, expected, builder, circuit):
