@@ -1,4 +1,5 @@
 from quompiler.utils.mgen import random_UnitaryM_2l
+from tests.qompiler.cirquits.circuit_test_template import CircuitTestTemplate
 
 from tests.qompiler.mock_fixtures import mock_factory_manager
 
@@ -13,3 +14,7 @@ def test_create_builder():
     factory = man.create_factory()
     qiskitC = factory.get_qompiler()
     assert qiskitC is not None
+
+
+class TestQiskitCircuit(CircuitTestTemplate):
+    man = man
