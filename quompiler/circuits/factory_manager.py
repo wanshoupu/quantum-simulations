@@ -3,6 +3,7 @@ from quompiler.circuits.cirq_factory.cirq_factory import CirqFactory
 from quompiler.circuits.qiskit_factory.qiskit_factory import QiskitFactory
 from quompiler.circuits.quimb_factory.qumb_factory import QuimbFactory
 from quompiler.config.config_manager import ConfigManager
+from quompiler.config.construct import QompilerConfig
 from quompiler.construct.types import QompilePlatform
 
 
@@ -23,3 +24,9 @@ class FactoryManager:
         if platform == QompilePlatform.QUIMB:
             return QuimbFactory(config)
         raise ValueError(f"Unsupported platform {platform}")
+
+    def merge(self, override: dict):
+        self.config_man.merge(override)
+
+    def create_config(self) -> QompilerConfig:
+        return self.config_man.create_config()
