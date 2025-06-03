@@ -12,6 +12,6 @@
   },
   "target": "CIRQ",
   "emit": "UNIV_GATE",
-  "rtol": 1e-6,
-  "atol": 1e-9
+  "rtol": 1e-2,
+  "atol": 1e-3
 }

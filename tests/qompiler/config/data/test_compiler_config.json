@@ -3,14 +3,10 @@
   "optimization": "O3",
   "debug": true,
   "warnings": {
-    "all": true,
     "as_errors": false
   },
   "device": {
     "ancilla_offset": 1000
   },
-  "target": "QUIMB",
-  "emit": "CLIFFORD_T",
-  "rtol": 1e-5,
-  "atol": 1e-8
+  "atol": 1e-5
 }

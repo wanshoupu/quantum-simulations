@@ -59,23 +59,22 @@ class ConfigManager:
 
     def create_parser(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument("source", nargs="?", help="The source to parse, if any", default="")
+        parser.add_argument("source", nargs="?", help="The source to parse, if any")
         parser.add_argument("-c", "--config",
                             help="The config file name (JSON format). If provided, it will override the default config "
-                                 "but will be overridden by other arguments", default="")
-        parser.add_argument("-o", "--output", help="output file name", default="a.out")
-        parser.add_argument("-O", "--opt", help="optimization level", choices=["0", "1", "2", "3"], default="0")
+                                 "but will be overridden by other arguments")
+        parser.add_argument("-o", "--output", help="output file name")
+        parser.add_argument("-O", "--opt", help="optimization level", choices=["0", "1", "2", "3"])
         parser.add_argument("-g", "--debug", help="Print debug level info", action="store_true")
         parser.add_argument("-Wall", help="Enable all commonly used warning messages", action="store_true")
         parser.add_argument("-Werror", help="Whether or not treat warning as error", action="store_true")
-        parser.add_argument("--target", help="Target quantum computing platform", choices=["CIRQ", "QISKIT", "QUIMB"], default="CIRQ")
+        parser.add_argument("--target", help="Target quantum computing platform", choices=["CIRQ", "QISKIT", "QUIMB"])
         parser.add_argument("--emit",
                             help="specifies what kind of output file the compiler should generate after processing the source code.",
-                            choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "UNIV_GATE", "CLIFFORD_T"],
-                            default="SINGLET")
-        parser.add_argument("--rtol", help="Relative tolerance — allows for proportional error", default="1e-6")
-        parser.add_argument("--atol", help="Absolute tolerance — allows for fixed error", default="1e-9")
-        parser.add_argument("--ancilla_offset", help="The qubit space offset for ancilla qubits", default=100)
+                            choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "UNIV_GATE", "CLIFFORD_T"])
+        parser.add_argument("--rtol", help="Relative tolerance — allows for proportional error")
+        parser.add_argument("--atol", help="Absolute tolerance — allows for fixed error")
+        parser.add_argument("--ancilla_offset", help="The qubit space offset for ancilla qubits")
         return parser
 
     def save(self, file_path):
@@ -83,23 +82,36 @@ class ConfigManager:
             json.dump(self._config, f, indent=2)
 
     def _to_config(self, args):
-        return {
-            "source": args.source,
-            "output": args.output,
-            "optimization": f"O{args.opt}",
-            "debug": args.debug,
-            "warnings": {
-                "all": args.Wall,
-                "as_errors": args.Werror
-            },
-            "device": {
+        result = {}
+        if args.source:
+            result["source"] = args.source
+        if args.output:
+            result["output"] = args.output
+        if args.opt:
+            result["optimization"] = f"O{args.opt}"
+        if args.debug:
+            result["debug"] = args.debug
+        if args.Wall:
+            if "warnings" not in result:
+                result["warnings"] = {}
+            result["warnings"]["all"] = args.Wall
+        if args.Werror:
+            if "warnings" not in result:
+                result["warnings"] = {}
+            result["warnings"]["error"] = args.Werror
+        if args.ancilla_offset:
+            result["device"] = {
                 "ancilla_offset": int(args.ancilla_offset),
-            },
-            "target": args.target,
-            "emit": args.emit,
-            "rtol": float(args.rtol),
-            "atol": float(args.atol),
-        }
+            }
+        if args.target:
+            result["target"] = args.target
+        if args.emit:
+            result["emit"] = args.emit
+        if args.rtol:
+            result["rtol"] = float(args.rtol)
+        if args.atol:
+            result["atol"] = float(args.atol)
+        return result
 
 
 def merge_dicts(dict1: dict, dict2: dict) -> dict:

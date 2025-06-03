@@ -74,10 +74,13 @@ def test_load_config_file():
 
     # execute
     man.load_config_file(fpath)
-
     config = man.create_config()
-    assert config.target != default.target
-    assert config.emit != default.emit
+
+    # verify
+    assert config.output != default.output  # overwritten
+    assert config.atol != default.atol  # overwritten
+    assert config.target == default.target  # default left alone
+    assert config.emit == default.emit  # default left alone
 
 
 def test_load_config():
@@ -168,29 +171,43 @@ def test_in_sync_enum_target():
         assert conf_value == config.target, f'{conf_value} != {config.target}'
 
 
-def test_override_order(mocker):
+def test_file_override_default():
     # 1 default
     man = ConfigManager()
     default = man.create_config()
 
     # 2 json file config
     man.load_config_file(fpath)
+    final_config = man.create_config()
+
+    # verify
+    assert final_config.target == default.target  # default left alone
+    assert default.output != final_config.output  # overwritten
+    assert default.atol != final_config.atol  # overwritten
+    assert default.device.ancilla_offset != final_config.device.ancilla_offset  # overwritten
+    assert final_config.output == "program.out"
+    assert final_config.atol == 1e-5
+    assert final_config.device.ancilla_offset == 1000
+
+
+def test_cmd_override_file(mocker):
+    # 1 default
+    man = ConfigManager()
+    # 2 json file config
+    man.load_config_file(fpath)
     file_config = man.create_config()
 
     # 3 cmd line args
-    test_args = ['--emit', 'UNIV_GATE', "--rtol", "1e-6", "--atol", "1e-9", "--ancilla_offset", "10000"]
+    test_args = ["script_name.py", "-o", "bar.out", "--atol", "1e-9", "--ancilla_offset", "10000"]
     mocker.patch('sys.argv', test_args)
     man.parse_args()
-    cmd_config = man.create_config()
+    final_config = man.create_config()
 
     # verify
-    default_device = default.device
-    file_device = file_config.device
-    cmd_device = cmd_config.device
-    # print('default_device\n', default_device)
-    # print('file_device\n', file_device)
-    # print('cmd_device\n', cmd_device)
-
-    assert default_device.ancilla_offset != cmd_device.ancilla_offset
-    assert cmd_device.ancilla_offset != file_device.ancilla_offset
-    assert default_device.ancilla_offset != file_device.ancilla_offset
+    assert file_config.source == final_config.source  # default left alone
+    assert file_config.output != final_config.output  # overwritten
+    assert file_config.atol != final_config.atol  # overwritten
+    assert file_config.device.ancilla_offset != final_config.device.ancilla_offset  # overwritten
+    assert final_config.output == "bar.out"
+    assert final_config.atol == 1e-9
+    assert final_config.device.ancilla_offset == 10000
