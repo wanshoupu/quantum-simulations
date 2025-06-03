@@ -1,7 +1,7 @@
 import cirq
 import numpy as np
 
-from tests.qompiler.cirquits.circuit_test_template import CircuitTestTemplate
+from tests.qompiler.circuits.circuit_test_template import CircuitTestTemplate
 from tests.qompiler.mock_fixtures import mock_factory_manager
 
 
