@@ -1,7 +1,9 @@
 from collections import Counter, namedtuple
+from typing import Sequence
 
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.qspace import Qubit
 
 # Named tuple to hold stats
 CodeMetadata = namedtuple(
@@ -32,6 +34,16 @@ def ctrl_len(node: Bytecode) -> int:
     if not isinstance(data, CtrlGate):
         return -1
     return len(data.controls)
+
+
+def extract_qspace(stats: CodeMetadata) -> Sequence[Qubit]:
+    qspace = []
+    for q in stats.qubit_distr:
+        prefix = q[0]
+        qid = int(q[1:])
+        is_ancilla = True if prefix == 'a' else False
+        qspace.append(Qubit(qid, ancilla=is_ancilla))
+    return sorted(qspace)
 
 
 def gen_stats(node: Bytecode) -> CodeMetadata:

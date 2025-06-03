@@ -5,7 +5,7 @@ from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType
-from quompiler.optimize.code_analyze import gen_stats
+from quompiler.optimize.code_analyze import gen_stats, extract_qspace
 from quompiler.utils.mgen import random_UnitaryM, random_indexes, random_ctrlgate
 
 
@@ -25,3 +25,10 @@ def test_gen_stats():
     sstats = json.dumps(stats)
     print(sstats)
     assert len(sstats) == 100
+
+
+def test_assemble_qspace():
+    code = random_code()
+    stats = gen_stats(code)
+    qspace = extract_qspace(stats)
+    assert qspace == [Qubit(0), Qubit(1), Qubit(3), Qubit(4), Qubit(201, ancilla=True), Qubit(202, ancilla=True)]
