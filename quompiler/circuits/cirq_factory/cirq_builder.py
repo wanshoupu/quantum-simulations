@@ -31,7 +31,7 @@ class CirqBuilder(CircuitBuilder):
 
     def __init__(self):
         self.circuit = cirq.Circuit()
-        self.qubits: Dict[Qubit, object] = {}
+        self.qubit_mapping: Dict[Qubit, object] = {}
 
     def get_univ_gate(self, gate: UnivGate) -> Optional[EigenGate]:
         return self._UNIV_GATES[gate]
@@ -43,8 +43,8 @@ class CirqBuilder(CircuitBuilder):
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
     def _append_gate(self, controller, gate, qids):
-        target = [self.qubits[qids[i]] for i, c in enumerate(controller) if c is QType.TARGET]
-        control = [self.qubits[qids[i]] for i, c in enumerate(controller) if c in QType.CONTROL0 | QType.CONTROL1]
+        target = [self.qubit_mapping[qids[i]] for i, c in enumerate(controller) if c is QType.TARGET]
+        control = [self.qubit_mapping[qids[i]] for i, c in enumerate(controller) if c in QType.CONTROL0 | QType.CONTROL1]
         control_values = [c.base[0] for c in controller if c in QType.CONTROL0 | QType.CONTROL1]
         self.circuit.append(gate(*target).controlled_by(*control, control_values=control_values))
 
@@ -54,14 +54,14 @@ class CirqBuilder(CircuitBuilder):
         return self.circuit
 
     def all_qubits(self) -> list:
-        return sorted(self.circuit.all_qubits())
+        return [self.qubit_mapping[k] for k in sorted(self.qubit_mapping)]
 
     @override
     def register(self, qspace):
         for qbit in qspace:
-            if qbit in self.qubits:
+            if qbit in self.qubit_mapping:
                 continue
-            self.qubits[qbit] = cirq.NamedQubit(str(qbit))
+            self.qubit_mapping[qbit] = cirq.NamedQubit(str(qbit))
 
 
 def optimize(circuit: Circuit):

@@ -64,7 +64,7 @@ class QiskitBuilder(CircuitBuilder):
 
     @override
     def all_qubits(self) -> list:
-        return sorted(self.circuit.qubits, key=lambda q: (q in self.areg, q.index))
+        return [self.qubit_mapping[k] for k in sorted(self.qubit_mapping)]
 
     def map_gate(self, gate):
         if gate == UnivGate.I:
