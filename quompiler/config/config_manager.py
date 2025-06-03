@@ -33,7 +33,7 @@ class ConfigManager:
     def load_source(self) -> NDArray:
         return load_ndarray(self._source)
 
-    def load_config(self, data: dict):
+    def merge(self, data: dict):
         self._config = merge_dicts(self._config, data)
 
     def load_config_file(self, json_file: str):
@@ -42,17 +42,16 @@ class ConfigManager:
         :param json_file: a path to the JSON configuration file.
         """
         config = json.load(open(json_file))
-        self.load_config(config)
+        self.merge(config)
 
     def parse_args(self):
-        args = self._parser.parse_args()
+        args, _ = self._parser.parse_known_args()
         if args.source:
             self._source = args.source
         if args.config:
             self.load_config_file(args.config)
         qconfig = self._to_config(args)
-        merged = merge_dicts(self._config, qconfig)
-        self._config = merged
+        self.merge(qconfig)
 
     def help(self):
         return self._parser.format_help()

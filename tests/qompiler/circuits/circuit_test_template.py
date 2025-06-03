@@ -1,4 +1,5 @@
 import random
+from abc import abstractmethod, ABC
 
 import numpy as np
 import pytest
@@ -13,7 +14,7 @@ from quompiler.utils.mgen import random_control, random_unitary, cyclic_matrix
 formatter = MatrixFormatter(precision=2)
 
 
-class CircuitTestTemplate:
+class CircuitTestTemplate(ABC):
     man: FactoryManager = None
 
     def test_create_builder(self):
@@ -26,10 +27,8 @@ class CircuitTestTemplate:
         builder.register(phase.qspace)
         builder.build_gate(phase)
         circuit = builder.finish()
-        # print(circuit.all_qubits())
-        # print(circuit)
-        u = circuit.unitary(circuit.all_qubits())
-        print(formatter.tostr(u))
+        assert circuit is not None
+        self.verify_circuit(phase.inflate(), builder, circuit)
 
     @pytest.mark.parametrize("gate", list(UnivGate))
     def test_builder_standard_ctrlgate(self, gate):
@@ -46,10 +45,8 @@ class CircuitTestTemplate:
         builder.register(cu.qspace)
         builder.build_gate(cu)
         circuit = builder.finish()
-        # print(circuit)
-        u = circuit.unitary(sorted(circuit.all_qubits()))
-        expected = cu.inflate()
-        assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
+        assert circuit is not None
+        self.verify_circuit(cu.inflate(), builder, circuit)
 
     @pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
     def test_builder_random_ctrlgate(self, seed: int):
@@ -71,10 +68,8 @@ class CircuitTestTemplate:
         builder.register(cu.qspace)
         builder.build_gate(cu)
         circuit = builder.finish()
-        # print(circuit)
-        u = circuit.unitary(sorted(circuit.all_qubits()))
-        expected = cu.inflate()
-        assert np.allclose(u, expected), f'Expected:\n{formatter.tostr(expected)},\nActual:\n{formatter.tostr(u)}'
+        assert circuit is not None
+        self.verify_circuit(cu.inflate(), builder, circuit)
 
     def test_builder_cyclic_4_everything(self):
         n = 2
@@ -98,6 +93,9 @@ class CircuitTestTemplate:
             builder.register(cu.qspace)
             builder.build_gate(cu)
         circuit = builder.finish()
-        # print(circuit)
-        v = circuit.unitary(builder.all_qubits())
-        assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
+        assert circuit is not None
+        self.verify_circuit(u, builder, circuit)
+
+    @abstractmethod
+    def verify_circuit(self, unitary, builder, circuit):
+        pass

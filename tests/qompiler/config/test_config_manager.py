@@ -90,7 +90,7 @@ def test_load_config():
         "emit": "TWO_LEVEL",
     }
     # execute
-    man.load_config(data)
+    man.merge(data)
 
     config = man.create_config()
     assert "TWO_LEVEL" == config.emit != default.emit
@@ -103,7 +103,7 @@ def test_enum_invalid_emit():
     }
     # execute
     with pytest.raises(ValidationError):
-        man.load_config(data)
+        man.merge(data)
         man.create_config()
 
 
@@ -114,7 +114,7 @@ def test_in_sync_enum_emit():
         data = {
             "emit": conf_value,
         }
-        man.load_config(data)
+        man.merge(data)
 
         # execute
         config = man.create_config()
@@ -128,7 +128,7 @@ def test_enum_invalid_optimization():
     }
     # execute
     with pytest.raises(ValidationError):
-        man.load_config(data)
+        man.merge(data)
         man.create_config()
 
 
@@ -139,7 +139,7 @@ def test_in_sync_enum_optimization():
         data = {
             "optimization": conf_value,
         }
-        man.load_config(data)
+        man.merge(data)
 
         # execute
         config = man.create_config()
@@ -153,7 +153,7 @@ def test_enum_invalid_target():
     }
     # execute
     with pytest.raises(ValidationError):
-        man.load_config(data)
+        man.merge(data)
         man.create_config()
 
 
@@ -164,7 +164,7 @@ def test_in_sync_enum_target():
         data = {
             "target": conf_value,
         }
-        man.load_config(data)
+        man.merge(data)
 
         # execute
         config = man.create_config()
@@ -185,7 +185,7 @@ def test_file_override_default():
     assert default.output != final_config.output  # overwritten
     assert default.atol != final_config.atol  # overwritten
     assert default.device.ancilla_offset != final_config.device.ancilla_offset  # overwritten
-    assert final_config.output == "program.out"
+    assert final_config.output == "program.qco"
     assert final_config.atol == 1e-5
     assert final_config.device.ancilla_offset == 1000
 

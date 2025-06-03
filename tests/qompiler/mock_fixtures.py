@@ -18,7 +18,7 @@ def mock_config_manager(emit: str = "SINGLET", ancilla_offset=1, target="CIRQ", 
         }
     }
     man = ConfigManager()
-    man.load_config(config)
+    man.merge(config)
     return man
 
 

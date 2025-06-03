@@ -34,8 +34,10 @@ class QiskitBuilder(CircuitBuilder):
         for qbit in qspace:
             if qbit.ancilla:
                 self.qubit_mapping[qbit] = self.areg[aindex]
+                aindex += 1
             else:
                 self.qubit_mapping[qbit] = self.qreg[qindex]
+                qindex += 1
 
     @override
     def build_gate(self, m: Union[UnitaryM, CtrlGate]):
@@ -44,14 +46,16 @@ class QiskitBuilder(CircuitBuilder):
             if m.is_std():
                 physgate = self.map_gate(m.gate)
             else:
-                physgate = UnitaryGate(m.matrix)
+                physgate = lambda: UnitaryGate(m.matrix())
             self._append_gate(physgate, m.qids(), m.controls)
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
     def _append_gate(self, gate, qids, controller):
         physical_qubits = [self.qubit_mapping[q] for q in qids]
         control_values = ''.join([str(c.base[0]) for c in controller if c in QType.CONTROL0 | QType.CONTROL1])
-        gate_impl = gate().control(len(control_values), ctrl_state=control_values)
+        gate_impl = gate()
+        if control_values:
+            gate_impl = gate_impl.control(len(control_values), ctrl_state=control_values)
         self.circuit.append(gate_impl, physical_qubits)
 
     @override
@@ -60,7 +64,7 @@ class QiskitBuilder(CircuitBuilder):
 
     @override
     def all_qubits(self) -> list:
-        return list(self.qubit_mapping.values())
+        return sorted(self.circuit.qubits, key=lambda q: (q in self.areg, q.index))
 
     def map_gate(self, gate):
         if gate == UnivGate.I:
