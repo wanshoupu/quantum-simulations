@@ -11,7 +11,7 @@ def test_render(mocker):
     MockBuilder = mocker.patch("quompiler.circuits.qbuilder.CircuitBuilder")
     mock_config = mocker.patch("quompiler.config.construct.QompilerConfig")
     builder = MockBuilder()
-    codefile = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "codefile.out"))
+    codefile = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "codefile.qco"))
     # execute
     render = QRenderer(config=mock_config, builder=builder)
     circuit = render.render(codefile)

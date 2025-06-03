@@ -1,5 +1,5 @@
 {
-  "output": "program.out",
+  "output": "program.qco",
   "optimization": "O3",
   "debug": true,
   "warnings": {

@@ -1,6 +1,6 @@
 {
   "source": "",
-  "output": "a.out",
+  "output": "a.qco",
   "optimization": "O3",
   "debug": true,
   "warnings": {

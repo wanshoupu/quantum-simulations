@@ -76,7 +76,7 @@ docs/_build/
 target/
 
 # Quantum circuit build
-*.out
+*.qco
 
 # Jupyter Notebook
 .ipynb_checkpoints
