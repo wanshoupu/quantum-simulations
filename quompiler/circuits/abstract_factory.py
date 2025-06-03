@@ -12,21 +12,15 @@ class QFactory(ABC):
 
     def __init__(self, config: QompilerConfig):
         self._config = config
-        self._qompiler = None
-        self._renderer = None
 
     def get_config(self):
         return self._config
 
     def get_qompiler(self) -> Qompiler:
-        if self._qompiler is None:
-            self._qompiler = Qompiler(self._config, self.get_builder(), self.get_device(), self.get_optimizers())
-        return self._qompiler
+        return Qompiler(self._config, self.get_builder(), self.get_device(), self.get_optimizers())
 
     def get_render(self) -> QRenderer:
-        if self._renderer is None:
-            self._renderer = QRenderer(self._config, self.get_builder())
-        return self._renderer
+        return QRenderer(self._config, self.get_builder())
 
     def get_device(self) -> QDevice:
         return QDevice(self._config.device)

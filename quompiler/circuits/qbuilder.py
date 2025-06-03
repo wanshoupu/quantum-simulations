@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Union, Optional
+from typing import Union, Sequence
 
-from quompiler.config.construct import DeviceConfig
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import UnivGate
+from quompiler.construct.qspace import Qubit
 from quompiler.construct.unitary import UnitaryM
 
 
@@ -43,5 +42,8 @@ class CircuitBuilder(ABC):
         pass
 
     @abstractmethod
-    def register(self, qspace):
+    def register(self, qspace: Sequence[Qubit]) -> None:
+        """
+        Register all the qubits with this builder.
+        """
         pass

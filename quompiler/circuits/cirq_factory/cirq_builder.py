@@ -14,7 +14,7 @@ from quompiler.construct.unitary import UnitaryM
 
 
 class CirqBuilder(CircuitBuilder):
-    __UNIV_GATES = {
+    _UNIV_GATES = {
         # identity gate for completeness
         UnivGate.I: cirq.I,
         # necessary gates
@@ -29,20 +29,16 @@ class CirqBuilder(CircuitBuilder):
         UnivGate.Z: cirq.Z,
     }
 
-    def __init__(self, config: QompilerConfig):
-        self.device = config
+    def __init__(self):
         self.circuit = cirq.Circuit()
         self.qubits: Dict[Qubit, object] = {}
 
-    @override
-    def get_univ_gate(self, m: CtrlGate) -> Optional[EigenGate]:
-        if isinstance(m, CtrlGate) and m.is_std():
-            return CirqBuilder.__UNIV_GATES[m.gate]
-        return None
+    def get_univ_gate(self, gate: UnivGate) -> Optional[EigenGate]:
+        return self._UNIV_GATES[gate]
 
     def build_gate(self, m: Union[UnitaryM, CtrlGate]):
         if isinstance(m, CtrlGate):
-            gate = self.get_univ_gate(m) or cirq.MatrixGate(m.matrix())
+            gate = self.get_univ_gate(m.gate) if m.is_std() else cirq.MatrixGate(m.matrix())
             self._append_gate(m.controls, gate, m.qids())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
