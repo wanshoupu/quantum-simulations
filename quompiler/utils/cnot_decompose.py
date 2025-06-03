@@ -71,6 +71,8 @@ V is a controlled unitary matrix on the 2nd qubit by the first and third qubit o
 """
 from typing import Tuple, Sequence
 
+import numpy as np
+
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.unitary import UnitaryM
@@ -94,7 +96,7 @@ def cnot_decompose(m: UnitaryM, qspace: Sequence[Qubit] = None) -> Tuple[CtrlGat
     if not m.is2l():
         raise ValueError(f'The unitary matrix is not 2 level: {m}')
     code = gray_code(*m.core)
-    xmat = UnivGate.X.matrix
+    xmat = np.array(UnivGate.X)
     components = [CtrlGate(xmat, core2control(n, core), qspace) for core in zip(code, code[1:-1])]
     if code[-2] < code[-1]:
         #  the final swap preserves the original ordering of the core matrix

@@ -119,9 +119,9 @@ def test_deflate_deficit_core():
 
 def test_matmul_eye_phase():
     core = (1, 3)
-    a = UnitaryM(4, core, UnivGate.I.matrix, 1.0)
+    a = UnitaryM(4, core, np.array(UnivGate.I), 1.0)
     core2 = (0, 2)
-    b = UnitaryM(4, core2, UnivGate.S.matrix, 1.0)
+    b = UnitaryM(4, core2, np.array(UnivGate.S), 1.0)
     c = a @ b
     assert c is not None
     assert len(c.core) == 2, f'Core indexes is unexpected {c.core}'

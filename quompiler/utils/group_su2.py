@@ -49,7 +49,7 @@ def tsim(U, V):
     """
     _, uval, uvec = eigen_decompose(U)
     _, vval, vvec = eigen_decompose(V)
-    X = UnivGate.X.matrix
+    X = np.array(UnivGate.X)
     if np.allclose(uval, vval[::-1]):
         # swap the eigen values along with the eigenvectors
         return vvec @ X @ herm(uvec)

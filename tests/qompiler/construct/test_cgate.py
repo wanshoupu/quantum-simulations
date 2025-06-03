@@ -796,7 +796,7 @@ def test_verify_phase_matmul():
     # print(formatter.tostr(actual))
 
     # verify
-    expected = u @ UnivGate.X.matrix * phase1 * phase2
+    expected = u @ np.array(UnivGate.X) * phase1 * phase2
     # print('expected')
     # print(formatter.tostr(expected))
     assert np.allclose(actual, expected)

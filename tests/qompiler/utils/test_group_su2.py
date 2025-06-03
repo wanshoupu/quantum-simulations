@@ -157,13 +157,13 @@ def test_rangle_slightly_gt_1():
 
 
 def test_rangle_eq_0():
-    gate = -UnivGate.I.matrix
+    gate = -np.array(UnivGate.I)
     actual = rangle(gate)
     assert np.isclose(actual, 0)
 
 
 def test_rangle_eq_pi():
-    gate = -UnivGate.X.matrix
+    gate = -np.array(UnivGate.X)
     actual = rangle(gate)
     assert np.isclose(actual, np.pi)
 

@@ -10,12 +10,12 @@ from quompiler.utils.mgen import random_unitary, random_phase
 
 
 def test_univ_gate_X():
-    assert np.all(np.equal(UnivGate.X.matrix[::-1], np.eye(2)))
+    assert np.all(np.equal(np.array(UnivGate.X)[::-1], np.eye(2)))
 
 
 def test_univ_gate_Y():
-    mat = UnivGate.Y.matrix
-    assert np.array_equal(mat, UnivGate.Z.matrix[[1, 0]] * 1j)
+    mat = np.array(UnivGate.Y)
+    assert np.array_equal(mat, np.array(UnivGate.Z)[[1, 0]] * 1j)
 
 
 def test_univ_gate_get_none():
@@ -31,13 +31,13 @@ def test_univ_gate_get_T():
 
 
 def test_univ_gate_get_Z():
-    mat = UnivGate.H.matrix @ UnivGate.X.matrix @ UnivGate.H.matrix
+    mat = np.array(UnivGate.H) @ np.array(UnivGate.X) @ np.array(UnivGate.H)
     gate = UnivGate.get(mat)
     assert gate == UnivGate.Z
 
 
 def test_univ_gate_get_H():
-    mat = (UnivGate.Z.matrix + UnivGate.X.matrix) / np.sqrt(2)
+    mat = (np.array(UnivGate.Z) + np.array(UnivGate.X)) / np.sqrt(2)
     gate = UnivGate.get(mat)
     assert gate == UnivGate.H
 
@@ -128,8 +128,8 @@ def test_univ_gate_rmat(name):
 
 
 def test_univ_gate_commutator():
-    mat = UnivGate.Z.matrix @ UnivGate.Y.matrix @ UnivGate.Z.matrix
-    assert np.array_equal(mat, -UnivGate.Y.matrix), f'mat unexpected {mat}'
+    mat = np.array(UnivGate.Z) @ np.array(UnivGate.Y) @ np.array(UnivGate.Z)
+    assert np.array_equal(mat, -np.array(UnivGate.Y)), f'mat unexpected {mat}'
 
 
 def test_qtype_empty_state():

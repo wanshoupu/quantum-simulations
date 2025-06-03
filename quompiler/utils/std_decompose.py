@@ -24,7 +24,7 @@ def cliffordt_seqs(length: int) -> list[tuple[NDArray, tuple[UnivGate]]]:
     We grow the subtree by gc_decompose the node into its commutators
     :param node: the root to begin with.
     """
-    pairs = [(UnivGate.I.matrix, (UnivGate.I,))]  # start with identity
+    pairs = [(np.array(UnivGate.I), (UnivGate.I,))]  # start with identity
     cliffordt = UnivGate.cliffordt()
     cliffordt.remove(UnivGate.I)
 
