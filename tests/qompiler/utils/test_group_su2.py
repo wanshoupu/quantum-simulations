@@ -22,10 +22,10 @@ formatter = MatrixFormatter(precision=2)
     [UnivGate.T, (np.power(1j, 1 / 4), np.pi / 8, 0, np.pi / 8)],
 ])
 def test_euler_params_std_gate(gate: UnivGate, expected: tuple):
-    coms = euler_params(gate.matrix)
+    coms = euler_params(np.array(gate))
     a, b, c, d = coms
     actual = a * UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c) @ UnivGate.Z.rotation(d)
-    assert np.allclose(actual, gate.matrix)
+    assert np.allclose(actual, np.array(gate))
     assert np.allclose(coms, expected)
 
 
@@ -229,7 +229,7 @@ def test_dist_negation_zero_distance(seed: int):
     [UnivGate.I, UnivGate.Z, np.pi],
 ])
 def test_dist_real_unitary(u, v, angle):
-    actual = dist(u.matrix, v.matrix)
+    actual = dist(np.array(u), np.array(v))
     expected = 2 * (1 - np.cos(angle / 2))
     assert np.isclose(actual, expected), f'{actual} != {expected}'
 
@@ -244,7 +244,7 @@ def test_dist_real_unitary(u, v, angle):
     [UnivGate.SD, UnivGate.Y, np.pi],
 ])
 def test_dist_std_gates(u, v, angle):
-    actual = dist(u.matrix, v.matrix)
+    actual = dist(np.array(u), np.array(v))
     expected = 2 * (1 - np.cos(angle / 2))
     assert np.isclose(actual, expected), f'{actual} != {expected}'
 
@@ -256,7 +256,7 @@ def test_dist_std_special_phase(gate):
     Instead of being zero, the distance is 4.
     """
     gate = UnivGate.X
-    u = gate.matrix
+    u = np.array(gate)
     assert dist(u, u) == 0
     assert dist(u, 1j * u) == 0
     assert dist(u, -1 * u) == 0
@@ -286,7 +286,7 @@ def test_dist_phase_agnostic(seed):
     [UnivGate.TD, np.array([0, 0, -1])],
 ])
 def test_raxis_std(gate, expected):
-    u = gate.matrix
+    u = np.array(gate)
     # execute
     norm_vec = raxis(u)
     # verify
@@ -592,7 +592,7 @@ def test_tan2(x, y, expected):
     [UnivGate.TD, (np.pi, 0, np.pi / 4)],
 ])
 def test_vec_std(gate, expected):
-    angle_vec = vec(gate.matrix)
+    angle_vec = vec(np.array(gate))
     assert np.allclose(angle_vec, expected, rtol=1.e-4, atol=1.e-7), f"{angle_vec} != {expected}"
 
 

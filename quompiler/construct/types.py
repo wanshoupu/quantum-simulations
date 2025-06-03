@@ -7,21 +7,29 @@ from scipy.linalg import expm
 
 from quompiler.utils.mfun import allprop
 
+_univgate_mat_mapping = dict([
+    ('I', np.eye(2)),
+    ('X', np.eye(2)[[1, 0]]),
+    ('Y', np.array([[0j, -1j], [1j, 0j]])),
+    ('Z', np.array([[1, 0j], [0j, -1]])),
+    ('H', np.array([[1, 1], [1, -1]]) / np.sqrt(2)),
+    ('S', np.array([[1, 0j], [0j, 1j]])),
+    ('T', np.array([[1, 0j], [0j, np.exp(1j * np.pi / 4)]])),
+    ('SD', np.array([[1, 0j], [0j, -1j]])),
+    ('TD', np.array([[1, 0j], [0j, np.exp(-1j * np.pi / 4)]])),
+])
+
 
 class UnivGate(Enum):
-    I = ('I', np.eye(2))
-    X = ('X', np.eye(2)[[1, 0]])
-    Y = ('Y', np.array([[0j, -1j], [1j, 0j]]))
-    Z = ('Z', np.array([[1, 0j], [0j, -1]]))
-    H = ('H', np.array([[1, 1], [1, -1]]) / np.sqrt(2))
-    S = ('S', np.array([[1, 0j], [0j, 1j]]))
-    T = ('T', np.array([[1, 0j], [0j, np.exp(1j * np.pi / 4)]]))
-    SD = ('SD', np.array([[1, 0j], [0j, -1j]]))
-    TD = ('TD', np.array([[1, 0j], [0j, np.exp(-1j * np.pi / 4)]]))
-
-    def __init__(self, label, mat: NDArray):
-        self.label = label
-        self.matrix = mat
+    I = 'I'
+    X = 'X'
+    Y = 'Y'
+    Z = 'Z'
+    H = 'H'
+    S = 'S'
+    T = 'T'
+    SD = 'SD'
+    TD = 'TD'
 
     @staticmethod
     def get(m: NDArray) -> Optional['UnivGate']:
@@ -33,22 +41,25 @@ class UnivGate(Enum):
         if m.shape != (2, 2) or not np.allclose(m.conj() @ m.T, np.eye(2)):
             return None
         for g in UnivGate:
-            if np.allclose(m, g.matrix):
+            if np.allclose(m, np.array(g)):
                 return g
         return None
 
     def __repr__(self):
-        return self.label
+        return self.name
 
     def __lt__(self, other):
-        return self.label < other.label
+        return self.name < other.name
+
+    def __reduce__(self):
+        return self.__class__, (self.name,)
 
     def __array__(self):
-        return self.matrix
+        return _univgate_mat_mapping[self.value]
 
     def __matmul__(self, other: Union[NDArray, 'UnivGate']) -> NDArray:
         # 'other' may be np.ndarray
-        return self.matrix @ other
+        return np.array(self) @ other
 
     def herm(self):
         if self == UnivGate.S:
@@ -71,9 +82,9 @@ class UnivGate(Enum):
         if m.shape != (2, 2) or not np.allclose(m.conj() @ m.T, np.eye(2)):
             return None
         for g in UnivGate:
-            if np.allclose(m, g.matrix):
+            if np.allclose(m, np.array(g)):
                 return g, 1
-            p, f = allprop(m, g.matrix)
+            p, f = allprop(m, np.array(g))
             if p:
                 return g, f
         return None
@@ -84,7 +95,7 @@ class UnivGate(Enum):
         :param theta: the angle in radians.
         :return: the rotation matrix corresponding to the given angle along the axis.
         """
-        return expm(-.5j * theta * self.matrix)
+        return expm(-.5j * theta * np.array(self))
 
     @staticmethod
     def cliffordt():

@@ -124,9 +124,9 @@ def test_init_qspace_obj():
 def test_univ_Y():
     gate = UnivGate.Y
     control = (QType.CONTROL0, QType.CONTROL0, QType.TARGET)
-    cu = CtrlGate(gate.matrix, control)
+    cu = CtrlGate(np.array(gate), control)
     expected = np.eye(8, dtype=np.complexfloating)
-    expected[:2, :2] = gate.matrix
+    expected[:2, :2] = np.array(gate)
     # print()
     # print(formatter.tostr(expected))
     u = cu.inflate()
@@ -136,9 +136,9 @@ def test_univ_Y():
 def test_UnivGate_Z():
     gate = UnivGate.Z
     control = (QType.CONTROL1, QType.CONTROL0, QType.CONTROL0, QType.TARGET)
-    cu = CtrlGate(gate.matrix, control)
+    cu = CtrlGate(np.array(gate), control)
     expected = np.eye(16, dtype=np.complexfloating)
-    expected[8:10, 8:10] = gate.matrix
+    expected[8:10, 8:10] = np.array(gate)
     # print()
     # print(formatter.tostr(expected))
     u = cu.inflate()
@@ -149,7 +149,7 @@ def test_UnivGate_Z():
 def test_proportional_univ_gate(gate):
     prop_factor = random_phase()
     phase = random_phase()
-    actual = CtrlGate(gate.matrix * prop_factor, random_control(3, 1), phase=phase)
+    actual = CtrlGate(np.array(gate) * prop_factor, random_control(3, 1), phase=phase)
     assert actual.is_std()
     assert np.isclose(actual.phase(), phase * prop_factor)
 

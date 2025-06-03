@@ -32,7 +32,7 @@ class CtrlGate:
         core = ctrl2core(control)
         if isinstance(gate, UnivGate):
             self.gate = gate
-            mat = gate.matrix
+            mat = np.array(gate)
         elif isinstance(gate, np.ndarray):
             match = UnivGate.get_prop(gate)
             if match is None:
@@ -41,7 +41,7 @@ class CtrlGate:
             else:
                 g, f = match  # unpack to UnivGate, proportional factor (guaranteed norm-1)
                 self.gate = g
-                mat = g.matrix
+                mat = np.array(g)
                 phase *= f
         else:
             raise NotImplementedError(f'unsupported gate type: {gate}')

@@ -45,7 +45,7 @@ def test_univ_gate_get_H():
 @pytest.mark.parametrize('u', list(UnivGate))
 def test_univ_gate_herm(u):
     uh = UnivGate.herm(u)
-    assert np.allclose(uh.matrix @ u.matrix, np.eye(2))
+    assert np.allclose(np.array(uh) @ np.array(u), np.eye(2))
 
 
 @pytest.mark.parametrize("gate", list(UnivGate))
@@ -53,7 +53,7 @@ def test_univ_gate_matmul(gate):
     # left matmul with NDArray
     u = random_unitary(2)
     actual = gate @ u
-    expected = gate.matrix @ u
+    expected = np.array(gate) @ u
     assert np.allclose(actual, expected)
 
 
@@ -62,7 +62,7 @@ def test_univ_gate_rmatmul(gate):
     # right matmul with NDArray
     u = random_unitary(2)
     actual = u @ gate
-    expected = u @ gate.matrix
+    expected = u @ np.array(gate)
     assert np.allclose(actual, expected)
 
 
@@ -96,7 +96,7 @@ def test_get_prop_random_unitary():
 @pytest.mark.parametrize("gate", list(UnivGate))
 def test_get_prop_phase_factor(gate):
     phase = random_phase()
-    mat = gate.matrix * phase
+    mat = np.array(gate) * phase
     pg = UnivGate.get_prop(mat)
     assert pg is not None
     g, f = pg

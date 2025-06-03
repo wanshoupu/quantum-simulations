@@ -12,7 +12,7 @@ from quompiler.utils.std_decompose import cliffordt_seqs
 
 @pytest.mark.parametrize('gate', list(UnivGate))
 def test_lookup_std_autonn(gate):
-    matrix = gate.matrix
+    matrix = np.array(gate)
     nn = AutoNN(cliffordt_seqs(5))
     node, lookup_error = nn.lookup(matrix)
     seq = [n.data for n in node.children]
@@ -29,7 +29,7 @@ def test_lookup_std_autonn(gate):
 
 @pytest.mark.parametrize('gate', list(UnivGate))
 def test_lookup_std_brutenn(gate):
-    matrix = gate.matrix
+    matrix = np.array(gate)
     nn = BruteNN(cliffordt_seqs(5))
     node, lookup_error = nn.lookup(matrix)
     seq = [n.data for n in node.children]
@@ -47,7 +47,7 @@ def test_lookup_std_brutenn(gate):
 @pytest.mark.parametrize('gate', list(UnivGate))
 def test_lookup_std_kdtree(gate):
     gate = UnivGate.Z
-    matrix = gate.matrix
+    matrix = np.array(gate)
     nn = KDTreeNN(cliffordt_seqs(5))
     node, lookup_error = nn.lookup(matrix)
     seq = [n.data for n in node.children]

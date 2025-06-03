@@ -23,7 +23,7 @@ class SU2NetTestTemplate:
 
     def test_lookup_identity(self):
         gate = UnivGate.I
-        matrix = gate.matrix
+        matrix = np.array(gate)
         node, lookup_error = self.su2net.lookup(matrix)
         seq = [n.data for n in node.children]
         v = reduce(lambda a, b: a @ b, seq, np.eye(2))
@@ -33,7 +33,7 @@ class SU2NetTestTemplate:
 
     @pytest.mark.parametrize('gate', list(UnivGate))
     def test_lookup_std(self, gate):
-        matrix = gate.matrix
+        matrix = np.array(gate)
         node, lookup_error = self.su2net.lookup(matrix)
         seq = [n.data for n in node.children]
         v = reduce(lambda a, b: a @ b, seq, np.eye(2))
