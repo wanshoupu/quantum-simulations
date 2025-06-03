@@ -8,6 +8,7 @@ import pytest
 
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
+from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 
@@ -174,7 +175,7 @@ def test_optimize_basic_optimizer():
 def test_output():
     from tests.qompiler.mock_fixtures import mock_factory_manager
     n = 1
-    with tempfile.NamedTemporaryFile(suffix=".out", mode="w+", delete=True) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
         man = mock_factory_manager(emit="SINGLET", ancilla_offset=n, output=tmp.name)
         dim = 1 << n
         u = random_unitary(dim)

@@ -3,7 +3,7 @@ import pickle
 
 from quompiler.construct.bytecode import Bytecode
 
-DEFAULT_EXT = ".qco"
+CODE_FILE_EXT = ".qco"
 
 
 def write_code(filename, code: Bytecode):
@@ -23,6 +23,6 @@ def read_code(filename) -> Bytecode:
 
 def rectify_filename(filename):
     _, ext = os.path.splitext(filename)
-    if ext != DEFAULT_EXT:
-        filename = f"{filename}{DEFAULT_EXT}"
+    if ext != CODE_FILE_EXT:
+        filename = f"{filename}{CODE_FILE_EXT}"
     return filename
