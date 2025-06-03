@@ -1,4 +1,6 @@
+import os
 import random
+import tempfile
 from functools import reduce
 
 import numpy as np
@@ -22,7 +24,7 @@ def test_compile_identity_matrix():
     interp = factory.get_qompiler()
 
     # execute
-    bc = interp.compile(u)
+    bc = interp.decompose(u)
     assert bc is not None
     assert np.array_equal(bc.data.matrix, np.eye(bc.data.matrix.shape[0]))
     assert bc.children == []
@@ -38,7 +40,7 @@ def test_compile_sing_qubit_circuit():
     interp = factory.get_qompiler()
 
     # execute
-    bc = interp.compile(u)
+    bc = interp.decompose(u)
     # print(bc)
     assert isinstance(bc, Bytecode)
     assert len(bc.children) == 1
@@ -55,7 +57,7 @@ def test_compile_insufficient_qspace_error():
 
     # execute
     with pytest.raises(EnvironmentError):
-        interp.compile(u)
+        interp.decompose(u)
 
 
 def test_compile_cyclic_8_ctrl_prune():
@@ -66,7 +68,7 @@ def test_compile_cyclic_8_ctrl_prune():
     interp = factory.get_qompiler()
 
     # execute
-    bc = interp.compile(u)
+    bc = interp.decompose(u)
     # print(bc)
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
@@ -86,7 +88,7 @@ def test_compile_cyclic_8():
     interp = factory.get_qompiler()
 
     # execute
-    bc = interp.compile(u)
+    bc = interp.decompose(u)
     # print(bc)
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
@@ -104,7 +106,7 @@ def test_compile_cyclic_4():
     interp = factory.get_qompiler()
 
     # execute
-    bc = interp.compile(u)
+    bc = interp.decompose(u)
     # print(bc)
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
@@ -127,7 +129,7 @@ def test_interp_random_unitary():
         interp = factory.get_qompiler()
 
         # execute
-        bc = interp.compile(u)
+        bc = interp.decompose(u)
 
         # verify
         leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, CtrlGate)]
@@ -143,7 +145,7 @@ def test_optimize_no_optimizer():
     factory = man.create_factory()
     compiler = Qompiler(cman.create_config(), factory.get_builder(), factory.get_device())
     u = random_unitary(2)
-    code = compiler.compile(u)
+    code = compiler.decompose(u)
 
     # execute
     optcode = compiler.optimize(code)
@@ -159,7 +161,7 @@ def test_optimize_basic_optimizer():
     factory = man.create_factory()
     compiler = factory.get_qompiler()
     u = random_unitary(2)
-    code = compiler.compile(u)
+    code = compiler.decompose(u)
 
     # execute
     optcode = compiler.optimize(code)
@@ -167,3 +169,21 @@ def test_optimize_basic_optimizer():
     leaves = [a.data for a in BytecodeIter(optcode) if a.is_leaf()]
     v = reduce(lambda a, b: a @ b, leaves)
     assert np.allclose(v.inflate(), u), f'circuit != input:\ncompiled=\n{formatter.tostr(v.inflate())},\ninput=\n{formatter.tostr(u)}'
+
+
+def test_output():
+    from tests.qompiler.mock_fixtures import mock_factory_manager
+    n = 1
+    with tempfile.NamedTemporaryFile(suffix=".out", mode="w+", delete=True) as tmp:
+        man = mock_factory_manager(emit="SINGLET", ancilla_offset=n, output=tmp.name)
+        dim = 1 << n
+        u = random_unitary(dim)
+        factory = man.create_factory()
+        interp = factory.get_qompiler()
+
+        # execute
+        bc = interp.decompose(u)
+        interp.output(bc)
+        assert os.path.exists(tmp.name)
+        actual_size = os.path.getsize(tmp.name)
+        assert actual_size == 782
