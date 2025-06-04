@@ -40,8 +40,8 @@ def test_lookup_std_brutenn(gate):
     print(vvec)
     assert np.allclose(np.array(v), node.data)  # self-consistent
     error = dist(np.array(v), np.array(matrix))
-    assert np.isclose(error, lookup_error)
-    assert np.isclose(error, 0,  rtol=1.e-5, atol=1.e-6)
+    assert np.isclose(error, lookup_error, rtol=1.e-5, atol=1.e-6)
+    assert np.isclose(error, 0, rtol=1.e-5, atol=1.e-6)
 
 
 @pytest.mark.parametrize('gate', list(UnivGate))
