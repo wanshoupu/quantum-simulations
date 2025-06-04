@@ -19,7 +19,7 @@ def compile_random_unitary(filename):
     n = int(args.input)
     dim = 1 << n
     u = random_unitary(dim)
-    config = create_config(emit="CLIFFORD_T", ancilla_offset=100, output=filename)
+    config = create_config(emit="CTRL_PRUNED", ancilla_offset=100, output=filename)
     factory = QFactory(config)
     compiler = factory.get_qompiler()
     compiler.compile(u)
