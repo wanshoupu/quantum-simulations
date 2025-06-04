@@ -51,7 +51,7 @@ def render_qiskit(filename):
     #     print(m)
     print(f'Total {len(layers)} layers in the circuit.')
     circuit.draw('mpl')
-    plt.savefig("qc_qiskit_sketch.pdf")
+    plt.savefig("qc_qiskit_sketch.pdf", bbox_inches='tight')
     plt.show()
 
 
