@@ -4,7 +4,7 @@ import cirq
 import numpy as np
 from typing_extensions import override
 
-from quompiler.config.config_manager import ConfigManager
+from quompiler.config.config_manager import create_config
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from tests.qompiler.circuits.circuit_test_template import CircuitTestTemplate
@@ -28,8 +28,7 @@ def test_cirq_bug_4_qubits():
 
 
 class TestCirqCircuit(CircuitTestTemplate):
-    override_config = dict(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
-    config = ConfigManager().merge(override_config).create_config()
+    config= create_config(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
 
     @override
     def verify_circuit(self, expected, builder, circuit):
@@ -42,8 +41,7 @@ class TestCirqCircuit(CircuitTestTemplate):
 
 with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
     class TestCirqCircuitEnd2End(CircuitTestTemplate):
-        override_config = dict(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
-        config = ConfigManager().merge(override_config).create_config()
+        config= create_config(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
 
         @override
         def verify_circuit(self, expected, builder, circuit):

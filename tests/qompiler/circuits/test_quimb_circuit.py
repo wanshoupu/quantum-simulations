@@ -1,10 +1,9 @@
 from quompiler.circuits.qfactory import QFactory
-from quompiler.config.config_manager import ConfigManager
+from quompiler.config.config_manager import create_config
 from quompiler.construct.types import QompilePlatform
 from quompiler.utils.mgen import random_UnitaryM_2l
 
-override = dict(emit="SINGLET", ancilla_offset=100, target="QUIMB")
-config = ConfigManager().merge(override).create_config()
+config= create_config(emit="SINGLET", ancilla_offset=100, target="QUIMB")
 
 
 def test_create_builder():

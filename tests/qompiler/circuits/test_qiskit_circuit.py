@@ -3,13 +3,12 @@ from qiskit.quantum_info import Operator
 from typing_extensions import override
 
 from quompiler.circuits.qfactory import QFactory
-from quompiler.config.config_manager import ConfigManager
+from quompiler.config.config_manager import ConfigManager, create_config
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM_2l
 from tests.qompiler.circuits.circuit_test_template import CircuitTestTemplate
 
-override_config = dict(emit="SINGLET", ancilla_offset=100, target="QISKIT")
-config = ConfigManager().merge(override_config).create_config()
+config = create_config(emit="SINGLET", ancilla_offset=100, target="QISKIT")
 
 formatter = MatrixFormatter(precision=2)
 
@@ -25,8 +24,7 @@ def test_create_builder():
 
 
 class TestQiskitCircuit(CircuitTestTemplate):
-    override_config = dict(emit="CTRL_PRUNED", ancilla_offset=100, target="QISKIT")
-    config = ConfigManager().merge(override_config).create_config()
+    config= create_config(emit="CTRL_PRUNED", ancilla_offset=100, target="QISKIT")
 
     @override
     def verify_circuit(self, expected, builder, circuit):

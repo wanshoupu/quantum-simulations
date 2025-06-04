@@ -4,7 +4,7 @@ import tempfile
 from qiskit.converters import circuit_to_dag
 
 from quompiler.circuits.qfactory import QFactory
-from quompiler.config.config_manager import ConfigManager
+from quompiler.config.config_manager import ConfigManager, create_config
 from quompiler.construct.types import QompilePlatform
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.mgen import random_unitary
@@ -25,9 +25,8 @@ def compile_random_unitary(filename):
 
 
 def render_cirq(filename):
-    override = dict(emit="CLIFFORD_T", ancilla_offset=100, target="CIRQ", output=filename)
-    config_man = ConfigManager().merge(override).parse_args()
-    factory = QFactory(config_man.create_config())
+    config = create_config(emit="CLIFFORD_T", ancilla_offset=100, target="CIRQ", output=filename)
+    factory = QFactory(config)
     render = factory.get_render(QompilePlatform.CIRQ)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
@@ -39,8 +38,7 @@ def render_cirq(filename):
 
 
 def render_qiskit(filename):
-    override = dict(emit="CLIFFORD_T", ancilla_offset=100, target="QISKIT", output=filename)
-    config_man = ConfigManager().merge(override).parse_args()
+    config_man = create_config(emit="CLIFFORD_T", ancilla_offset=100, target="QISKIT", output=filename)
     factory = QFactory(config_man.create_config())
     render = factory.get_render(QompilePlatform.QISKIT)
     codefile = factory.get_config().output

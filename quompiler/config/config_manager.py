@@ -130,3 +130,23 @@ def merge_dicts(dict1: dict, dict2: dict) -> dict:
         else:
             result[key] = value
     return result
+
+
+def create_config(emit: str = "SINGLET", ancilla_offset=1, target="CIRQ", output="a.out", lookup_tol=.4) -> QompilerConfig:
+    man = create_config_manager(emit, ancilla_offset, target, output, lookup_tol)
+    return man.create_config()
+
+
+def create_config_manager(emit: str = "SINGLET", ancilla_offset=1, target="CIRQ", output="a.out", lookup_tol=.4) -> ConfigManager:
+    config = {
+        "output": output,
+        "emit": emit,
+        "target": target,
+        "device": {
+            "ancilla_offset": ancilla_offset,
+        },
+        "lookup_tol": lookup_tol
+    }
+    man = ConfigManager()
+    man.merge(config)
+    return man
