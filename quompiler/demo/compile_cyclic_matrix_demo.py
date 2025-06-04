@@ -1,4 +1,6 @@
-from quompiler.circuits.factory_manager import FactoryManager
+from quompiler.circuits.qfactory import QFactory
+from quompiler.config.config_manager import ConfigManager
+from quompiler.construct.types import QompilePlatform
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
 
@@ -8,12 +10,10 @@ if __name__ == '__main__':
     dim = 1 << n
     u = cyclic_matrix(dim, 1)
     print(formatter.tostr(u))
-    fman = FactoryManager()
-    fman.parse_args()
-
-    factory = fman.create_factory()
+    config_man = ConfigManager().parse_args()
+    factory = QFactory(config_man.create_config())
     compiler = factory.get_qompiler()
-    render = factory.get_render()
+    render = factory.get_render(QompilePlatform.CIRQ)
 
     # execute
     compiler.compile(u)

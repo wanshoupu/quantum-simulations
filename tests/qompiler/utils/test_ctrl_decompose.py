@@ -4,7 +4,8 @@ from functools import reduce
 import numpy as np
 import pytest
 
-from quompiler.circuits.factory_manager import FactoryManager
+from quompiler.circuits.qfactory import QFactory
+from quompiler.config.config_manager import ConfigManager
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import QType
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -12,7 +13,8 @@ from quompiler.utils.mgen import random_CtrlGate, random_control
 from quompiler.utils.ctrl_decompose import ctrl_decompose
 
 formatter = MatrixFormatter(precision=2)
-factory = FactoryManager().create_factory()
+config = ConfigManager().create_config()
+factory = QFactory(config)
 device = factory.get_device()
 
 

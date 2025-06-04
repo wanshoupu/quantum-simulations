@@ -6,11 +6,10 @@ import pytest
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
-from quompiler.construct.types import UnivGate, QType
+from quompiler.construct.types import QType
+from quompiler.utils.euler_decompose import euler_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, random_control
-from quompiler.utils.euler_decompose import euler_decompose
-from quompiler.utils.group_su2 import euler_params
 
 formatter = MatrixFormatter(precision=2)
 

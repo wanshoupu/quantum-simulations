@@ -4,10 +4,10 @@ import cirq
 import numpy as np
 from typing_extensions import override
 
+from quompiler.config.config_manager import ConfigManager
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from tests.qompiler.circuits.circuit_test_template import CircuitTestTemplate
-from tests.qompiler.mock_fixtures import mock_factory_manager
 
 formatter = MatrixFormatter(precision=2)
 
@@ -28,7 +28,8 @@ def test_cirq_bug_4_qubits():
 
 
 class TestCirqCircuit(CircuitTestTemplate):
-    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
+    override_config = dict(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
+    config = ConfigManager().merge(override_config).create_config()
 
     @override
     def verify_circuit(self, expected, builder, circuit):
@@ -41,7 +42,8 @@ class TestCirqCircuit(CircuitTestTemplate):
 
 with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
     class TestCirqCircuitEnd2End(CircuitTestTemplate):
-        man = mock_factory_manager(emit="CLIFFORD_T", ancilla_offset=100, output=tmp.name, lookup_tol=.3)
+        override_config = dict(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
+        config = ConfigManager().merge(override_config).create_config()
 
         @override
         def verify_circuit(self, expected, builder, circuit):

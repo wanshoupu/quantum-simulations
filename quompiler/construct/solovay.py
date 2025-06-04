@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode, BytecodeIter
 from quompiler.construct.su2net import SU2Net
-from quompiler.construct.types import UnivGate, SU2NetType
+from quompiler.construct.types import UnivGate
 from quompiler.utils.group_su2 import gc_decompose
 from quompiler.utils.mfun import herm
 

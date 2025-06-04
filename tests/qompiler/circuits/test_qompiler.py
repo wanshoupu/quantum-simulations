@@ -6,6 +6,8 @@ from functools import reduce
 import numpy as np
 import pytest
 
+from quompiler.circuits.qfactory import QFactory
+from quompiler.config.config_manager import ConfigManager
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.utils.file_io import CODE_FILE_EXT
@@ -16,12 +18,12 @@ formatter = MatrixFormatter(precision=2)
 
 
 def test_compile_identity_matrix():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
     n = 3
-    man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
     dim = 1 << n
     u = np.eye(dim)
-    factory = man.create_factory()
+    override = dict(emit="SINGLET", ancilla_offset=n, target="QISKIT")
+    config = ConfigManager().merge(override).create_config()
+    factory = QFactory(config)
     interp = factory.get_qompiler()
 
     # execute
@@ -32,12 +34,12 @@ def test_compile_identity_matrix():
 
 
 def test_compile_sing_qubit_circuit():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
     n = 1
-    man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
     dim = 1 << n
     u = random_unitary(dim)
-    factory = man.create_factory()
+    override = dict(emit="SINGLET", ancilla_offset=n)
+    config = ConfigManager().merge(override).create_config()
+    factory = QFactory(config)
     interp = factory.get_qompiler()
 
     # execute
@@ -50,22 +52,23 @@ def test_compile_sing_qubit_circuit():
 
 
 def test_compile_insufficient_qspace_error():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
-    u = cyclic_matrix(8, 1)
-    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=1)
-    factory = man.create_factory()
+    # TODO: ancilla_offset=1 is not working
+    override = dict(emit="CTRL_PRUNED", ancilla_offset=1)
+    config = ConfigManager().merge(override).create_config()
+    factory = QFactory(config)
     interp = factory.get_qompiler()
 
+    u = cyclic_matrix(8, 1)
     # execute
     with pytest.raises(EnvironmentError):
         interp.decompose(u)
 
 
 def test_compile_cyclic_8_ctrl_prune():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
     u = cyclic_matrix(8, 1)
-    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=2)
-    factory = man.create_factory()
+    override = dict(emit="CTRL_PRUNED", ancilla_offset=2)
+    config = ConfigManager().merge(override).create_config()
+    factory = QFactory(config)
     interp = factory.get_qompiler()
 
     # execute
@@ -81,11 +84,11 @@ def test_compile_cyclic_8_ctrl_prune():
 
 
 def test_compile_cyclic_8():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
     n = 3
-    man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
     u = cyclic_matrix(1 << n, 1)
-    factory = man.create_factory()
+    override = dict(emit="SINGLET", ancilla_offset=n)
+    config = ConfigManager().merge(override).create_config()
+    factory = QFactory(config)
     interp = factory.get_qompiler()
 
     # execute
@@ -100,10 +103,9 @@ def test_compile_cyclic_8():
 
 
 def test_compile_cyclic_4():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
-    man = mock_factory_manager(emit="SINGLET")
     u = cyclic_matrix(4, 1)
-    factory = man.create_factory()
+    config = ConfigManager().merge(dict(emit="SINGLET")).create_config()
+    factory = QFactory(config)
     interp = factory.get_qompiler()
 
     # execute
@@ -119,14 +121,13 @@ def test_compile_cyclic_4():
 
 
 def test_interp_random_unitary():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
     for _ in range(10):
         # print(f'Test {_}th round')
         n = random.randint(1, 4)
         dim = 1 << n
         u = random_unitary(dim)
-        man = mock_factory_manager(emit="SINGLET", ancilla_offset=n)
-        factory = man.create_factory()
+        config = ConfigManager().merge(dict(emit="SINGLET", ancilla_offset=n)).create_config()
+        factory = QFactory(config)
         interp = factory.get_qompiler()
 
         # execute
@@ -139,12 +140,10 @@ def test_interp_random_unitary():
 
 
 def test_optimize_no_optimizer():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
-    from quompiler.circuits.qompiler import Qompiler
-    man = mock_factory_manager(emit="SINGLET")
-    cman = man.config_man
-    factory = man.create_factory()
-    compiler = Qompiler(cman.create_config(), factory.get_builder(), factory.get_device())
+    config = ConfigManager().merge(dict(emit="SINGLET")).create_config()
+    factory = QFactory(config)
+    compiler = factory.get_qompiler()
+
     u = random_unitary(2)
     code = compiler.decompose(u)
 
@@ -157,9 +156,8 @@ def test_optimize_no_optimizer():
 
 
 def test_optimize_basic_optimizer():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
-    man = mock_factory_manager(emit="SINGLET")
-    factory = man.create_factory()
+    config = ConfigManager().merge(dict(emit="SINGLET")).create_config()
+    factory = QFactory(config)
     compiler = factory.get_qompiler()
     u = random_unitary(2)
     code = compiler.decompose(u)
@@ -173,13 +171,12 @@ def test_optimize_basic_optimizer():
 
 
 def test_output():
-    from tests.qompiler.mock_fixtures import mock_factory_manager
     n = 1
     with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
-        man = mock_factory_manager(emit="SINGLET", ancilla_offset=n, output=tmp.name)
         dim = 1 << n
         u = random_unitary(dim)
-        factory = man.create_factory()
+        config = ConfigManager().merge(dict(emit="SINGLET", ancilla_offset=n, output=tmp.name)).create_config()
+        factory = QFactory(config)
         interp = factory.get_qompiler()
 
         # execute

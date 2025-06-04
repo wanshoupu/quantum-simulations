@@ -6,7 +6,6 @@ from cirq import EigenGate, Circuit, merge_single_qubit_gates_to_phased_x_and_z,
 from typing_extensions import override
 
 from quompiler.circuits.qbuilder import CircuitBuilder
-from quompiler.config.construct import QompilerConfig
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import UnivGate, QType

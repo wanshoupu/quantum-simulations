@@ -3,11 +3,11 @@ import tempfile
 
 from qiskit.converters import circuit_to_dag
 
-from quompiler.circuits.factory_manager import FactoryManager
-from quompiler.circuits.render import QRenderer
+from quompiler.circuits.qfactory import QFactory
+from quompiler.config.config_manager import ConfigManager
+from quompiler.construct.types import QompilePlatform
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.mgen import random_unitary
-from tests.qompiler.mock_fixtures import mock_factory_manager, mock_config
 
 
 def compile_random_unitary(filename):
@@ -17,20 +17,18 @@ def compile_random_unitary(filename):
     n = int(args.input)
     dim = 1 << n
     u = random_unitary(dim)
-    man = FactoryManager()
     override = {"output": filename}
-    man.merge(override)
-    factory = man.create_factory()
+    config_man = ConfigManager().merge(override).parse_args()
+    factory = QFactory(config_man.create_config())
     compiler = factory.get_qompiler()
     compiler.compile(u)
 
 
 def render_cirq(filename):
-    man = mock_factory_manager(emit="CLIFFORD_T", ancilla_offset=100, target="CIRQ")
-    override = {"output": filename}
-    man.merge(override)
-    factory = man.create_factory()
-    render = QRenderer(man.create_config(), factory.get_builder())
+    override = dict(emit="CLIFFORD_T", ancilla_offset=100, target="CIRQ", output=filename)
+    config_man = ConfigManager().merge(override).parse_args()
+    factory = QFactory(config_man.create_config())
+    render = factory.get_render(QompilePlatform.CIRQ)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
     print(circuit)
@@ -41,17 +39,16 @@ def render_cirq(filename):
 
 
 def render_qiskit(filename):
-    man = mock_factory_manager(emit="CLIFFORD_T", ancilla_offset=100, target="QISKIT")
-    override = {"output": filename}
-    man.merge(override)
-    factory = man.create_factory()
-    render = QRenderer(man.create_config(), factory.get_builder())
+    override = dict(emit="CLIFFORD_T", ancilla_offset=100, target="QISKIT", output=filename)
+    config_man = ConfigManager().merge(override).parse_args()
+    factory = QFactory(config_man.create_config())
+    render = factory.get_render(QompilePlatform.QISKIT)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
     print(circuit)
     dag = circuit_to_dag(circuit)
     layers = list(dag.layers())
-    # for m in moments:
+    # for m in layers:
     #     print(m)
     print(f'Total {len(layers)} layers in the circuit.')
 

@@ -1,8 +1,7 @@
-from itertools import chain, product
+from itertools import chain
 from typing import Sequence
 
 import numpy as np
-from future.backports.xmlrpc.client import dumps
 from numpy import kron
 from numpy.typing import NDArray
 

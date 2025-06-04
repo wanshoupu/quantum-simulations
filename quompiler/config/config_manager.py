@@ -30,21 +30,27 @@ class ConfigManager:
     def has_source(self, source: str) -> bool:
         return bool(source)
 
-    def load_source(self) -> NDArray:
+    def read_source(self) -> NDArray:
+        """
+        Load a unitary matrix stored in a file.
+        Returns the loaded unitary matrix in memory.
+        """
         return load_ndarray(self._source)
 
-    def merge(self, data: dict):
+    def merge(self, data: dict) -> 'ConfigManager':
         self._config = merge_dicts(self._config, data)
+        return self
 
-    def load_config_file(self, json_file: str):
+    def load_config_file(self, json_file: str) -> 'ConfigManager':
         """
         Loads a configuration from a JSON file.
         :param json_file: a path to the JSON configuration file.
         """
         config = json.load(open(json_file))
         self.merge(config)
+        return self
 
-    def parse_args(self):
+    def parse_args(self) -> 'ConfigManager':
         args, _ = self._parser.parse_known_args()
         if args.source:
             self._source = args.source
@@ -52,6 +58,7 @@ class ConfigManager:
             self.load_config_file(args.config)
         qconfig = self._to_config(args)
         self.merge(qconfig)
+        return self
 
     def help(self):
         return self._parser.format_help()

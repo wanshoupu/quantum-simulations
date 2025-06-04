@@ -19,7 +19,7 @@ formatter = MatrixFormatter(precision=2)
 
 def test_convert_invalid_dimension():
     cu = UnitaryM(3, (1, 2), random_unitary(2))
-    with pytest.raises(AssertionError) as exc:
+    with pytest.raises(AssertionError):
         CtrlGate.convert(cu)
 
 
@@ -803,12 +803,6 @@ def test_verify_phase_matmul():
 
 
 def test_verify_phase_project():
-    """
-    :param ctrl: ctr type
-    :param state: the state vector to project
-    :param qidx: the qubit index
-    :return:
-    """
     phase = random_phase()
     ctrls = [QType.CONTROL1, QType.TARGET, QType.TARGET]
     mat = kron(random_unitary(2), np.eye(2))

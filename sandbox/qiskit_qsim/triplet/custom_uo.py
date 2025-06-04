@@ -1,7 +1,6 @@
 import qiskit
-import numpy as np
-from qiskit.circuit.library import UnitaryGate
 from matplotlib import pyplot as plt
+from qiskit.circuit.library import UnitaryGate
 
 from quompiler.utils.mgen import random_unitary
 

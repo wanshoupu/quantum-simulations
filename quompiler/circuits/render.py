@@ -1,5 +1,4 @@
 from quompiler.circuits.qbuilder import CircuitBuilder
-from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeRevIter
 from quompiler.optimize.code_analyze import gen_stats, collect_qspace
 from quompiler.utils.file_io import read_code
@@ -7,8 +6,7 @@ from quompiler.utils.file_io import read_code
 
 class QRenderer:
 
-    def __init__(self, config: QompilerConfig, builder: CircuitBuilder):
-        self.config = config
+    def __init__(self, builder: CircuitBuilder):
         self.builder = builder
 
     def render(self, codefile) -> object:

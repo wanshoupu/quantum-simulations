@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 from numpy.typing import NDArray
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.types import UnivGate, SU2NetType
+from quompiler.construct.types import SU2NetType, UnivGate
 from quompiler.utils.std_decompose import cliffordt_seqs
 
 
 class QNN(ABC):
     @abstractmethod
-    def __init__(self, seq: list[tuple[NDArray, tuple[UnivGate]]]):
+    def __init__(self, seqs: list[tuple[NDArray, tuple[UnivGate]]]):
         pass
 
     @abstractmethod

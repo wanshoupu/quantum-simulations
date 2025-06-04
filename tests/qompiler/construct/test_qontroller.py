@@ -1,7 +1,6 @@
 import random
 from functools import reduce
 
-import numpy as np
 import pytest
 
 from quompiler.construct.qontroller import Qontroller, ctrl2core

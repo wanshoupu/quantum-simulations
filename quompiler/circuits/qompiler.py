@@ -3,11 +3,9 @@ This module provide the compilation functionalities.
 If needed, it may make distinctions between target qubits and ancilla qubits.
 """
 from typing import Union
-from deprecated import deprecated
 
 from numpy.typing import NDArray
 
-from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.circuits.qdevice import QDevice
 from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import Bytecode
@@ -15,7 +13,6 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.solovay import SKDecomposer
 from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.optimize.optimizer import Optimizer
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.ctrl_decompose import ctrl_decompose
 from quompiler.utils.euler_decompose import euler_decompose
@@ -27,11 +24,10 @@ from quompiler.utils.std_decompose import cliffordt_decompose
 
 class Qompiler:
 
-    def __init__(self, config: QompilerConfig, builder: CircuitBuilder, device: QDevice, optimizers: list[Optimizer] = None):
+    def __init__(self, config: QompilerConfig, device: QDevice):
         self.config = config
-        self.builder = builder
         self.device = device
-        self.optimizers = optimizers or []
+        self.optimizers = []
         self.emit = EmitType[config.emit]
         self.debug = self.config.debug
         self.sk = SKDecomposer(config.rtol, config.atol, config.lookup_tol)
@@ -125,13 +121,6 @@ class Qompiler:
             result = cnot_decompose(u, qspace)
             meta['method'] = 'cnot_decompose'
         return result, meta
-
-    @deprecated(reason="This method is deprecated, use `output` instead")
-    def finish(self, optimized=False) -> object:
-        return self.builder.finish(optimized=optimized)
-
-    def all_qubits(self):
-        return self.builder.all_qubits()
 
     def output(self, code: Bytecode):
         write_code(self.config.output, code)

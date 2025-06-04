@@ -22,7 +22,7 @@ def cliffordt_seqs(length: int) -> list[tuple[NDArray, tuple[UnivGate]]]:
     """
     Grow the ε-bound tree rooted at `node` until the minimum distance between parent and child is less than `error`.
     We grow the subtree by gc_decompose the node into its commutators
-    :param node: the root to begin with.
+    :param length: the length of the sequence.
     """
     pairs = [(np.array(UnivGate.I), (UnivGate.I,))]  # start with identity
     cliffordt = UnivGate.cliffordt()

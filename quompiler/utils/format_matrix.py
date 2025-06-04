@@ -34,7 +34,7 @@ class MatrixFormatter:
             return round(x)
         return x
 
-    def mformat(self, x: NDArray[np.complexfloating]) -> ndarray[object]:
+    def mformat(self, x: NDArray[np.complexfloating]) -> ndarray:
         """
         Convert elements in a NumPy array to non-negative integer, integer, positive decimal real, decimal real, or leave as complex as is possible.
         """

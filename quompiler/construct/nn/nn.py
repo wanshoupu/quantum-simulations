@@ -16,9 +16,8 @@ class NNN(QNN):
     NearestNeighbors with algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}
     """
 
-    @abstractmethod
-    def __init__(self, seq: list[tuple[NDArray, tuple[UnivGate]]]):
-        self._seq = seq
+    def __init__(self, seqs: list[tuple[NDArray, tuple[UnivGate]]]):
+        self._seqs = seqs
         self._root: NearestNeighbors = None
 
     @override
@@ -36,8 +35,8 @@ class AutoNN(NNN):
     """
 
     @override
-    def __init__(self, seq: list[tuple[NDArray, tuple[UnivGate]]]):
-        self._seqs = seq
+    def __init__(self, seqs: list[tuple[NDArray, tuple[UnivGate]]]):
+        self._seqs = seqs
         self._root = NearestNeighbors(n_neighbors=1, algorithm='auto')
         self._root.fit(np.array([vec(u) for u, _ in self._seqs]))
 
@@ -48,8 +47,8 @@ class BruteNN(NNN):
     """
 
     @override
-    def __init__(self, seq: list[tuple[NDArray, tuple[UnivGate]]]):
-        self._seqs = seq
+    def __init__(self, seqs: list[tuple[NDArray, tuple[UnivGate]]]):
+        self._seqs = seqs
         self._root = NearestNeighbors(n_neighbors=1, algorithm='brute')
         self._root.fit(np.array([vec(u) for u, _ in self._seqs]))
 
@@ -60,7 +59,7 @@ class BallTreeNN(NNN):
     """
 
     @override
-    def __init__(self, seq: list[tuple[NDArray, tuple[UnivGate]]]):
-        self._seqs = seq
+    def __init__(self, seqs: list[tuple[NDArray, tuple[UnivGate]]]):
+        self._seqs = seqs
         self._root = NearestNeighbors(n_neighbors=1, algorithm='ball_tree')
         self._root.fit(np.array([vec(u) for u, _ in self._seqs]))

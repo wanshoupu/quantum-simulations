@@ -1,12 +1,9 @@
 from itertools import product
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple
+
 from deprecated import deprecated
 
-import numpy as np
-
-from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType
-from numpy.typing import NDArray
 
 
 def binary(bits: Sequence[int]) -> int:

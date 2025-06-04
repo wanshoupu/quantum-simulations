@@ -8,7 +8,6 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType, UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import random_CtrlGate
 from quompiler.utils.toffoli import toffoli_decompose, _toffoli
 
 formatter = MatrixFormatter(precision=2)

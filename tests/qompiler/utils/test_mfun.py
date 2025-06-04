@@ -1,11 +1,9 @@
 from functools import reduce
 
 import numpy as np
-import pytest
 
-from quompiler.construct.types import UnivGate
-from quompiler.utils.mfun import allprop, herm, herms
-from quompiler.utils.group_su2 import euler_params, dist, gphase
+from quompiler.utils.group_su2 import dist
+from quompiler.utils.mfun import allprop, herms
 from quompiler.utils.mgen import random_unitary, random_phase, random_su2
 
 

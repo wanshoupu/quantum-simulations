@@ -1,16 +1,14 @@
-import os
 import random
-import tempfile
 from abc import abstractmethod, ABC
 
 import numpy as np
 import pytest
 
-from quompiler.circuits.factory_manager import FactoryManager
+from quompiler.circuits.qfactory import QFactory
+from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import UnivGate, QType
-from quompiler.utils.file_io import CODE_FILE_EXT
+from quompiler.construct.types import UnivGate, QType, QompilePlatform
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_control, random_unitary, cyclic_matrix
 
@@ -18,11 +16,11 @@ formatter = MatrixFormatter(precision=2)
 
 
 class CircuitTestTemplate(ABC):
-    man: FactoryManager = None
+    config: QompilerConfig = None
 
     def test_create_builder(self):
-        factory = self.man.create_factory()
-        builder = factory.get_builder()
+        factory = QFactory(self.config)
+        builder = factory.get_builder(QompilePlatform[self.config.target])
 
         phase = CtrlGate(np.array(UnivGate.S), (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
         # print()
@@ -35,8 +33,8 @@ class CircuitTestTemplate(ABC):
 
     @pytest.mark.parametrize("gate", list(UnivGate))
     def test_builder_standard_ctrlgate(self, gate):
-        factory = self.man.create_factory()
-        builder = factory.get_builder()
+        factory = QFactory(self.config)
+        builder = factory.get_builder(QompilePlatform[self.config.target])
 
         # print(gate)
         n = random.randint(1, 4)
@@ -56,8 +54,8 @@ class CircuitTestTemplate(ABC):
         random.seed(seed)
         np.random.seed(seed)
 
-        factory = self.man.create_factory()
-        builder = factory.get_builder()
+        factory = QFactory(self.config)
+        builder = factory.get_builder(QompilePlatform[self.config.target])
 
         # print(f'\nTest round #{_} ...')
         n = random.randint(1, 4)
@@ -79,8 +77,8 @@ class CircuitTestTemplate(ABC):
         dim = 1 << n
         u = cyclic_matrix(dim, 1)
 
-        factory = self.man.create_factory()
-        builder = factory.get_builder()
+        factory = QFactory(self.config)
+        builder = factory.get_builder(QompilePlatform[self.config.target])
         compiler = factory.get_qompiler()
 
         # execute
@@ -100,16 +98,15 @@ class CircuitTestTemplate(ABC):
         self.verify_circuit(u, builder, circuit)
 
     def test_builder_random_end_2_end(self):
-        from tests.qompiler.mock_fixtures import mock_factory_manager
         n = 1
         dim = 1 << n
         u = random_unitary(dim)
-        factory = self.man.create_factory()
+        factory = QFactory(self.config)
         interp = factory.get_qompiler()
 
         # execute
         interp.compile(u)
-        render = factory.get_render()
+        render = factory.get_render(QompilePlatform[self.config.target])
         codefile = factory.get_config().output
         circuit = render.render(codefile)
         assert circuit is not None
