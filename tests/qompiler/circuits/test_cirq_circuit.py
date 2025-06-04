@@ -28,7 +28,7 @@ def test_cirq_bug_4_qubits():
 
 
 class TestCirqCircuit(CircuitTestTemplate):
-    man = mock_factory_manager(emit="CLIFFORD_T", ancilla_offset=100, target="CIRQ")
+    man = mock_factory_manager(emit="CTRL_PRUNED", ancilla_offset=100, target="CIRQ")
 
     @override
     def verify_circuit(self, expected, builder, circuit):
