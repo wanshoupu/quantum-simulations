@@ -20,7 +20,7 @@ class CircuitTestTemplate(ABC):
 
     def test_create_builder(self):
         factory = QFactory(self.config)
-        builder = factory.get_builder(QompilePlatform[self.config.target])
+        builder = factory.get_builder(self.config.target)
 
         phase = CtrlGate(np.array(UnivGate.S), (QType.TARGET, QType.CONTROL0, QType.CONTROL1))
         # print()
@@ -34,7 +34,7 @@ class CircuitTestTemplate(ABC):
     @pytest.mark.parametrize("gate", list(UnivGate))
     def test_builder_standard_ctrlgate(self, gate):
         factory = QFactory(self.config)
-        builder = factory.get_builder(QompilePlatform[self.config.target])
+        builder = factory.get_builder(self.config.target)
 
         # print(gate)
         n = random.randint(1, 4)
@@ -55,7 +55,7 @@ class CircuitTestTemplate(ABC):
         np.random.seed(seed)
 
         factory = QFactory(self.config)
-        builder = factory.get_builder(QompilePlatform[self.config.target])
+        builder = factory.get_builder(self.config.target)
 
         # print(f'\nTest round #{_} ...')
         n = random.randint(1, 4)
@@ -78,7 +78,7 @@ class CircuitTestTemplate(ABC):
         u = cyclic_matrix(dim, 1)
 
         factory = QFactory(self.config)
-        builder = factory.get_builder(QompilePlatform[self.config.target])
+        builder = factory.get_builder(self.config.target)
         compiler = factory.get_qompiler()
 
         # execute
@@ -106,7 +106,7 @@ class CircuitTestTemplate(ABC):
 
         # execute
         interp.compile(u)
-        render = factory.get_render(QompilePlatform[self.config.target])
+        render = factory.get_render(self.config.target)
         codefile = factory.get_config().output
         circuit = render.render(codefile)
         assert circuit is not None

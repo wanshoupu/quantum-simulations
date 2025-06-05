@@ -28,7 +28,7 @@ class Qompiler:
         self.config = config
         self.device = device
         self.optimizers = []
-        self.emit = EmitType[config.emit]
+        self.emit = config.emit
         self.debug = self.config.debug
         self.sk = SKDecomposer(config.rtol, config.atol, config.lookup_tol)
 

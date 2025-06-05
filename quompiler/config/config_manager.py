@@ -70,14 +70,14 @@ class ConfigManager:
                             help="The config file name (JSON format). If provided, it will override the default config "
                                  "but will be overridden by other arguments")
         parser.add_argument("-o", "--output", help="output file name")
-        parser.add_argument("-O", "--opt", help="optimization level", choices=["0", "1", "2", "3"])
+        parser.add_argument("-O", "--opt", help="optimization level", choices=["O0", "O1", "O2", "O3"])
         parser.add_argument("-g", "--debug", help="Print debug level info", action="store_true")
         parser.add_argument("-Wall", help="Enable all commonly used warning messages", action="store_true")
         parser.add_argument("-Werror", help="Whether or not treat warning as error", action="store_true")
         parser.add_argument("--target", help="Target quantum computing platform", choices=["CIRQ", "QISKIT", "QUIMB"])
         parser.add_argument("--emit",
                             help="specifies what kind of output file the compiler should generate after processing the source code.",
-                            choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "UNIV_GATE", "CLIFFORD_T"])
+                            choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "ROTATIONAL", "UNIV_GATE", "CLIFFORD_T"])
         parser.add_argument("--rtol", help="Relative tolerance — allows for proportional error")
         parser.add_argument("--atol", help="Absolute tolerance — allows for fixed error")
         parser.add_argument("--lookup_tol", help="SU2Net lookup tolerance for Solovay-Kitaev decomposition.")
@@ -95,7 +95,7 @@ class ConfigManager:
         if args.output:
             result["output"] = args.output
         if args.opt:
-            result["optimization"] = f"O{args.opt}"
+            result["optimization"] = args.opt
         if args.debug:
             result["debug"] = args.debug
         if args.Wall:

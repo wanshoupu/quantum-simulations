@@ -56,6 +56,7 @@
         "SINGLET",
         "MULTI_TARGET",
         "CTRL_PRUNED",
+        "ROTATIONAL",
         "UNIV_GATE",
         "CLIFFORD_T"
       ]

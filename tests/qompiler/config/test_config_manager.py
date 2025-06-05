@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -5,6 +6,7 @@ import pytest
 from jsonschema import ValidationError
 
 from quompiler.config.config_manager import ConfigManager, merge_dicts
+from quompiler.config.construct import QompilerConfig, QompilerWarnings, DeviceConfig
 from quompiler.construct.types import EmitType, OptLevel, QompilePlatform
 
 fpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "test_compiler_config.json"))
@@ -14,8 +16,8 @@ def test_parse_default_config():
     parser = ConfigManager()
     config = parser.create_config()
     assert config.device is not None
-    assert config.target == "CIRQ"
-    assert config.emit in {e.name for e in list(EmitType)}
+    assert config.target == QompilePlatform.CIRQ
+    assert config.emit in list(EmitType)
 
 
 @pytest.mark.parametrize("dict1,dict2,expected", [
@@ -42,14 +44,14 @@ def test_parse_args(monkeypatch):
     actual = config_man.create_config()
 
     # verify
-    assert actual.target == target
+    assert actual.target == QompilePlatform[target]
     assert actual.rtol == rtol
     assert actual.atol == atol
     assert actual.device.ancilla_offset == offset
 
 
 def test_save(mocker):
-    test_args = ['--emit', 'UNIV_GATE', "--rtol", "1e-6", "--atol", "1e-9", "--ancilla_offset", "7"]
+    test_args = ['pyfile.py', 'source_file.txt', '--emit', 'UNIV_GATE', "--rtol", "1e-6", "--atol", "1e-9", "--ancilla_offset", "7"]
     mocker.patch('sys.argv', test_args)
     config_man = ConfigManager()
     config_man.parse_args()
@@ -93,7 +95,7 @@ def test_load_config():
     man.merge(data)
 
     config = man.create_config()
-    assert "TWO_LEVEL" == config.emit != default.emit
+    assert EmitType.TWO_LEVEL == config.emit != default.emit
 
 
 def test_enum_invalid_emit():
@@ -107,18 +109,27 @@ def test_enum_invalid_emit():
         man.create_config()
 
 
-def test_in_sync_enum_emit():
-    man = ConfigManager()
-    for emit in EmitType:
-        conf_value = emit.name
-        data = {
-            "emit": conf_value,
-        }
-        man.merge(data)
+@pytest.mark.parametrize("emit", list(EmitType))
+def test_in_sync_args_enum_emit(mocker, emit: EmitType):
+    test_args = ['pyfile.py', 'source_file.txt', "--emit", emit.name]
+    mocker.patch('sys.argv', test_args)
+    config_man = ConfigManager()
+    config_man.parse_args()
+    config = config_man.create_config()
+    assert config.emit == emit
 
-        # execute
-        config = man.create_config()
-        assert conf_value == config.emit
+
+@pytest.mark.parametrize("emit", list(EmitType))
+def test_in_sync_enum_emit(emit):
+    man = ConfigManager()
+    data = {
+        "emit": emit.name,
+    }
+    man.merge(data)
+
+    # execute
+    config = man.create_config()
+    assert emit == config.emit
 
 
 def test_enum_invalid_optimization():
@@ -132,18 +143,27 @@ def test_enum_invalid_optimization():
         man.create_config()
 
 
-def test_in_sync_enum_optimization():
-    man = ConfigManager()
-    for opt in OptLevel:
-        conf_value = opt.name
-        data = {
-            "optimization": conf_value,
-        }
-        man.merge(data)
+@pytest.mark.parametrize("opt", list(OptLevel))
+def test_in_sync_args_enum_optimization(mocker, opt: OptLevel):
+    test_args = ['pyfile.py', 'source_file.txt', "--opt", opt.name]
+    mocker.patch('sys.argv', test_args)
+    config_man = ConfigManager()
+    config_man.parse_args()
+    config = config_man.create_config()
+    assert config.optimization == opt
 
-        # execute
-        config = man.create_config()
-        assert conf_value == config.optimization, f'{conf_value} != {config.optimization}'
+
+@pytest.mark.parametrize("opt", list(OptLevel))
+def test_in_sync_enum_optimization(opt):
+    man = ConfigManager()
+    data = {
+        "optimization": opt.name,
+    }
+    man.merge(data)
+
+    # execute
+    config = man.create_config()
+    assert opt == config.optimization, f'{opt} != {config.optimization}'
 
 
 def test_enum_invalid_target():
@@ -157,18 +177,27 @@ def test_enum_invalid_target():
         man.create_config()
 
 
-def test_in_sync_enum_target():
-    man = ConfigManager()
-    for opt in QompilePlatform:
-        conf_value = opt.name
-        data = {
-            "target": conf_value,
-        }
-        man.merge(data)
+@pytest.mark.parametrize("target", list(QompilePlatform))
+def test_in_sync_args_enum_target(mocker, target: QompilePlatform):
+    test_args = ['pyfile.py', 'source_file.txt', "--target", target.name]
+    mocker.patch('sys.argv', test_args)
+    config_man = ConfigManager()
+    config_man.parse_args()
+    config = config_man.create_config()
+    assert config.target == target
 
-        # execute
-        config = man.create_config()
-        assert conf_value == config.target, f'{conf_value} != {config.target}'
+
+@pytest.mark.parametrize("target", list(QompilePlatform))
+def test_in_sync_enum_target(target):
+    man = ConfigManager()
+    data = {
+        "target": target.name,
+    }
+    man.merge(data)
+
+    # execute
+    config = man.create_config()
+    assert target == config.target, f'{target} != {config.target}'
 
 
 def test_file_override_default():

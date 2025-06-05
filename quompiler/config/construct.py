@@ -1,23 +1,28 @@
 import json
 import os
 from dataclasses import dataclass, asdict
+from enum import Enum
 from typing import Dict
 
 from jsonschema import validate
 
-from quompiler.construct.types import QompilePlatform
+from quompiler.construct.types import QompilePlatform, OptLevel, EmitType
 
 
 class QompilePlatformEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, QompilePlatform):
+        if isinstance(obj, Enum):
             return obj.name
         return super().default(obj)
 
 
 def qompile_platform_decoder(dct: dict):
-    if "platform" in dct:
-        dct["platform"] = QompilePlatform[dct["platform"]]
+    if "emit" in dct:
+        dct["emit"] = EmitType(dct["emit"])
+    if "target" in dct:
+        dct["target"] = QompilePlatform[dct["target"]]
+    if "optimization" in dct:
+        dct["optimization"] = OptLevel[dct["optimization"]]
     return dct
 
 
@@ -72,12 +77,12 @@ class QompilerConfig:
     """
     source: str
     output: str
-    optimization: str
+    optimization: OptLevel
     debug: bool
     warnings: QompilerWarnings
-    target: str
+    target: QompilePlatform
     device: DeviceConfig
-    emit: str
+    emit: EmitType
     rtol: float
     atol: float
     lookup_tol: float
@@ -90,11 +95,11 @@ class QompilerConfig:
         return QompilerConfig(
             source=data["source"],
             output=data["output"],
-            optimization=data["optimization"],
+            optimization=OptLevel[data["optimization"]],
             debug=data["debug"],
             warnings=warnings,
-            target=data["target"],
-            emit=data["emit"],
+            target=QompilePlatform[data["target"]],
+            emit=EmitType[data["emit"]],
             device=device,
             rtol=float(data["rtol"]),
             atol=float(data["atol"]),
@@ -107,7 +112,7 @@ class QompilerConfig:
         return result
 
     def to_json(self) -> str:
-        return json.dumps(self.to_dict(), indent=2)
+        return json.dumps(self.to_dict(), cls=QompilePlatformEncoder)
 
 
 def validate_config(data: Dict):
@@ -115,3 +120,10 @@ def validate_config(data: Dict):
     assert os.path.exists(schema_file)
     schema = json.load(open(schema_file))
     validate(instance=data, schema=schema)
+
+
+class QompilerConfigEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Enum):
+            return obj.name  # or obj.value
+        return super().default(obj)
