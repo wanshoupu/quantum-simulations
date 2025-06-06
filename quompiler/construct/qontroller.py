@@ -70,15 +70,6 @@ class Qontroller:
                 index |= 1 << i
         return index
 
-    @deprecated
-    def core(self) -> list[int]:  # TODO to be deprecated
-        """
-        Create the core indexes in the controlled matrix.
-        It is defined as the sparce indexes occupied by the matrix for targets + idlers under the controls (both type 0 and type 1) restrictions.
-        :return: the core indexes in the controlled matrix.
-        """
-        raise NotImplementedError('Deprecated, use ctrl2core() instead')
-
     def indexes(self, qtype: QType):
         """
         Create the subindexes spanned by certain 'QType'
