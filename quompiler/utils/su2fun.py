@@ -125,11 +125,25 @@ def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
 
 
 def rota(theta: float, phi: float, alpha: float) -> NDArray:
+    """
+    Generate a SU2 unitary matrix based on the rotation of angle α around the axis prescribed by the spherical coordinate (θ, φ).
+    U =
+    :param theta: polar coordinate of the axis
+    :param phi: azimuthal coordinate of the axis
+    :param alpha: rotation angle.
+    :return: SU2 unitary matrix
+    """
     nvec = np.sin(theta) * np.cos(phi), np.cos(theta) * np.cos(phi), np.cos(theta)
     return rot(np.array(nvec), alpha)
 
 
 def rot(n: NDArray, angle: float) -> NDArray:
+    """
+    Generate a SU2 unitary matrix based on the rotation angle around the axis prescribed by the vector in 3D Euclidean space.
+    :param n: the vector in 3D Euclidean space given by (x,y,z).
+    :param angle: the rotation angle.
+    :return: SU2 unitary matrix
+    """
     assert n.shape == (3,)
     n = n / np.linalg.norm(n)
     pvec = np.array([[[0, 1], [1, 0]], [[0, -1j], [1j, 0]], [[1, 0], [0, -1]]])
