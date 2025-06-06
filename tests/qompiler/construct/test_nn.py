@@ -6,7 +6,7 @@ import pytest
 from quompiler.construct.nn.kdtree import KDTreeNN
 from quompiler.construct.nn.nn import BruteNN, AutoNN
 from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import dist, vec
+from quompiler.utils.su2fun import dist, vec
 from quompiler.utils.std_decompose import cliffordt_seqs
 
 

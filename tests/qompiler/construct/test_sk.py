@@ -8,7 +8,7 @@ from quompiler.construct.bytecode import BytecodeIter
 from quompiler.construct.solovay import SKDecomposer
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.group_su2 import dist
+from quompiler.utils.su2fun import dist
 from quompiler.utils.mgen import random_su2, random_gate_seq
 
 formatter = MatrixFormatter(precision=3)

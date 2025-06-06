@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.typing import NDArray
+from numpy._typing import NDArray
 from scipy.linalg import eig
 
 from quompiler.construct.types import UnivGate

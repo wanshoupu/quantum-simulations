@@ -6,7 +6,7 @@ from typing_extensions import override
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.nn.abstract import QNN
 from quompiler.construct.types import UnivGate
-from quompiler.utils.group_su2 import vec
+from quompiler.utils.su2fun import vec
 
 
 class KDTreeNN(QNN):

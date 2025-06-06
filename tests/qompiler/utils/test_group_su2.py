@@ -5,7 +5,7 @@ import pytest
 
 from quompiler.construct.types import UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.group_su2 import rangle, gc_decompose, tsim, raxis, rot, euler_params, gphase, dist, eigen_decompose, vec, mod_dist, rota, vec4su2net
+from quompiler.utils.su2fun import gc_decompose, tsim, eigen_decompose, rangle, raxis, euler_params, rota, rot, dist, gphase, vec, vec4su2net, mod_dist
 from quompiler.utils.mfun import herm, allprop
 from quompiler.utils.mgen import random_unitary, random_su2, random_phase
 

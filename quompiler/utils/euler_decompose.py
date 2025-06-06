@@ -2,7 +2,7 @@ import numpy as np
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import UnivGate, QType
-from quompiler.utils.group_su2 import euler_params
+from quompiler.utils.su2fun import euler_params
 
 
 def euler_decompose(gate: CtrlGate) -> list[CtrlGate]:

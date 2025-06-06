@@ -2,7 +2,7 @@ from functools import reduce
 
 import numpy as np
 
-from quompiler.utils.group_su2 import dist
+from quompiler.utils.su2fun import dist
 from quompiler.utils.mfun import allprop, herms
 from quompiler.utils.mgen import random_unitary, random_phase, random_su2
 

@@ -7,7 +7,7 @@ import pytest
 from quompiler.construct.su2net import SU2Net
 from quompiler.construct.types import SU2NetType, UnivGate
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.group_su2 import dist
+from quompiler.utils.su2fun import dist
 from quompiler.utils.mfun import herm
 from quompiler.utils.mgen import random_su2, random_unitary
 
