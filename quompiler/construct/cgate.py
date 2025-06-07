@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 
 from quompiler.construct.qontroller import core2control, ctrl2core
 from quompiler.construct.qspace import Qubit
+from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import ctrl_expand, qproject, is_idler
@@ -20,17 +21,20 @@ class CtrlGate:
     Optionally a qubit space may be specified for the total control + target qubits. If not specified, assuming the range [0, 1, ...].
     """
 
-    def __init__(self, gate: Union[UnivGate, NDArray], control: Sequence[QType], qspace: Sequence[Qubit] = None, phase: complex = 1.0):
+    def __init__(self, gate: Union[UnivGate, NDArray, RGate], control: Sequence[QType], qspace: Sequence[Qubit] = None, phase: complex = 1.0):
         """
         Instantiate a controlled n-qubit unitary matrix.
-        :param gate: the core matrix operation. It may be a NDArray or UnivGate.
+        :param gate: the core matrix operation. It may be a NDArray or UnivGate or RGate.
         :param control: the control sequence or a Qontroller. Order of the matrix is given by len(controls).
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
         assert all(isinstance(c, QType) for c in control), f'control contains non-QType items'
         self.controls = list(control)
         core = ctrl2core(control)
-        if isinstance(gate, UnivGate):
+        if isinstance(gate, RGate):
+            self.gate = gate
+            mat = np.array(gate)
+        elif isinstance(gate, UnivGate):
             self.gate = gate
             mat = np.array(gate)
         elif isinstance(gate, np.ndarray):

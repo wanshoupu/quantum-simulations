@@ -11,7 +11,7 @@ from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import mykron, qproject
-from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate, random_CtrlGate, random_state, random_phase
+from quompiler.utils.mgen import random_unitary, random_indexes, random_UnitaryM, random_control, random_ctrlgate, random_CtrlGate, random_state, random_phase, random_rgate
 from quompiler.utils.permute import Permuter
 
 formatter = MatrixFormatter(precision=2)
@@ -119,6 +119,14 @@ def test_init_qspace_obj():
     qspace = [Qubit(i) for i in range(3)]
     cu = CtrlGate(m, controls, qspace)
     assert cu.qspace == [Qubit(i) for i in range(3)]
+
+
+def test_init_rgate():
+    rg = random_rgate()
+    gate = CtrlGate(rg, [QType.TARGET], [Qubit(10)])
+    actual = gate.matrix()
+    expected = rg.matrix
+    assert np.allclose(actual, expected)
 
 
 def test_univ_Y():
@@ -459,6 +467,26 @@ def test_matmul_identical_qspace_diff_controls(ctrl1, ctrl2):
     assert actual.qspace == a.qspace == b.qspace
     expected = a.inflate() @ b.inflate()
     assert np.allclose(actual.inflate(), expected)
+
+
+def test_matmul_rgate_ndarray_same_qspace():
+    rg = random_rgate()
+    gate1 = CtrlGate(rg, [QType.TARGET], [Qubit(10)])
+    mat = random_unitary(2)
+    gate2 = CtrlGate(mat, [QType.TARGET], [Qubit(10)])
+    actual = gate1 @ gate2
+    expected = rg @ mat
+    assert np.allclose(actual.matrix(), expected)
+
+
+def test_matmul_rgate_ndarray_diff_qspace():
+    rg = random_rgate()
+    gate1 = CtrlGate(rg, [QType.TARGET], [Qubit(10)])
+    mat = random_unitary(2)
+    gate2 = CtrlGate(mat, [QType.TARGET, QType.CONTROL1], [Qubit(10), Qubit(1)])
+    actual = gate1 @ gate2
+    expected = mykron(rg, np.eye(2)) @ gate2.inflate()
+    assert np.allclose(actual.matrix(), expected)
 
 
 def test_matmul_qs_1_6_qs_1_7_6():

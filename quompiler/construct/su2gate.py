@@ -111,13 +111,17 @@ class RGate:
             return repr(self.gate)
         return f"R{repr(self.axis)}({pi_repr(self.angle)})"
 
-    def __matmul__(self, other: "RGate") -> 'RGate':
+    def __matmul__(self, other: Union[NDArray, 'RGate']) -> Union[NDArray, 'RGate']:
         """
         Calculate the multiplication between this RMat and another RMat and return a new RMat,
         R = self @ other, other than a global phase.
         :param other:
         :return: a new RMat such that R = self @ other, other than a global phase.
         """
+        if isinstance(other, np.ndarray):
+            return np.array(self) @ other
+        if not isinstance(other, RGate):
+            raise NotImplementedError(f'matmul only implemented for {other}')
         if self.axis == other.axis:
             return RGate(self.angle + other.angle, self.axis)
         mat = self.matrix @ other.matrix
