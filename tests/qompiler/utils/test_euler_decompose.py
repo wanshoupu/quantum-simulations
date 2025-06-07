@@ -13,6 +13,8 @@ from quompiler.utils.mgen import random_unitary, random_control
 
 formatter = MatrixFormatter(precision=2)
 
+identity_coms_indexes = [1, 2, 4, 5, 7]
+
 
 def test_identity():
     for _ in range(10):
@@ -23,9 +25,10 @@ def test_identity():
 
         # execute
         result = euler_decompose(cu)
-        assert len(result) == 6
+        assert len(result) == 8
         assert all(com is not None for com in result)
-        actual = reduce(lambda a, b: a @ b, result[1::2]).inflate()
+        identity_coms = [result[i] for i in identity_coms_indexes]
+        actual = reduce(lambda a, b: a @ b, identity_coms).inflate()
         assert np.allclose(actual, np.eye(2))
 
 
@@ -150,7 +153,7 @@ def test_noop_control():
     controls = random_control(3, 1)
     cu = CtrlGate(u, controls)
     result = euler_decompose(cu)
-    assert len(result) == 6
+    assert len(result) == 8
     assert all(com is not None for com in result)
     actual = reduce(lambda a, b: a @ b, result)
     assert np.allclose(actual.inflate(), cu.inflate())
@@ -169,7 +172,7 @@ def test_custom_qspace():
     result = euler_decompose(cu)
 
     # verify
-    for i in [1, 3, 5]:
+    for i in identity_coms_indexes:
         r = result[i]
         assert tuple(r.qspace) == (Qubit(offset + target),)
 
@@ -188,9 +191,8 @@ def test_verify_qspace_random():
         result = euler_decompose(cu)
 
         # verify
-        assert len(result) == 6
+        assert len(result) == 8
         assert all(com is not None for com in result)
-        uncontrolled = [1, 3, 5]
-        for i in uncontrolled:
+        for i in identity_coms_indexes:
             r = result[i]
             assert tuple(r.qspace) == (Qubit(offset + target),)

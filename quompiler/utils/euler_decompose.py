@@ -1,6 +1,7 @@
 import numpy as np
 
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.utils.su2fun import euler_params
 
@@ -29,9 +30,11 @@ def euler_decompose(gate: CtrlGate) -> list[CtrlGate]:
     else:
         phase_gate = CtrlGate(a * np.eye(2), gate.controls, gate.qspace)
     result = [phase_gate,
-              CtrlGate(A, [QType.TARGET], target),
+              CtrlGate(RGate(b, 'z'), [QType.TARGET], target),
+              CtrlGate(RGate(c / 2, 'y'), [QType.TARGET], target),
               CtrlGate(UnivGate.X, gate.controls, gate.qspace),
-              CtrlGate(B, [QType.TARGET], target),
+              CtrlGate(RGate(-c / 2, 'y'), [QType.TARGET], target),
+              CtrlGate(RGate(-(d + b) / 2, 'z'), [QType.TARGET], target),
               CtrlGate(UnivGate.X, gate.controls, gate.qspace),
-              CtrlGate(C, [QType.TARGET], target)]
+              CtrlGate(RGate((d - b) / 2, 'z'), [QType.TARGET], target)]
     return result
