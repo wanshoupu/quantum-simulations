@@ -1,10 +1,10 @@
-from typing import Union
+from typing import Union, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
 
 from quompiler.construct.types import UnivGate
-from quompiler.utils.fun import rational, angle_repr
+from quompiler.utils.fun import rational, pi_repr
 from quompiler.utils.su2fun import rot, vec
 
 _principal_axes = {"x": np.array([1, 0, 0]), "y": np.array([0, 1, 0]), "z": np.array([0, 0, 1]),
@@ -16,7 +16,7 @@ class RAxis:
     Represent the rotation axis with a few convenient ways to define.
     """
 
-    def __init__(self, axis: Union[str, np.ndarray]):
+    def __init__(self, axis: Union[str, np.ndarray, Sequence]):
         """
         Normal vector, n, may be specified in one of three ways:
         3-vector: (x,y,z) represents the normal vector of the rotation axis. It can be an unnormalized vector as normalization will be performed internally.
@@ -26,7 +26,12 @@ class RAxis:
             when it's a 2-vector, it is interpreted as spherical coordinate;
             when it's a 3-vector, it is interpreted as normal vector (x,y,z).
         """
-        if isinstance(axis, np.ndarray):
+        if isinstance(axis, str):
+            if axis not in _principal_axes:
+                raise ValueError("axis must be in {'x', 'y', 'z', '-x', '-y', '-z'}")
+            self.nvec = _principal_axes[axis]
+        elif isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
+            axis = np.array(axis)
             if axis.shape == (2,):
                 theta, phi = axis
                 self.nvec = np.array([np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)])
@@ -37,10 +42,6 @@ class RAxis:
                 self.nvec = axis / norm
             else:
                 raise ValueError('axis must be either a 2-vector or 3-vector')
-        elif isinstance(axis, str):
-            if axis not in _principal_axes:
-                raise ValueError("axis must be in {'x', 'y', 'z', '-x', '-y', '-z'}")
-            self.nvec = _principal_axes[axis]
         else:
             raise ValueError('axis must be either an np.array or a str or RAxis')
         x, y, z = self.nvec
@@ -64,7 +65,7 @@ class RAxis:
     def __repr__(self):
         if self.isprincipal():
             return self.principal
-        return f"({angle_repr(self.theta)}, {angle_repr(self.phi)})"
+        return f"({pi_repr(self.theta)}, {pi_repr(self.phi)})"
 
     def spherical(self) -> tuple[float, float]:
         """
@@ -83,7 +84,7 @@ class RGate:
     where n is the normal vector, α is the angle of rotation.
     """
 
-    def __init__(self, angle: float, axis: Union[str, RAxis, np.ndarray]):
+    def __init__(self, angle: float, axis: Union[str, RAxis, np.ndarray, Sequence]):
         """
         Create a rotation matrix from an axis and angle.
         Normal vector, n, may be specified in one of three ways:
@@ -97,7 +98,7 @@ class RGate:
         """
         if isinstance(axis, RAxis):
             self.axis = axis
-        if isinstance(axis, str) or isinstance(axis, np.ndarray):
+        if isinstance(axis, str) or isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
             self.axis = RAxis(axis)
         else:
             raise ValueError('axis must be either an np.array or a str or RAxis')
@@ -108,10 +109,7 @@ class RGate:
     def __repr__(self):
         if self.gate:
             return repr(self.gate)
-        if self.axis.isprincipal():
-            return f"R{self.axis.principal}({self.angle})"
-        theta, phi = self.axis.spherical()
-        return f"R({self.angle},{theta},{phi})"
+        return f"R{repr(self.axis)}({pi_repr(self.angle)})"
 
     def __matmul__(self, other: "RGate") -> 'RGate':
         """
@@ -128,10 +126,3 @@ class RGate:
 
     def __array__(self) -> NDArray:
         return self.matrix
-
-    def isprincipal(self) -> bool:
-        """
-        if this rotation matrix is around a principal axis, namely, one of x, y, or z axis.
-        :return: True if this rotation matrix is around a principal axis, false otherwise.
-        """
-        return self.axis.isprincipal()

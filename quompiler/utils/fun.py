@@ -25,16 +25,29 @@ def rational(num: float, cofactor: float = 1, denom: int = 8) -> Optional[Fracti
     return None
 
 
-def angle_repr(angle: float) -> str:
-    fr = rational(angle, np.pi)
-    if fr:
-        if fr.numerator == 1:
-            return f"π/{fr.denominator}"
-        if fr.numerator == -1:
-            return f"-π/{fr.denominator}"
-        return f"{fr.numerator}π/{fr.denominator}"
-    fr = rational(angle)
-    if fr:
-        return str(fr.numerator)
+def pi_binary(angle: float) -> float:
+    """
+    Round the angle in terms of a binary fraction of π, like `k / 2^n * π`, k and n are integers.
+    :param angle: input angle in radians
+    :return: angle / π rounded to the nearest binary fraction.
+    """
+    result = round(angle * MAX_BINARY_LENGTH / np.pi)
+    return result / MAX_BINARY_LENGTH
 
-    return repr(round(angle * MAX_BINARY_LENGTH) / MAX_BINARY_LENGTH)
+
+def pi_repr(angle: float) -> str:
+    """
+    Attempt to round the angle in terms of a binary fraction of π, or integer.
+    As a last result, round to a binary fraction of π.
+    :param angle:
+    :return:
+    """
+    fr = rational(angle, np.pi)
+    if fr is None:
+        bf = pi_binary(angle)
+        return f'{bf}π'
+    sign = '-' if fr < 0 else ''
+    fr = abs(fr)
+    numerator = '' if fr.numerator == 1 else repr(fr.numerator)
+    denominator = '' if fr.denominator == 1 else f'/{fr.denominator}'
+    return f'{sign}{numerator}π{denominator}'
