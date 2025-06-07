@@ -98,7 +98,7 @@ class RGate:
         """
         if isinstance(axis, RAxis):
             self.axis = axis
-        if isinstance(axis, str) or isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
+        elif isinstance(axis, str) or isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
             self.axis = RAxis(axis)
         else:
             raise ValueError('axis must be either an np.array or a str or RAxis')
