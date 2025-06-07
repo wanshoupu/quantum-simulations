@@ -5,6 +5,12 @@ import numpy as np
 import pytest
 
 from quompiler.construct.su2gate import RGate, RAxis, _principal_axes
+from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mfun import allprop
+from quompiler.utils.mgen import random_rgate
+from quompiler.utils.su2fun import rot
+
+formatter = MatrixFormatter(precision=2)
 
 
 @pytest.mark.parametrize("axis, error", [
@@ -122,3 +128,43 @@ def test_rgate_init_str(axis):
 def test_rgate_init_ndarray(angle: float, axis, expected):
     gate = RGate(angle, axis)
     assert repr(gate) == expected
+
+
+@pytest.mark.parametrize('angle, axis, expected', [
+    [np.pi, 'x', rot(np.array([1, 0, 0]), np.pi)],
+    [-np.pi, [3, 4, 5], rot(np.array([3, 4, 5]), -np.pi)],
+])
+def test_rgate_verify_matrix(angle: float, axis, expected):
+    gate = RGate(angle, axis)
+    assert np.allclose(gate.matrix, expected), f'{gate.matrix} != {expected}'
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
+def test_rgate_axis_aligned_matmul(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    theta = random.uniform(0, np.pi)
+    phi = random.uniform(-np.pi, np.pi)
+    angle1 = random.uniform(0, 2 * np.pi)
+    angle2 = random.uniform(0, 2 * np.pi)
+    a = RGate(angle1, [theta, phi])
+    b = RGate(angle2, [theta, phi])
+
+    c = a @ b
+    actual_theta, actual_phi = c.axis.spherical()
+    assert np.allclose(actual_theta, theta), f'{actual_theta} != {theta}'
+    assert np.allclose(actual_phi, phi), f'{actual_phi} != {phi}'
+
+
+@pytest.mark.parametrize("seed", random.sample(range(1 << 20), 10))
+def test_rgate_matmul(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    a = random_rgate()
+    b = random_rgate()
+    actual = a @ b
+    expected = a.matrix @ b.matrix
+    # actual and expected shall be equal other than a global phase
+    assert allprop(actual.matrix, expected), f'\n{formatter.tostr(actual.matrix)} != \n{formatter.tostr(expected)}'

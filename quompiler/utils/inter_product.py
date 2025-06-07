@@ -48,18 +48,18 @@ def normalize(factors: Sequence[NDArray]) -> list[NDArray]:
     scale = 1
     nonids = []
     for i in range(length):
-        p, r = id_prop(factors[i])
+        p = id_prop(factors[i])
         if p:
-            factors[i] = factors[i] / r
-            scale *= r
+            factors[i] = factors[i] / p.ratio
+            scale *= p.ratio
         else:
             nonids.append(i)
     dump_idxs = []
     for i in nonids:
-        p, r = unitary_prop(factors[i])
+        p = unitary_prop(factors[i])
         if p:
-            factors[i] = factors[i] / r
-            scale *= r
+            factors[i] = factors[i] / p.ratio
+            scale *= p.ratio
         else:
             dump_idxs.append(i)
     dump_idx = dump_idxs[0] if dump_idxs else (nonids[0] if nonids else 0)

@@ -9,35 +9,35 @@ from quompiler.utils.mgen import random_unitary, random_phase, random_su2
 
 def test_allprop_false():
     a = np.array([[1, 1], [1, 1]]) * np.pi
-    p, r = allprop(a, np.eye(a.shape[0]))
+    p = allprop(a, np.eye(a.shape[0]))
     assert not p
     if p:
-        assert np.isclose(r, np.pi)
+        assert np.isclose(p.ratio, np.pi)
 
 
 def test_allprop_zeros_prop():
     shape = (2, 3)
     a = np.zeros(shape)
     b = np.zeros(shape)
-    p, r = allprop(a, b)
+    p = allprop(a, b)
     assert p
-    assert np.isclose(r, 0)
+    assert np.isclose(p.ratio, 0)
 
 
 def test_allprop_zeros_atol():
     shape = (2, 3)
     a = np.zeros(shape)
     b = np.zeros(shape) + 1e-6
-    p, r = allprop(a, b)
+    p = allprop(a, b)
     assert p
-    assert r == 0
+    assert p.ratio == 0
 
 
 def test_allprop_partial_zeros():
     shape = (2, 3)
     a = np.array([[0, 0], [0, 1]]) * np.pi
     b = np.zeros(shape) + 1e-6
-    p, r = allprop(a, b)
+    p = allprop(a, b)
     assert not p
 
 

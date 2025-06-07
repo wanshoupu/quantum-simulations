@@ -320,11 +320,11 @@ def test_inter_factor_random():
     dough, matrices = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
     # print(f'matrices=\n{formatter.tostr(matrices)}')
-    p, _ = allprop(inter_product(dough, matrices, 2), m)
+    p = allprop(inter_product(dough, matrices, 2), m)
     assert p
-    dp, _ = allprop(dough, a)
+    dp = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(matrices, b)
+    yp = allprop(matrices, b)
     assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
 
 
@@ -338,11 +338,11 @@ def test_inter_factor_identity_factors():
     dough, yeast = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
     # print(f'yeast=\n{formatter.tostr(yeast)}')
-    p, _ = allprop(inter_product(dough, yeast, 2), m)
+    p = allprop(inter_product(dough, yeast, 2), m)
     assert p
-    dp, _ = allprop(dough, a)
+    dp = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(yeast, b)
+    yp = allprop(yeast, b)
     assert yp, f'yeast=\n{formatter.tostr(yeast)}\nexpected=\n{formatter.tostr(b)}'
 
 
@@ -356,47 +356,46 @@ def test_inter_factor_all_identities():
     dough, matrices = ms
     # print(f'dough=\n{formatter.tostr(dough)}')
     # print(f'matrices=\n{formatter.tostr(matrices)}')
-    p, _ = allprop(inter_product(dough, matrices, 2), m)
+    p = allprop(inter_product(dough, matrices, 2), m)
     assert p
-    dp, _ = allprop(dough, a)
+    dp = allprop(dough, a)
     assert dp, f'dough=\n{formatter.tostr(dough)}\nexpected=\n{formatter.tostr(a)}'
-    yp, _ = allprop(matrices, b)
+    yp = allprop(matrices, b)
     assert yp, f'matrices=\n{formatter.tostr(matrices)}\nexpected=\n{formatter.tostr(b)}'
 
 
 def test_unitary_prop_eye():
     a = np.eye(5)
-    p, r = unitary_prop(a)
+    p = unitary_prop(a)
     assert p
-    assert np.isclose(r, 1)
+    assert np.isclose(p.ratio, 1)
 
 
 def test_unitary_prop_1():
     a = random_unitary(5)
-    p, r = unitary_prop(a)
+    p = unitary_prop(a)
     assert p
-    assert np.isclose(r, 1)
+    assert np.isclose(p.ratio, 1)
 
 
 def test_unitary_prop_pi():
     a = random_unitary(5) * np.pi
-    p, r = unitary_prop(a)
+    p = unitary_prop(a)
     assert p
-    assert np.isclose(r, np.pi)
+    assert np.isclose(p.ratio, np.pi)
 
 
 def test_unitary_prop_rank_deficit():
     a = np.array([[1, 1], [1, 1]]) * np.pi
-    p, r = unitary_prop(a)
+    p = unitary_prop(a)
     assert not p
 
 
 def test_unitary_prop_zeros():
     shape = (2, 3)
     a = np.zeros(shape)
-    p, r = unitary_prop(a)
+    p = unitary_prop(a)
     assert not p
-    assert np.isclose(r, 0), f'ratio = {r}'
 
 
 @pytest.mark.parametrize("epsilon,expected", [
@@ -405,10 +404,10 @@ def test_unitary_prop_zeros():
 ])
 def test_unitary_prop_close2zero(epsilon, expected):
     a = np.eye(2) * epsilon
-    p, r = unitary_prop(a)
-    assert p == expected
+    p = unitary_prop(a)
+    assert bool(p) == expected
     if p:
-        assert np.isclose(r, epsilon), f'ratio = {r}'
+        assert np.isclose(p.ratio, epsilon), f'ratio = {p.ratio}'
 
 
 def test_normalize_all():

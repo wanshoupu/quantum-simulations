@@ -84,9 +84,9 @@ class UnivGate(Enum):
         for g in UnivGate:
             if np.allclose(m, np.array(g)):
                 return g, 1
-            p, f = allprop(m, np.array(g))
-            if p:
-                return g, f
+            prop = allprop(m, np.array(g))
+            if prop:
+                return g, prop.ratio
         return None
 
     def rotation(self, theta) -> NDArray:

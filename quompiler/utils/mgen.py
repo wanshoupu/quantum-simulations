@@ -7,6 +7,7 @@ from scipy.stats import unitary_group
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
+from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 
@@ -154,3 +155,11 @@ def random_gate_seq(length, pop: Sequence[UnivGate] = None):
         c = random.choice(sorted(set(pop) - {result[-1]}))
         result.append(c)
     return result
+
+
+def random_rgate():
+    angle = random.uniform(0, 2 * np.pi)
+    theta = random.uniform(0, np.pi)
+    phi = random.uniform(0, 2 * np.pi)
+    gate = RGate(angle, [theta, phi])
+    return gate
