@@ -18,9 +18,6 @@ def euler_decompose(gate: CtrlGate) -> list[CtrlGate]:
     """
     assert gate.issinglet()
     a, b, c, d = euler_params(gate.matrix())
-    A = UnivGate.Z.rotation(b) @ UnivGate.Y.rotation(c / 2)
-    B = UnivGate.Y.rotation(-c / 2) @ UnivGate.Z.rotation(-(d + b) / 2)
-    C = UnivGate.Z.rotation((d - b) / 2)
     target = gate.target_qids()
 
     if len(gate.control_qids()) == 1:
