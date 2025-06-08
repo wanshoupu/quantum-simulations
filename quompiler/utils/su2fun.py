@@ -100,6 +100,11 @@ def raxis(U: NDArray) -> NDArray:
 def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
     """
     Given a U(2) matrix, decompose it into Euler angles + an overall scalar factor.
+    The ranges of the parameters are:
+    abs(a) == 1
+    -π < b < π
+    -π < c < π
+    -π < d < π
     :param u: U(2) matrix as input
     :return: scalar factor + Euler angles (b, c, d), such that u = a * Rz(b) @ Ry(c) @ Rz(d)
     """
@@ -111,8 +116,8 @@ def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
     plus = c2 if np.isclose(c2, 0) else np.angle(u[1, 1] / u[0, 0])
     minus = s2 if np.isclose(s2, 0) else np.angle(-u[1, 0] / u[0, 1])
 
-    b = (plus + minus) / 2  # angle before Y rotation
-    d = (plus - minus) / 2  # angle after Y rotation
+    b = (plus + minus) / 2  # angle pre-Y rotation
+    d = (plus - minus) / 2  # angle post-Y rotation
 
     # Determine rotation angle around Y (theta)
     x = np.real_if_close(c2 - s2)
