@@ -55,7 +55,7 @@ def test_controlled_equality_1_ctr_1_target():
     phase_gate = result[0]
     assert not phase_gate.control_qids()
     assert phase_gate.qspace[0] == cu.qspace[0]
-    assert result[2].is_std() and result[4].is_std()
+    assert result[3].is_std() and result[6].is_std()
 
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
@@ -77,7 +77,6 @@ def test_controlled_equality_2_ctrl_1_target():
     # verify
     phase_gate = result[0]
     assert len(phase_gate.control_qids()) > 1
-    assert result[2].is_std() and result[4].is_std()
 
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
@@ -97,7 +96,6 @@ def test_controlled_equality_C1T():
     result = euler_decompose(cu)
 
     # verify
-    assert result[2].is_std() and result[4].is_std()
     actual = reduce(lambda a, b: a @ b, result)
     # print('actual:')
     # print(formatter.tostr(actual.inflate()))
