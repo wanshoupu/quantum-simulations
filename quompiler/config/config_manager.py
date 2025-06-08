@@ -77,7 +77,7 @@ class ConfigManager:
         parser.add_argument("--target", help="Target quantum computing platform", choices=["CIRQ", "QISKIT", "QUIMB"])
         parser.add_argument("--emit",
                             help="specifies what kind of output file the compiler should generate after processing the source code.",
-                            choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "ROTATIONAL", "UNIV_GATE", "CLIFFORD_T"])
+                            choices=["INVALID", "UNITARY", "TWO_LEVEL", "SINGLET", "MULTI_TARGET", "CTRL_PRUNED", "PRINCIPAL", "UNIV_GATE", "CLIFFORD_T"])
         parser.add_argument("--rtol", help="Relative tolerance — allows for proportional error")
         parser.add_argument("--atol", help="Absolute tolerance — allows for fixed error")
         parser.add_argument("--lookup_tol", help="SU2Net lookup tolerance for Solovay-Kitaev decomposition.")
