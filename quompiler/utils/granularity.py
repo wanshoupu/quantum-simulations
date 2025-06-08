@@ -13,22 +13,32 @@ def granularity(obj: Union[UnitaryM, CtrlGate]) -> EmitType:
     :return: EmitType denoting the granularity
     """
     if isinstance(obj, UnitaryM):
-        if obj.is2l():
-            return EmitType.TWO_LEVEL
-        return EmitType.UNITARY
+        return granularity_mat(obj)
+    if isinstance(obj, CtrlGate):
+        return granularity_gate(obj)
+    return EmitType.INVALID
 
-    if isinstance(obj, CtrlGate) and not obj.is_std():
-        if not obj.issinglet():
-            return EmitType.MULTI_TARGET
-        if len(obj.control_qids()) < 2:
-            return EmitType.CTRL_PRUNED
-        return EmitType.SINGLET
 
-    if isinstance(obj, CtrlGate) and obj.is_std():
+def granularity_mat(obj: UnitaryM) -> EmitType:
+    if obj.is2l():
+        return EmitType.TWO_LEVEL
+    return EmitType.UNITARY
+
+
+def granularity_gate(obj: CtrlGate) -> EmitType:
+    if obj.is_std():
         if 1 < len(obj.control_qids()):
             return EmitType.SINGLET
         if obj.gate in UnivGate.cliffordt():
             return EmitType.CLIFFORD_T
         return EmitType.CTRL_PRUNED
 
-    return EmitType.INVALID
+    if obj.is_principal():
+        return EmitType.PRINCIPAL
+
+    # not std, not principal
+    if not obj.issinglet():
+        return EmitType.MULTI_TARGET
+    if len(obj.control_qids()) < 2:
+        return EmitType.CTRL_PRUNED
+    return EmitType.SINGLET

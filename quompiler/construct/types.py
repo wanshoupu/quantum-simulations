@@ -138,7 +138,7 @@ class EmitType(IntEnum):
     MULTI_TARGET = 0x60,  # CtrlGate and with more than one qubit in target
     SINGLET = 0x80,  # CtrlGate and with one-qubit target
     CTRL_PRUNED = 0xa0,  # CtrlGate with single target and zero or one control qubit.
-    ROTATIONAL = 0xb0,  # All single qubit operations are Rx(α), Ry(α), or Rz(α) with rotation angles 0 <= α < 2π.
+    PRINCIPAL = 0xb0,  # All single qubit operations are Rx(α), Ry(α), or Rz(α) with rotation angles 0 <= α < 2π.
     UNIV_GATE = 0xc0,  # any std CtrlGate with any UnivGate as the operator
     CLIFFORD_T = 0xe0,  # CtrlGate and the gate is among Clifford + T gates, namely, {X, H, S, T}
 

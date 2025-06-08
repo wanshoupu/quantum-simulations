@@ -76,7 +76,10 @@ class CtrlGate:
         return self._unitary.isid()
 
     def is_std(self) -> bool:
-        return self.gate is not None
+        return isinstance(self.gate, UnivGate)
+
+    def is_principal(self) -> bool:
+        return isinstance(self.gate, RGate) and self.gate.axis.principal
 
     def is2l(self) -> bool:
         return self._unitary.is2l()

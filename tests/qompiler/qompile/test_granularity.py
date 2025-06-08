@@ -1,4 +1,8 @@
+import math
+import random
+
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import EmitType, UnivGate
 from quompiler.utils.granularity import granularity
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -66,6 +70,16 @@ def test_granularity_std_clifford_t():
     u = CtrlGate(UnivGate.H, ctrl)
     grain = granularity(u)
     assert grain == EmitType.CLIFFORD_T
+
+
+def test_granularity_rgate():
+    n = 1
+    ctrl = random_control(n, 1)
+    angle = random.uniform(0, 2 * math.pi)
+    gate = RGate(angle, 'z')
+    u = CtrlGate(gate, ctrl)
+    grain = granularity(u)
+    assert grain == EmitType.PRINCIPAL
 
 
 def test_granularity_invalid():
