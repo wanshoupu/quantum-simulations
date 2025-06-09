@@ -103,7 +103,7 @@ class RGate:
             else:
                 self.axis = RAxis(axis)
         else:
-            raise ValueError('axis must be either an np.array or a str or RAxis')
+            raise ValueError('axis must be either an np.array, sequence, or enum PrincipalAxis')
         self.angle = angle
         self.matrix = rot(self.axis.nvec, self.angle)
 
