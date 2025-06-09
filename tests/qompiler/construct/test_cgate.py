@@ -8,7 +8,7 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import ctrl2core
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.su2gate import RGate
-from quompiler.construct.types import UnivGate, QType
+from quompiler.construct.types import UnivGate, QType, PrincipalAxis
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.inter_product import mykron, qproject
@@ -162,7 +162,7 @@ def test_proportional_univ_gate(gate):
     assert np.isclose(actual.phase(), prop_factor)
 
 
-@pytest.mark.parametrize("axis", list('xyz'))
+@pytest.mark.parametrize("axis", list(PrincipalAxis))
 def test_proportional_rgate(axis):
     gate = RGate(np.pi, axis)
     actual = CtrlGate(gate, random_control(3, 1))
