@@ -83,9 +83,8 @@ class Qompiler:
         if gate.is_std():
             if self.emit == EmitType.UNIV_GATE or gate.gate in UnivGate.cliffordt():
                 return [gate], {}
-            else:
-                meta = {'method': 'cliffordt_decompose'} if self.debug else {}
-                return cliffordt_decompose(gate), meta
+            meta = {'method': 'cliffordt_decompose'} if self.debug else {}
+            return cliffordt_decompose(gate), meta
         sk_coms = self.sk.approx(gate.matrix())
         constituents = [CtrlGate(g, gate.controls, gate.qspace) for g in sk_coms]
         meta = {'method': 'sk_approx'} if self.debug else {}
@@ -101,6 +100,8 @@ class Qompiler:
             return result, meta
 
         euler_coms = euler_decompose(gate)
+        if self.emit <= EmitType.PRINCIPAL:
+            return euler_coms, ({'method': 'euler_decompose'} if self.debug else {})
         result = []
         meta = dict()
         for com in euler_coms:

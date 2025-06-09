@@ -10,6 +10,7 @@ from quompiler.circuits.qfactory import QFactory
 from quompiler.config.config_manager import ConfigManager, create_config
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
+from quompiler.construct.types import EmitType
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
@@ -21,12 +22,12 @@ def test_compile_identity_matrix():
     n = 3
     dim = 1 << n
     u = np.eye(dim)
-    config= create_config(emit="SINGLET", ancilla_offset=n, target="QISKIT")
+    config = create_config(emit="SINGLET", ancilla_offset=n, target="QISKIT")
     factory = QFactory(config)
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
 
     # execute
-    bc = interp.decompose(u)
+    bc = compiler.decompose(u)
     assert bc is not None
     assert np.array_equal(bc.data.matrix, np.eye(bc.data.matrix.shape[0]))
     assert bc.children == []
@@ -36,12 +37,12 @@ def test_compile_sing_qubit_circuit():
     n = 1
     dim = 1 << n
     u = random_unitary(dim)
-    config= create_config(emit="SINGLET", ancilla_offset=n)
+    config = create_config(emit="SINGLET", ancilla_offset=n)
     factory = QFactory(config)
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
 
     # execute
-    bc = interp.decompose(u)
+    bc = compiler.decompose(u)
     # print(bc)
     assert isinstance(bc, Bytecode)
     assert len(bc.children) == 1
@@ -51,24 +52,24 @@ def test_compile_sing_qubit_circuit():
 
 def test_compile_insufficient_qspace_error():
     # TODO: ancilla_offset=1 is not working
-    config= create_config(emit="CTRL_PRUNED", ancilla_offset=1)
+    config = create_config(emit="CTRL_PRUNED", ancilla_offset=1)
     factory = QFactory(config)
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
 
     u = cyclic_matrix(8, 1)
     # execute
     with pytest.raises(EnvironmentError):
-        interp.decompose(u)
+        compiler.decompose(u)
 
 
 def test_compile_cyclic_8_ctrl_prune():
     u = cyclic_matrix(8, 1)
-    config= create_config(emit="CTRL_PRUNED", ancilla_offset=2)
+    config = create_config(emit="CTRL_PRUNED", ancilla_offset=2)
     factory = QFactory(config)
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
 
     # execute
-    bc = interp.decompose(u)
+    bc = compiler.decompose(u)
     # print(bc)
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
@@ -82,12 +83,12 @@ def test_compile_cyclic_8_ctrl_prune():
 def test_compile_cyclic_8():
     n = 3
     u = cyclic_matrix(1 << n, 1)
-    config= create_config(emit="SINGLET", ancilla_offset=n)
+    config = create_config(emit="SINGLET", ancilla_offset=n)
     factory = QFactory(config)
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
 
     # execute
-    bc = interp.decompose(u)
+    bc = compiler.decompose(u)
     # print(bc)
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
@@ -101,10 +102,10 @@ def test_compile_cyclic_4():
     u = cyclic_matrix(4, 1)
     config = create_config(emit="SINGLET")
     factory = QFactory(config)
-    interp = factory.get_qompiler()
+    compiler = factory.get_qompiler()
 
     # execute
-    bc = interp.decompose(u)
+    bc = compiler.decompose(u)
     # print(bc)
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
@@ -115,23 +116,35 @@ def test_compile_cyclic_4():
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 
 
-def test_interp_random_unitary():
-    for _ in range(10):
-        # print(f'Test {_}th round')
-        n = random.randint(1, 4)
-        dim = 1 << n
-        u = random_unitary(dim)
-        config = ConfigManager().merge(dict(emit="SINGLET", ancilla_offset=n)).create_config()
-        factory = QFactory(config)
-        interp = factory.get_qompiler()
+@pytest.mark.parametrize("emit_name,seed", zip([
+    # 'UNITARY',
+    # 'TWO_LEVEL',
+    # 'MULTI_TARGET',
+    # 'SINGLET',
+    # 'CTRL_PRUNED',
+    'PRINCIPAL',
+    'UNIV_GATE',
+    'CLIFFORD_T',
+], random.sample(range(1 << 20), len(EmitType))))
+def test_compile_random_unitary(emit_name, seed: int):
+    seed = 839239
+    random.seed(seed)
+    np.random.seed(seed)
 
-        # execute
-        bc = interp.decompose(u)
+    n = random.randint(1, 4)
+    dim = 1 << n
+    input_mat = random_unitary(dim)
+    config = ConfigManager().merge(dict(emit=emit_name, ancilla_offset=n)).create_config()
+    factory = QFactory(config)
+    compiler = factory.get_qompiler()
 
-        # verify
-        leaves = [a.data.inflate() for a in BytecodeIter(bc) if isinstance(a.data, CtrlGate)]
-        v = reduce(lambda a, b: a @ b, leaves)
-        assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
+    # execute
+    bc = compiler.decompose(input_mat)
+
+    # verify
+    leaves = [a.data.inflate() for a in BytecodeIter(bc) if a.is_leaf()]
+    recovered_compiled = reduce(lambda a, b: a @ b, leaves)
+    assert np.allclose(recovered_compiled, input_mat), f'\ncompiled=\n{formatter.tostr(recovered_compiled)},\ninput=\n{formatter.tostr(input_mat)}'
 
 
 def test_optimize_no_optimizer():
@@ -172,11 +185,11 @@ def test_output():
         u = random_unitary(dim)
         config = create_config(emit="SINGLET", ancilla_offset=n, output=tmp.name)
         factory = QFactory(config)
-        interp = factory.get_qompiler()
+        compiler = factory.get_qompiler()
 
         # execute
-        bc = interp.decompose(u)
-        interp.output(bc)
+        bc = compiler.decompose(u)
+        compiler.output(bc)
         assert os.path.exists(tmp.name)
         actual_size = os.path.getsize(tmp.name)
         assert actual_size == 782
