@@ -7,6 +7,7 @@ from numpy import kron
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qontroller import ctrl2core
 from quompiler.construct.qspace import Qubit
+from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import UnivGate, QType
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -156,10 +157,17 @@ def test_UnivGate_Z():
 @pytest.mark.parametrize("gate", list(UnivGate))
 def test_proportional_univ_gate(gate):
     prop_factor = random_phase()
-    phase = random_phase()
-    actual = CtrlGate(np.array(gate) * prop_factor, random_control(3, 1), phase=phase)
+    actual = CtrlGate(np.array(gate) * prop_factor, random_control(3, 1))
     assert actual.is_std()
-    assert np.isclose(actual.phase(), phase * prop_factor)
+    assert np.isclose(actual.phase(), prop_factor)
+
+
+@pytest.mark.parametrize("axis", list('xyz'))
+def test_proportional_rgate(axis):
+    gate = RGate(np.pi, axis)
+    actual = CtrlGate(gate, random_control(3, 1))
+    assert actual.is_std()
+    assert np.isclose(actual.phase(), -1j)
 
 
 def test_sorted_noop():

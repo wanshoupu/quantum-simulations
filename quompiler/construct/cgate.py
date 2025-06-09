@@ -12,6 +12,7 @@ from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import ctrl_expand, qproject, is_idler
+from quompiler.utils.mfun import allprop
 from quompiler.utils.permute import Permuter
 
 
@@ -31,24 +32,12 @@ class CtrlGate:
         assert all(isinstance(c, QType) for c in control), f'control contains non-QType items'
         self.controls = list(control)
         core = ctrl2core(control)
-        if isinstance(gate, RGate):
+        mat = np.array(gate)
+        self.gate = UnivGate.get_prop(mat)
+        if self.gate is not None:
+            phase *= allprop(mat, np.array(self.gate)).ratio
+        elif isinstance(gate, RGate):
             self.gate = gate
-            mat = np.array(gate)
-        elif isinstance(gate, UnivGate):
-            self.gate = gate
-            mat = np.array(gate)
-        elif isinstance(gate, np.ndarray):
-            match = UnivGate.get_prop(gate)
-            if match is None:
-                mat = gate
-                self.gate = None
-            else:
-                g, f = match  # unpack to UnivGate, proportional factor (guaranteed norm-1)
-                self.gate = g
-                mat = np.array(g)
-                phase *= f
-        else:
-            raise NotImplementedError(f'unsupported gate type: {gate}')
         assert mat.shape[0] == len(core), f'matrix shape does not match the control sequence'
         dim = 1 << len(self.controls)
         self._unitary = UnitaryM(dim, core, mat, phase=phase)
