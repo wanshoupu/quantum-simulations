@@ -6,8 +6,7 @@ from numpy.typing import NDArray
 from quompiler.utils.fun import pi_repr
 from quompiler.utils.su2fun import rot, vec
 
-_principal_axes = {"x": np.array([1, 0, 0]), "y": np.array([0, 1, 0]), "z": np.array([0, 0, 1]),
-                   "-x": np.array([-1, 0, 0]), "-y": np.array([0, -1, 0]), "-z": np.array([0, 0, -1])}
+_principal_axes = {"x": np.array([1, 0, 0]), "y": np.array([0, 1, 0]), "z": np.array([0, 0, 1])}
 
 
 class RAxis:
@@ -21,13 +20,13 @@ class RAxis:
         3-vector: (x,y,z) represents the normal vector of the rotation axis. It can be an unnormalized vector as normalization will be performed internally.
         2-vector: (θ,φ) represents the normal vector of the rotation axis in spherical coordinate.
         :param axis: axis of the rotation matrix
-            when it's a string, it must be in {'x', 'y', 'z', '-x', '-y', '-z'};
+            when it's a string, it must be in {'x', 'y', 'z'};
             when it's a 2-vector, it is interpreted as spherical coordinate;
             when it's a 3-vector, it is interpreted as normal vector (x,y,z).
         """
         if isinstance(axis, str):
             if axis not in _principal_axes:
-                raise ValueError("axis must be in {'x', 'y', 'z', '-x', '-y', '-z'}")
+                raise ValueError("axis must be in {'x', 'y', 'z'}")
             self.nvec = _principal_axes[axis]
         elif isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
             axis = np.array(axis)

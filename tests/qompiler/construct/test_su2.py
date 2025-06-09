@@ -14,9 +14,10 @@ formatter = MatrixFormatter(precision=2)
 
 
 @pytest.mark.parametrize("axis, error", [
-    ['h', "axis must be in {'x', 'y', 'z', '-x', '-y', '-z'}"],
-    ['-t', "axis must be in {'x', 'y', 'z', '-x', '-y', '-z'}"],
-    ['-s', "axis must be in {'x', 'y', 'z', '-x', '-y', '-z'}"],
+    ['h', "axis must be in {'x', 'y', 'z'}"],
+    ['-t', "axis must be in {'x', 'y', 'z'}"],
+    ['-s', "axis must be in {'x', 'y', 'z'}"],
+    ['-x', "axis must be in {'x', 'y', 'z'}"],
     [np.array([1]), 'axis must be either a 2-vector or 3-vector'],
     [np.array([1, 2, 3, 4]), 'axis must be either a 2-vector or 3-vector'],
     [np.array([0, 0, 0]), "axis must not be zero."],
@@ -27,7 +28,7 @@ def test_axis_init_invalid(axis: Union[str, np.ndarray], error):
     assert str(e.value) == error
 
 
-@pytest.mark.parametrize('principal', ['x', 'y', 'z', '-x', '-y', '-z'])
+@pytest.mark.parametrize('principal', ['x', 'y', 'z'])
 def test_axis_init_principal(principal):
     axis = RAxis(principal)
     assert repr(axis) == principal
@@ -94,24 +95,19 @@ def test_axis_init_nvec2spherical(nvec, expected):
 
 @pytest.mark.parametrize('param, expr', [
     [[0, 0], 'z'],
-    [[np.pi, 0], '-z'],
     [[0, 2 * np.pi], 'z'],
     [[0, -2 * np.pi], 'z'],
-    [[-np.pi / 2, 0], '-x'],
-    [[-np.pi / 2, np.pi / 2], '-y'],
     [[-np.pi / 3, np.pi / 4], '(π/3, -3π/4)'],
     [[1e-5, 0, 0], 'x'],
     [[1, 0, 0], 'x'],
     [[0, 1, 0], 'y'],
     [[0, 0, 1], 'z'],
     [[0, .5, 0], 'y'],
-    [[0, 0, -1], '-z'],
-    [[0, 0, -.5], '-z'],
     [[-1 / np.sqrt(3), 1 / np.sqrt(3), 1 / np.sqrt(3)], f'(0.3037109375π, 3π/4)']
 ])
 def test_axis_repr(param, expr):
     axis = RAxis(np.array(param))
-    assert repr(axis) == expr, f'Repr of Sphereical {param} != {repr(expr)}'
+    assert repr(axis) == expr, f'Repr of Spherical {param} != {repr(expr)}'
 
 
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
