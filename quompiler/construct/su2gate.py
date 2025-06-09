@@ -3,10 +3,9 @@ from typing import Union, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
+from quompiler.construct.types import PrincipalAxis
 from quompiler.utils.fun import pi_repr
 from quompiler.utils.su2fun import rot, vec
-
-_principal_axes = {"x": np.array([1, 0, 0]), "y": np.array([0, 1, 0]), "z": np.array([0, 0, 1])}
 
 
 class RAxis:
@@ -14,21 +13,20 @@ class RAxis:
     Represent the rotation axis with a few convenient ways to define.
     """
 
-    def __init__(self, axis: Union[str, np.ndarray, Sequence]):
+    def __init__(self, axis: Union[PrincipalAxis, np.ndarray, Sequence]):
         """
         Normal vector, n, may be specified in one of three ways:
         3-vector: (x,y,z) represents the normal vector of the rotation axis. It can be an unnormalized vector as normalization will be performed internally.
         2-vector: (θ,φ) represents the normal vector of the rotation axis in spherical coordinate.
         :param axis: axis of the rotation matrix
-            when it's a string, it must be in {'x', 'y', 'z'};
+            axis can be a PrincipalAxis enum
             when it's a 2-vector, it is interpreted as spherical coordinate;
             when it's a 3-vector, it is interpreted as normal vector (x,y,z).
         """
-        if isinstance(axis, str):
-            if axis not in _principal_axes:
-                raise ValueError("axis must be in {'x', 'y', 'z'}")
-            self.nvec = _principal_axes[axis]
-        elif isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
+        if isinstance(axis, PrincipalAxis):
+            self.nvec = np.array(axis.value)
+            self.principal = axis
+        elif isinstance(axis, np.ndarray) or isinstance(axis, (tuple, list)):
             axis = np.array(axis)
             if axis.shape == (2,):
                 theta, phi = axis
@@ -41,28 +39,24 @@ class RAxis:
             else:
                 raise ValueError('axis must be either a 2-vector or 3-vector')
         else:
-            raise ValueError('axis must be either an np.array or a str or RAxis')
+            raise ValueError('axis must be either an np.array, sequence, or enum PrincipalAxis')
         x, y, z = self.nvec
         self.theta = np.arccos(np.clip(z, -1, 1))
         self.phi = np.arctan2(y, x)
-
-        self.principal = None
-        for key, val in _principal_axes.items():
-            if np.allclose(self.nvec, val):
-                self.principal = key
+        self.principal = PrincipalAxis.get(self.nvec)
 
     def __eq__(self, other):
         if self is other:
             return True
         if not isinstance(other, RAxis):
             return False
-        if self.isprincipal() and other.isprincipal() and self.principal == other.principal:
+        if (self.isprincipal() or other.isprincipal()) and self.principal == other.principal:
             return True
         return np.allclose(self.nvec, other.nvec)
 
     def __repr__(self):
         if self.isprincipal():
-            return self.principal
+            return repr(self.principal)
         return f"({pi_repr(self.theta)}, {pi_repr(self.phi)})"
 
     def spherical(self) -> tuple[float, float]:
@@ -82,7 +76,7 @@ class RGate:
     where n is the normal vector, α is the angle of rotation.
     """
 
-    def __init__(self, angle: float, axis: Union[str, RAxis, np.ndarray, Sequence]):
+    def __init__(self, angle: float, axis: Union[PrincipalAxis, RAxis, np.ndarray, Sequence]):
         """
         Create a rotation matrix from an axis and angle.
         Normal vector, n, may be specified in one of three ways:
@@ -90,14 +84,24 @@ class RGate:
         2-vector: (θ,φ) represents the normal vector of the rotation axis in spherical coordinate.
         :param angle: angle of the rotation matrix
         :param axis: axis of the rotation matrix
-            when it's a string, it can only be one of 'X' or 'Y' or 'Z';
+            axis can be a PrincipalAxis enum
             when it's a 2-vector, it is interpreted as spherical coordinate;
             when it's a 3-vector, it is interpreted as normal vector (x,y,z).
         """
         if isinstance(axis, RAxis):
             self.axis = axis
-        elif isinstance(axis, str) or isinstance(axis, np.ndarray) or isinstance(axis, Sequence):
+        elif isinstance(axis, PrincipalAxis):
             self.axis = RAxis(axis)
+        elif isinstance(axis, np.ndarray) or isinstance(axis, (tuple, list)):
+            principal_check = PrincipalAxis.get_prop(axis)
+            if principal_check:
+                principal, ratio = principal_check.result
+                if ratio < 0:
+                    angle = -angle
+                self.axis = RAxis(principal)
+
+            else:
+                self.axis = RAxis(axis)
         else:
             raise ValueError('axis must be either an np.array or a str or RAxis')
         self.angle = angle

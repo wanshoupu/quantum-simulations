@@ -1,11 +1,10 @@
 from functools import reduce
 
 import numpy as np
-import pytest
 
-from quompiler.utils.su2fun import dist
-from quompiler.utils.mfun import allprop, herms, get_principal
+from quompiler.utils.mfun import allprop, herms
 from quompiler.utils.mgen import random_unitary, random_phase, random_su2
+from quompiler.utils.su2fun import dist
 
 
 def test_allprop_false():
@@ -65,57 +64,3 @@ def test_herms_equality():
     u = reduce(lambda x, y: x @ y, us)
     v = reduce(lambda x, y: x @ y, vs)
     assert np.allclose(u @ v, np.eye(2)), f'{u} != {v}'
-
-
-@pytest.mark.parametrize("axis,principal,factor", [
-    [[1, 0, 0], 'x', 1],
-    [[0, 1, 0], 'y', 1],
-    [[0, 0, 1], 'z', 1],
-    [[-1, 0, 0], 'x', -1],
-    [[0, -1, 0], 'y', -1],
-    [[0, 0, -1], 'z', -1],
-    [[-1.5, 1e-9, 0], 'x', -1.5],
-    [[1e-9, -np.pi, 1e-9], 'y', -np.pi],
-    [[0, 0, 3.14], 'z', 3.14],
-])
-def test_get_principal_3d_affirmative(axis, principal, factor):
-    chk = get_principal(axis)
-    assert chk
-    p, f = chk.result
-    assert p == principal
-    assert np.isclose(f, factor)
-
-
-@pytest.mark.parametrize("axis,principal,factor", [
-    [[0, 0], 'z', 1],
-    [[np.pi, 0], 'z', -1],
-    [[0, 2 * np.pi], 'z', 1],
-    [[0, -2 * np.pi], 'z', 1],
-    [[np.pi / 2, 0], 'x', 1],
-    [[-np.pi / 2, 0], 'x', -1],
-    [[-np.pi / 2, np.pi / 2], 'y', -1],
-])
-def test_get_principal_2d_affirmative(axis, principal, factor):
-    chk = get_principal(axis)
-    assert chk
-    p, f = chk.result
-    assert p == principal
-    assert np.isclose(f, factor)
-
-
-@pytest.mark.parametrize("axis", [
-    [-1, -1, 0],
-    [0, -1, 1],
-    [1, 1, -1],
-    [-1.5, 1e-5, 0],
-    [1e-5, 1e-5, 1e-9],
-    [1, 0],
-    [.5 * np.pi, 1e-3],
-    [1e-3, .2 * np.pi],
-    [-1e-5, -1],
-    [-np.pi / 3, 0],
-    [-np.pi / 3, np.pi / 4],
-])
-def test_get_principal_none_result(axis):
-    chk = get_principal(axis)
-    assert not chk

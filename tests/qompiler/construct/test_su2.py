@@ -4,7 +4,8 @@ from typing import Union
 import numpy as np
 import pytest
 
-from quompiler.construct.su2gate import RGate, RAxis, _principal_axes
+from quompiler.construct.su2gate import RGate, RAxis
+from quompiler.construct.types import PrincipalAxis
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import random_rgate
@@ -14,10 +15,10 @@ formatter = MatrixFormatter(precision=2)
 
 
 @pytest.mark.parametrize("axis, error", [
-    ['h', "axis must be in {'x', 'y', 'z'}"],
-    ['-t', "axis must be in {'x', 'y', 'z'}"],
-    ['-s', "axis must be in {'x', 'y', 'z'}"],
-    ['-x', "axis must be in {'x', 'y', 'z'}"],
+    ['h', "axis must be either an np.array, sequence, or enum PrincipalAxis"],
+    ['-t', "axis must be either an np.array, sequence, or enum PrincipalAxis"],
+    ['-s', "axis must be either an np.array, sequence, or enum PrincipalAxis"],
+    ['-x', "axis must be either an np.array, sequence, or enum PrincipalAxis"],
     [np.array([1]), 'axis must be either a 2-vector or 3-vector'],
     [np.array([1, 2, 3, 4]), 'axis must be either a 2-vector or 3-vector'],
     [np.array([0, 0, 0]), "axis must not be zero."],
@@ -28,11 +29,11 @@ def test_axis_init_invalid(axis: Union[str, np.ndarray], error):
     assert str(e.value) == error
 
 
-@pytest.mark.parametrize('principal', ['x', 'y', 'z'])
+@pytest.mark.parametrize('principal', list(PrincipalAxis))
 def test_axis_init_principal(principal):
     axis = RAxis(principal)
-    assert repr(axis) == principal
-    assert np.allclose(axis.nvec, _principal_axes[principal])
+    assert repr(axis) == repr(principal)
+    assert np.allclose(axis.nvec, principal.value)
 
 
 @pytest.mark.parametrize('spherical, expected', [
@@ -107,18 +108,18 @@ def test_axis_init_nvec2spherical(nvec, expected):
 ])
 def test_axis_repr(param, expr):
     axis = RAxis(np.array(param))
-    assert repr(axis) == expr, f'Repr of Spherical {param} != {repr(expr)}'
+    assert repr(axis) == expr, f'Repr of Spherical {repr(axis)} != {expr}'
 
 
-@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
-def test_rgate_init_str(axis):
+@pytest.mark.parametrize('axis', [PrincipalAxis.X, PrincipalAxis.Y, PrincipalAxis.Z])
+def test_rgate_init_principal(axis):
     angle = random.uniform(0, 2 * np.pi)
     gate = RGate(angle, axis)
     assert gate.axis.isprincipal()
 
 
 @pytest.mark.parametrize('angle, axis, expected', [
-    [np.pi, 'x', 'Rx(π)'],
+    [np.pi, PrincipalAxis.X, 'Rx(π)'],
     [-np.pi, [3, 4, 5], 'R(π/4, 0.294921875π)(-π)'],
 ])
 def test_rgate_init_ndarray(angle: float, axis, expected):
@@ -127,7 +128,7 @@ def test_rgate_init_ndarray(angle: float, axis, expected):
 
 
 @pytest.mark.parametrize('angle, axis, expected', [
-    [np.pi, 'x', rot(np.array([1, 0, 0]), np.pi)],
+    [np.pi, PrincipalAxis.X, rot(np.array([1, 0, 0]), np.pi)],
     [-np.pi, [3, 4, 5], rot(np.array([3, 4, 5]), -np.pi)],
 ])
 def test_rgate_verify_matrix(angle: float, axis, expected):

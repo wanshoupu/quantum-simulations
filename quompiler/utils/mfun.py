@@ -1,5 +1,4 @@
 import dataclasses
-from typing import Union, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
@@ -88,29 +87,3 @@ def unitary_prop(a: NDArray, rtol=1.e-5, atol=1.e-8, equal_nan=False) -> Conditi
     mat = a.conj() @ a.T
     prop = id_prop(mat, rtol=rtol, atol=atol, equal_nan=equal_nan)
     return ConditionalResult(prop.is_affirmative, np.sqrt(prop.result))
-
-
-_principal_axes = {"x": np.array([1, 0, 0]), "y": np.array([0, 1, 0]), "z": np.array([0, 0, 1])}
-
-
-def get_principal(axis: Union[NDArray, Sequence]) -> ConditionalResult:
-    """
-    Check if `axis` represents one of the principal axes: 'x', 'y', 'z'.
-    If so, return a tuple of the principal axis and a float factor to denote if its parallel (positive number) or antiparallel (negative number).
-    :param axis: given in 3D/2D vector, corresponding to Euclidean vector or spherical vector.
-    :return: ConditionalResult representing the check.
-    """
-    axis = np.array(axis)
-    length, = axis.shape
-    assert length == 2 or length == 3
-
-    if length == 3:
-        for k, v in _principal_axes.items():
-            pchk = allprop(axis, v)
-            if pchk:
-                result = k, pchk.result
-                return ConditionalResult(True, result)
-        return ConditionalResult()
-
-    vec = np.sin(axis[0]) * np.cos(axis[1]), np.sin(axis[0]) * np.sin(axis[1]), np.cos(axis[0])
-    return get_principal(vec)

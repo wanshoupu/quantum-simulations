@@ -4,7 +4,7 @@ from operator import or_
 import numpy as np
 import pytest
 
-from quompiler.construct.types import UnivGate, QType, QompilePlatform, EmitType
+from quompiler.construct.types import UnivGate, QType, QompilePlatform, EmitType, PrincipalAxis
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, random_phase
 
@@ -223,3 +223,57 @@ def test_EmitType_comparison():
     lesser = EmitType.TWO_LEVEL
     larger = EmitType.UNIV_GATE
     assert lesser < larger
+
+
+@pytest.mark.parametrize("axis,principal,factor", [
+    [[1, 0, 0], PrincipalAxis.X, 1],
+    [[0, 1, 0], PrincipalAxis.Y, 1],
+    [[0, 0, 1], PrincipalAxis.Z, 1],
+    [[-1, 0, 0], PrincipalAxis.X, -1],
+    [[0, -1, 0], PrincipalAxis.Y, -1],
+    [[0, 0, -1], PrincipalAxis.Z, -1],
+    [[-1.5, 1e-9, 0], PrincipalAxis.X, -1.5],
+    [[1e-9, -np.pi, 1e-9], PrincipalAxis.Y, -np.pi],
+    [[0, 0, 3.14], PrincipalAxis.Z, 3.14],
+])
+def test_get_principal_3d_affirmative(axis, principal, factor):
+    chk = PrincipalAxis.get_prop(axis)
+    assert chk
+    p, f = chk.result
+    assert p == principal
+    assert np.isclose(f, factor)
+
+
+@pytest.mark.parametrize("axis,principal,factor", [
+    [[0, 0], PrincipalAxis.Z, 1],
+    [[np.pi, 0], PrincipalAxis.Z, -1],
+    [[0, 2 * np.pi], PrincipalAxis.Z, 1],
+    [[0, -2 * np.pi], PrincipalAxis.Z, 1],
+    [[np.pi / 2, 0], PrincipalAxis.X, 1],
+    [[-np.pi / 2, 0], PrincipalAxis.X, -1],
+    [[-np.pi / 2, np.pi / 2], PrincipalAxis.Y, -1],
+])
+def test_get_principal_2d_affirmative(axis, principal, factor):
+    chk = PrincipalAxis.get_prop(axis)
+    assert chk
+    p, f = chk.result
+    assert p == principal
+    assert np.isclose(f, factor)
+
+
+@pytest.mark.parametrize("axis", [
+    [-1, -1, 0],
+    [0, -1, 1],
+    [1, 1, -1],
+    [-1.5, 1e-5, 0],
+    [1e-5, 1e-5, 1e-9],
+    [1, 0],
+    [.5 * np.pi, 1e-3],
+    [1e-3, .2 * np.pi],
+    [-1e-5, -1],
+    [-np.pi / 3, 0],
+    [-np.pi / 3, np.pi / 4],
+])
+def test_get_principal_none_result(axis):
+    chk = PrincipalAxis.get_prop(axis)
+    assert not chk

@@ -1,11 +1,11 @@
 from enum import Enum, IntFlag, IntEnum
-from typing import Optional, Union
+from typing import Optional, Union, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import expm
 
-from quompiler.utils.mfun import allprop
+from quompiler.utils.mfun import allprop, ConditionalResult
 
 _univgate_mat_mapping = dict([
     ('I', np.eye(2)),
@@ -170,3 +170,50 @@ class SU2NetType(Enum):
     AutoNN = 2
     BallTreeNN = 3
     KDTreeNN = 4
+
+
+class PrincipalAxis(Enum):
+    X = (1, 0, 0)
+    Y = (0, 1, 0)
+    Z = (0, 0, 1)
+
+    def __repr__(self):
+        return self.name.lower()
+
+    @staticmethod
+    def get(axis: Union[NDArray, Sequence]) -> Optional['PrincipalAxis']:
+        axis = np.array(axis)
+        length, = axis.shape
+        assert length == 2 or length == 3
+
+        if length == 3:
+            for k in PrincipalAxis:
+                if np.allclose(axis, np.array(k.value)):
+                    return k
+            return None
+
+        vec = np.sin(axis[0]) * np.cos(axis[1]), np.sin(axis[0]) * np.sin(axis[1]), np.cos(axis[0])
+        return PrincipalAxis.get(vec)
+
+    @staticmethod
+    def get_prop(axis: Union[NDArray, Sequence]) -> ConditionalResult:
+        """
+        Check if `axis` represents one of the principal axes: 'x', 'y', 'z'.
+        If so, return a tuple of the principal axis and a float factor to denote if its parallel (positive number) or antiparallel (negative number).
+        :param axis: given in 3D/2D vector, corresponding to Euclidean vector or spherical vector.
+        :return: ConditionalResult representing the check.
+        """
+        axis = np.array(axis)
+        length, = axis.shape
+        assert length == 2 or length == 3
+
+        if length == 3:
+            for k in PrincipalAxis:
+                pchk = allprop(axis, np.array(k.value))
+                if pchk:
+                    result = k, pchk.result
+                    return ConditionalResult(True, result)
+            return ConditionalResult()
+
+        vec = np.sin(axis[0]) * np.cos(axis[1]), np.sin(axis[0]) * np.sin(axis[1]), np.cos(axis[0])
+        return PrincipalAxis.get_prop(vec)
