@@ -3,7 +3,7 @@ import random
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.su2gate import RGate
-from quompiler.construct.types import EmitType, UnivGate
+from quompiler.construct.types import EmitType, UnivGate, PrincipalAxis
 from quompiler.utils.granularity import granularity
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM, random_indexes, random_CtrlGate, random_control, random_unitary
@@ -76,7 +76,7 @@ def test_granularity_rgate():
     n = 1
     ctrl = random_control(n, 1)
     angle = random.uniform(0, 2 * math.pi)
-    gate = RGate(angle, 'z')
+    gate = RGate(angle, PrincipalAxis.Z)
     u = CtrlGate(gate, ctrl)
     grain = granularity(u)
     assert grain == EmitType.PRINCIPAL
