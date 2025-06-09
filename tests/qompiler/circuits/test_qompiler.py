@@ -2,6 +2,7 @@ import os
 import random
 import tempfile
 from functools import reduce
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -10,9 +11,12 @@ from quompiler.circuits.qfactory import QFactory
 from quompiler.config.config_manager import ConfigManager, create_config
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import EmitType
+from quompiler.construct.solovay import SKDecomposer
+from quompiler.construct.types import EmitType, UnivGate
+from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
 
 formatter = MatrixFormatter(precision=2)
@@ -117,17 +121,45 @@ def test_compile_cyclic_4():
 
 
 @pytest.mark.parametrize("emit_name,seed", zip([
-    # 'UNITARY',
-    # 'TWO_LEVEL',
-    # 'MULTI_TARGET',
-    # 'SINGLET',
-    # 'CTRL_PRUNED',
+    'UNITARY',
+    'TWO_LEVEL',
+    'MULTI_TARGET',
+    'SINGLET',
+    'CTRL_PRUNED',
     'PRINCIPAL',
+], random.sample(range(1 << 20), len(EmitType))))
+def test_compile_precise_decompose(emit_name, seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+
+    n = 4
+    dim = 1 << n
+    input_mat = random_unitary(dim)
+    config = ConfigManager().merge(dict(emit=emit_name, ancilla_offset=n)).create_config()
+    factory = QFactory(config)
+    compiler = factory.get_qompiler()
+
+    # execute
+    bc = compiler.decompose(input_mat)
+
+    # verify
+    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
+    reduced = reduce(lambda a, b: a @ b, leaves)
+    if isinstance(reduced, UnitaryM):
+        reduced = reduced.inflate()
+    elif isinstance(reduced, CtrlGate):
+        reduced = reduced.dela().inflate()
+    assert allprop(reduced, input_mat)
+    assert np.allclose(reduced, input_mat), f'\ncompiled=\n{formatter.tostr(reduced)},\ninput=\n{formatter.tostr(input_mat)}'
+
+
+@patch.object(SKDecomposer, 'approx', return_value=[UnivGate.X, UnivGate.H])
+@pytest.mark.parametrize("emit_name,seed", zip([
     'UNIV_GATE',
     'CLIFFORD_T',
 ], random.sample(range(1 << 20), len(EmitType))))
-def test_compile_random_unitary(emit_name, seed: int):
-    seed = 839239
+def test_compile_sk_approx(mock_approx, emit_name, seed: int):
+    # mocked_sk = mocker.patch('quompiler.construct.solovay.SKDecomposer')
     random.seed(seed)
     np.random.seed(seed)
 
@@ -139,12 +171,10 @@ def test_compile_random_unitary(emit_name, seed: int):
     compiler = factory.get_qompiler()
 
     # execute
-    bc = compiler.decompose(input_mat)
+    compiler.decompose(input_mat)
 
     # verify
-    leaves = [a.data.inflate() for a in BytecodeIter(bc) if a.is_leaf()]
-    recovered_compiled = reduce(lambda a, b: a @ b, leaves)
-    assert np.allclose(recovered_compiled, input_mat), f'\ncompiled=\n{formatter.tostr(recovered_compiled)},\ninput=\n{formatter.tostr(input_mat)}'
+    mock_approx.assert_called()
 
 
 def test_optimize_no_optimizer():
@@ -192,4 +222,4 @@ def test_output():
         compiler.output(bc)
         assert os.path.exists(tmp.name)
         actual_size = os.path.getsize(tmp.name)
-        assert actual_size == 782
+        assert actual_size == 876

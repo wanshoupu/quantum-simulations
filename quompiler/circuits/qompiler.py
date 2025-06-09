@@ -37,7 +37,7 @@ class Qompiler:
         code = self.optimize(code)
         self.output(code)
 
-    def optimize(self, code):
+    def optimize(self, code: Bytecode) -> Bytecode:
         for opt in self.optimizers:
             code = opt.optimize(code)
         return code
