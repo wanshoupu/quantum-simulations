@@ -9,6 +9,7 @@ from quompiler.construct.qspace import Qubit
 from quompiler.construct.types import QType
 from quompiler.utils.euler_decompose import euler_decompose
 from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import random_unitary, random_control
 
 formatter = MatrixFormatter(precision=2)
@@ -39,6 +40,7 @@ def test_uncontrolled_equality():
     # execute
     result = euler_decompose(cu)
     actual = reduce(lambda a, b: a @ b, result).inflate()
+    assert allprop(actual, expected)
     assert np.allclose(actual, expected)
 
 
