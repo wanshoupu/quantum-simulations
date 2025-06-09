@@ -73,7 +73,7 @@ class UnivGate(Enum):
         return self
 
     @staticmethod
-    def get_prop(m: NDArray) -> Optional[tuple['UnivGate', complex]]:
+    def get_prop(m: NDArray) -> Optional['UnivGate']:
         """
         Attempt to match a universal gate within certain tolerance other than a phase factor (of norm 1), e.g., m = λg with λ as a phase factor.
         :param m:
@@ -82,11 +82,8 @@ class UnivGate(Enum):
         if m.shape != (2, 2) or not np.allclose(m.conj() @ m.T, np.eye(2)):
             return None
         for g in UnivGate:
-            if np.allclose(m, np.array(g)):
-                return g, 1
-            prop = allprop(m, np.array(g))
-            if prop:
-                return g, prop.ratio
+            if np.allclose(m, np.array(g)) or allprop(m, np.array(g)):
+                return g
         return None
 
     def rotation(self, theta) -> NDArray:

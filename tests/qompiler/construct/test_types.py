@@ -99,9 +99,8 @@ def test_get_prop_phase_factor(gate):
     mat = np.array(gate) * phase
     pg = UnivGate.get_prop(mat)
     assert pg is not None
-    g, f = pg
-    assert g == gate
-    assert np.isclose(f, phase)
+    assert pg == gate
+    assert np.allclose(np.array(pg) * phase, mat)
 
 
 @pytest.mark.parametrize('name,expected', [
