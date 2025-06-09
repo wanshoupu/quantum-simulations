@@ -3,8 +3,7 @@ from typing import Union, Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from quompiler.construct.types import UnivGate
-from quompiler.utils.fun import rational, pi_repr
+from quompiler.utils.fun import pi_repr
 from quompiler.utils.su2fun import rot, vec
 
 _principal_axes = {"x": np.array([1, 0, 0]), "y": np.array([0, 1, 0]), "z": np.array([0, 0, 1]),
