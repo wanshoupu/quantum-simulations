@@ -368,21 +368,21 @@ def test_unitary_prop_eye():
     a = np.eye(5)
     p = unitary_prop(a)
     assert p
-    assert np.isclose(p.ratio, 1)
+    assert np.isclose(p.result, 1)
 
 
 def test_unitary_prop_1():
     a = random_unitary(5)
     p = unitary_prop(a)
     assert p
-    assert np.isclose(p.ratio, 1)
+    assert np.isclose(p.result, 1)
 
 
 def test_unitary_prop_pi():
     a = random_unitary(5) * np.pi
     p = unitary_prop(a)
     assert p
-    assert np.isclose(p.ratio, np.pi)
+    assert np.isclose(p.result, np.pi)
 
 
 def test_unitary_prop_rank_deficit():
@@ -407,7 +407,7 @@ def test_unitary_prop_close2zero(epsilon, expected):
     p = unitary_prop(a)
     assert bool(p) == expected
     if p:
-        assert np.isclose(p.ratio, epsilon), f'ratio = {p.ratio}'
+        assert np.isclose(p.result, epsilon), f'ratio = {p.result}'
 
 
 def test_normalize_all():

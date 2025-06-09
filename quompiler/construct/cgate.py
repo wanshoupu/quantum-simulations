@@ -35,7 +35,7 @@ class CtrlGate:
         mat = np.array(gate)
         self.gate = UnivGate.get_prop(mat)
         if self.gate is not None:
-            phase *= allprop(mat, np.array(self.gate)).ratio
+            phase *= allprop(mat, np.array(self.gate)).result
             mat = np.array(self.gate)
         elif isinstance(gate, RGate):
             self.gate = gate
