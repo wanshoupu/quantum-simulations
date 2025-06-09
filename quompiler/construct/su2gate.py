@@ -104,11 +104,8 @@ class RGate:
             raise ValueError('axis must be either an np.array or a str or RAxis')
         self.angle = angle
         self.matrix = rot(self.axis.nvec, self.angle)
-        self.gate = UnivGate.get(self.matrix)
 
     def __repr__(self):
-        if self.gate:
-            return repr(self.gate)
         return f"R{repr(self.axis)}({pi_repr(self.angle)})"
 
     def __matmul__(self, other: Union[NDArray, 'RGate']) -> Union[NDArray, 'RGate']:
