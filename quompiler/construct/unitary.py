@@ -63,6 +63,9 @@ class UnitaryM:
     def __repr__(self):
         return f'{{dimension={self.dimension}, core={self.core}, matrix={self.matrix}}}'
 
+    def __array__(self) -> NDArray:
+        return self.inflate()
+
     def inflate(self) -> NDArray:
         """
         Create a full-blown NDArray represented by UnitaryM. It is a readonly method.

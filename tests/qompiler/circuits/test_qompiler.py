@@ -14,7 +14,7 @@ from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.solovay import SKDecomposer
 from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
-from quompiler.utils.file_io import CODE_FILE_EXT
+from quompiler.utils.file_io import CODE_FILE_EXT, read_code
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mfun import allprop
 from quompiler.utils.mgen import cyclic_matrix, random_unitary
@@ -149,30 +149,31 @@ def test_compile_precise_decompose(emit_name, seed: int):
         reduced = reduced.inflate()
     elif isinstance(reduced, CtrlGate):
         reduced = reduced.dela().inflate()
-    assert allprop(reduced, input_mat)
     assert np.allclose(reduced, input_mat), f'\ncompiled=\n{formatter.tostr(reduced)},\ninput=\n{formatter.tostr(input_mat)}'
 
 
-def test_compile_optimization():
-    n = 4
-    dim = 1 << n
-    input_mat = cyclic_matrix(dim)
-    config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=n, optimization='O3')).create_config()
+def test_optimize():
+    codefile = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "for_optimize_test.qco"))
+    code = read_code(codefile)
+    nodes_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
+    assert len(nodes_before_opts) == 534
+
+    config = ConfigManager().merge(dict(optimization='O3')).create_config()
     factory = QFactory(config)
-    compiler = factory.get_qompiler()
+    opts = factory.get_optimizers()
 
     # execute
-    bc = compiler.compile(input_mat)
+    for opt in opts:
+        code = opt.optimize(code)
+    nodes_after_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
 
     # verify
-    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
-    reduced = reduce(lambda a, b: a @ b, leaves)
-    if isinstance(reduced, UnitaryM):
-        reduced = reduced.inflate()
-    elif isinstance(reduced, CtrlGate):
-        reduced = reduced.dela().inflate()
-    assert allprop(reduced, input_mat)
-    assert np.allclose(reduced, input_mat), f'\ncompiled=\n{formatter.tostr(reduced)},\ninput=\n{formatter.tostr(input_mat)}'
+    assert len(nodes_after_opts) == 534
+
+    before_opt = np.array(reduce(lambda a, b: a @ b, nodes_before_opts))
+    after_opt = np.array(reduce(lambda a, b: a @ b, nodes_after_opts))
+    assert before_opt.shape == after_opt.shape
+    assert np.allclose(after_opt, before_opt), f'\ncompiled=\n{formatter.tostr(after_opt)},\ninput=\n{formatter.tostr(before_opt)}'
 
 
 @patch.object(SKDecomposer, 'approx', return_value=[UnivGate.X, UnivGate.H])

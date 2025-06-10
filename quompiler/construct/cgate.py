@@ -62,6 +62,9 @@ class CtrlGate:
     def inflate(self) -> NDArray:
         return self._unitary.inflate()
 
+    def __array__(self) -> NDArray:
+        return self.inflate()
+
     def isid(self) -> bool:
         return self._unitary.isid()
 
