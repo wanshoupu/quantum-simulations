@@ -116,8 +116,8 @@ def euler_params(u: NDArray) -> tuple[complex, float, float, float]:
     plus = c2 if np.isclose(c2, 0) else np.angle(u[1, 1] / u[0, 0])
     minus = s2 if np.isclose(s2, 0) else np.angle(-u[1, 0] / u[0, 1])
 
-    b = (plus + minus) / 2  # angle pre-Y rotation
-    d = (plus - minus) / 2  # angle post-Y rotation
+    b = np.real(plus + minus) / 2  # angle pre-Y rotation
+    d = np.real(plus - minus) / 2  # angle post-Y rotation
 
     # Determine rotation angle around Y (theta)
     x = np.real_if_close(c2 - s2)

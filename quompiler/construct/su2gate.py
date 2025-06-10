@@ -104,7 +104,8 @@ class RGate:
                 self.axis = RAxis(axis)
         else:
             raise ValueError('axis must be either an np.array, sequence, or enum PrincipalAxis')
-        self.angle = angle
+        assert np.isclose(np.imag(angle), 0)
+        self.angle = np.real(angle)
         self.matrix = rot(self.axis.nvec, self.angle)
 
     def __repr__(self):

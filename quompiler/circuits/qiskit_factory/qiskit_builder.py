@@ -48,7 +48,7 @@ class QiskitBuilder(CircuitBuilder):
                 physgate = self.map_gate(m.gate)
             elif m.is_principal():
                 principal = m.gate.axis.principal
-                angle = np.real(m.gate.angle)
+                angle = m.gate.angle
                 physgate = lambda: self._PRINCIPAL_GATES[principal](angle)
             else:
                 physgate = lambda: UnitaryGate(m.matrix())
