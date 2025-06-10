@@ -33,7 +33,7 @@ def ctrl_len(node: Bytecode) -> int:
     data = node.data
     if not isinstance(data, CtrlGate):
         return -1
-    return len(data.controls)
+    return len(data.controls())
 
 
 def collect_qspace(stats: CodeMetadata) -> Sequence[Qubit]:

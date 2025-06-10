@@ -33,7 +33,7 @@ class Bytecode:
         elif isinstance(self.data, UnitaryM):
             data = UnitaryM(self.data.dimension, herm(self.data.matrix), self.data.core, np.conj(self.data.phase))
         elif isinstance(self.data, CtrlGate):
-            data = CtrlGate(herm(self.data.matrix()), self.data.controls, self.data.qspace, np.conj(self.data.phase()))
+            data = CtrlGate(herm(self.data.matrix()), self.data.controls(), self.data.qspace, np.conj(self.data.phase()))
         elif isinstance(self.data, UnivGate):
             data = self.data.herm()
         else:

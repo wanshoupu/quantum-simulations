@@ -57,7 +57,7 @@ class Qompiler:
             if isinstance(data, UnitaryM):
                 root.metadata['data'] = f'UnitaryM(core={data.core})'
             elif isinstance(data, CtrlGate):
-                root.metadata['data'] = f'CtrlGate(ctrl={data.controls},qspace={data.qspace})'
+                root.metadata['data'] = f'CtrlGate(ctrl={data.controls()},qspace={data.qspace})'
 
         grain = granularity(data)
         if self.emit <= grain:  # noop
@@ -88,7 +88,7 @@ class Qompiler:
             meta = {'method': 'cliffordt_decompose'} if self.debug else {}
             return cliffordt_decompose(gate), meta
         sk_coms = self.sk.approx(gate.matrix())
-        constituents = [CtrlGate(g, gate.controls, gate.qspace) for g in sk_coms]
+        constituents = [CtrlGate(g, gate.controls(), gate.qspace) for g in sk_coms]
         meta = {'method': 'sk_approx'} if self.debug else {}
         return constituents, meta
 

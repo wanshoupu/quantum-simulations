@@ -14,7 +14,7 @@ def ctrl_decompose(gate: CtrlGate, device: QDevice, clength=1) -> list[CtrlGate]
     """
     assert 1 <= clength <= 2
 
-    ctrl_seq = list(gate.controls)
+    ctrl_seq = list(gate.controls())
     qspace = gate.qspace
     # ctrl indexes
     cindexes = [i for i, c in enumerate(ctrl_seq) if c in QType.CONTROL0 | QType.CONTROL1]

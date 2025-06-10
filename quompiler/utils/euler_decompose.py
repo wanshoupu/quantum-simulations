@@ -21,17 +21,17 @@ def euler_decompose(gate: CtrlGate) -> list[CtrlGate]:
     target = gate.target_qids()
 
     if len(gate.control_qids()) == 1:
-        _, ctrl = sorted(gate.controls)
+        _, ctrl = sorted(gate.controls())
         p1, p2 = (1, a) if ctrl.base[0] == 1 else (a, 1)
         phase_gate = CtrlGate(np.array([[p1, 0], [0, p2]]), [QType.TARGET], gate.control_qids())
     else:
-        phase_gate = CtrlGate(a * np.eye(2), gate.controls, gate.qspace)
+        phase_gate = CtrlGate(a * np.eye(2), gate.controls(), gate.qspace)
     result = [phase_gate,
               CtrlGate(RGate(b, PrincipalAxis.Z), [QType.TARGET], target),
               CtrlGate(RGate(c / 2, PrincipalAxis.Y), [QType.TARGET], target),
-              CtrlGate(UnivGate.X, gate.controls, gate.qspace),
+              CtrlGate(UnivGate.X, gate.controls(), gate.qspace),
               CtrlGate(RGate(-c / 2, PrincipalAxis.Y), [QType.TARGET], target),
               CtrlGate(RGate(-(d + b) / 2, PrincipalAxis.Z), [QType.TARGET], target),
-              CtrlGate(UnivGate.X, gate.controls, gate.qspace),
+              CtrlGate(UnivGate.X, gate.controls(), gate.qspace),
               CtrlGate(RGate((d - b) / 2, PrincipalAxis.Z), [QType.TARGET], target)]
     return result

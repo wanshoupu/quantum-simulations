@@ -253,10 +253,10 @@ def test_sorted_by_ctrl():
     cu = CtrlGate(m, controls, qids)
 
     # execute
-    sorting = np.argsort(cu.controls)
+    sorting = np.argsort(cu.controls())
     sorted_cu = cu.sorted(sorting=sorting)
-    assert sorted_cu.controls[:t] == [QType.TARGET] * t
-    ctrls = sorted_cu.controls[t:]
+    assert sorted_cu.controls()[:t] == [QType.TARGET] * t
+    ctrls = sorted_cu.controls()[t:]
     assert all(c in QType(0x110) for c in ctrls)
 
 
@@ -341,7 +341,7 @@ def test_expand_default_ctrls():
     # print('actual\n')
     # print(formatter.tostr(actual.inflate()))
 
-    ctrls = actual.controls[len(cu.controls):]
+    ctrls = actual.controls()[len(cu.controls()):]
     assert ctrls == [QType.TARGET] * len(ctrls)
 
 
@@ -862,7 +862,7 @@ def test_verify_phase_sorted():
     qids = [Qubit(i) for i in np.random.choice(100, size=n, replace=False)]
     cg_phase = CtrlGate(m, controls, qids, phase=phase)
     cg_no_phase = CtrlGate(m, controls, qids)
-    sorting = np.argsort(cg_phase.controls)
+    sorting = np.argsort(cg_phase.controls())
 
     # execute
     actual = cg_phase.sorted(sorting=sorting)

@@ -22,7 +22,7 @@ def test_cliffordt_decompose_invariance(univgate):
 
     # verify
     assert all(g.qspace == cg.qspace for g in gates)
-    assert all(g.controls == cg.controls for g in gates)
+    assert all(g.controls() == cg.controls() for g in gates)
 
     actual = reduce(lambda x, y: x @ y, gates)
     # print(f'actual:\n{formatter.tostr(actual.inflate())}')

@@ -43,7 +43,7 @@ class QiskitBuilder(CircuitBuilder):
     @override
     def build_gate(self, m: Union[UnitaryM, CtrlGate]):
         if isinstance(m, CtrlGate):
-            m.sorted(np.argsort(m.controls))
+            m.sorted(np.argsort(m.controls()))
             if m.is_std():
                 physgate = self.map_gate(m.gate)
             elif m.is_principal():
@@ -52,7 +52,7 @@ class QiskitBuilder(CircuitBuilder):
                 physgate = lambda: self._PRINCIPAL_GATES[principal](angle)
             else:
                 physgate = lambda: UnitaryGate(m.matrix())
-            self._append_gate(physgate, m.qids(), m.controls)
+            self._append_gate(physgate, m.qids(), m.controls())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
     def _append_gate(self, gate, qids, controller):

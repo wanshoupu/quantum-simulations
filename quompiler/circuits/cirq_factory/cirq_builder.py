@@ -46,7 +46,7 @@ class CirqBuilder(CircuitBuilder):
                 gate = op(rads=angle)
             else:
                 gate = cirq.MatrixGate(m.matrix())
-            self._append_gate(m.controls, gate, m.qids())
+            self._append_gate(m.controls(), gate, m.qids())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 
     def _append_gate(self, controller, gate, qids):
