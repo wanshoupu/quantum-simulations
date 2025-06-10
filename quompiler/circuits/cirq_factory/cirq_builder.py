@@ -8,7 +8,7 @@ from typing_extensions import override
 from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
-from quompiler.construct.types import UnivGate, QType
+from quompiler.construct.types import UnivGate, QType, PrincipalAxis
 from quompiler.construct.unitary import UnitaryM
 
 
@@ -27,6 +27,7 @@ class CirqBuilder(CircuitBuilder):
         UnivGate.Y: cirq.Y,
         UnivGate.Z: cirq.Z,
     }
+    _PRINCIPAL_GATES = {PrincipalAxis.X: cirq.Rx, PrincipalAxis.Y: cirq.Ry, PrincipalAxis.Z: cirq.Rz}
 
     def __init__(self):
         self.circuit = cirq.Circuit()
@@ -37,7 +38,14 @@ class CirqBuilder(CircuitBuilder):
 
     def build_gate(self, m: Union[UnitaryM, CtrlGate]):
         if isinstance(m, CtrlGate):
-            gate = self.get_univ_gate(m.gate) if m.is_std() else cirq.MatrixGate(m.matrix())
+            if m.is_std():
+                gate = self.get_univ_gate(m.gate)
+            elif m.is_principal():
+                angle = m.gate.angle
+                op = self._PRINCIPAL_GATES[m.gate.axis.principal]
+                gate = op(rads=angle)
+            else:
+                gate = cirq.MatrixGate(m.matrix())
             self._append_gate(m.controls, gate, m.qids())
         warnings.warn(f"Warning: gate of type {type(m)} is ignored.")
 

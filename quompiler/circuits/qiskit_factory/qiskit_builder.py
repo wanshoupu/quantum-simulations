@@ -3,7 +3,7 @@ from typing import Union, Sequence, Dict
 
 import numpy as np
 from qiskit import QuantumCircuit, AncillaRegister, QuantumRegister
-from qiskit.circuit.library import IGate, XGate, HGate, YGate, ZGate, SGate, TGate, SdgGate, TdgGate
+from qiskit.circuit.library import IGate, XGate, HGate, YGate, ZGate, SGate, TGate, SdgGate, TdgGate, RXGate, RYGate, RZGate
 from qiskit.circuit.library import UnitaryGate
 from qiskit.circuit.quantumregister import Qubit as PhysQubit
 from typing_extensions import override
@@ -11,11 +11,12 @@ from typing_extensions import override
 from quompiler.circuits.qbuilder import CircuitBuilder
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
-from quompiler.construct.types import UnivGate, QType
+from quompiler.construct.types import UnivGate, QType, PrincipalAxis
 from quompiler.construct.unitary import UnitaryM
 
 
 class QiskitBuilder(CircuitBuilder):
+    _PRINCIPAL_GATES = {PrincipalAxis.X: RXGate, PrincipalAxis.Y: RYGate, PrincipalAxis.Z: RZGate}
 
     def __init__(self):
         self.qreg = None
@@ -45,6 +46,10 @@ class QiskitBuilder(CircuitBuilder):
             m.sorted(np.argsort(m.controls))
             if m.is_std():
                 physgate = self.map_gate(m.gate)
+            elif m.is_principal():
+                principal = m.gate.axis.principal
+                angle = m.gate.angle
+                physgate = lambda: self._PRINCIPAL_GATES[principal](angle)
             else:
                 physgate = lambda: UnitaryGate(m.matrix())
             self._append_gate(physgate, m.qids(), m.controls)

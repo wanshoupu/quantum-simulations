@@ -21,7 +21,7 @@ def compile_random_unitary(filename):
     dim = 1 << n
     u = random_unitary(dim)
     print(formatter.tostr(u))
-    config = create_config(emit="CTRL_PRUNED", ancilla_offset=100, output=filename)
+    config = create_config(emit="PRINCIPAL", ancilla_offset=100, output=filename)
     factory = QFactory(config)
     compiler = factory.get_qompiler()
     compiler.compile(u)
@@ -56,7 +56,6 @@ def render_qiskit(filename):
     print(f'Total {len(layers)} layers in the circuit.')
     circuit.draw('mpl')
     plt.savefig("qc_qiskit_sketch.pdf", bbox_inches='tight')
-    plt.show()
 
 
 if __name__ == '__main__':
@@ -65,4 +64,4 @@ if __name__ == '__main__':
     with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
         compile_random_unitary(tmp.name)
         render_cirq(tmp.name)
-        render_qiskit(tmp.name)
+        # render_qiskit(tmp.name)
