@@ -26,7 +26,9 @@ class QFactory:
         return [SlidingWindowOptimizer(2)]
 
     def get_qompiler(self) -> Qompiler:
-        return Qompiler(self._config, self.get_device())
+        result = Qompiler(self._config, self.get_device())
+        result.optimizers.extend(self.get_optimizers())
+        return result
 
     def get_render(self, target: QompilePlatform) -> QRenderer:
         return QRenderer(self.get_builder(target))

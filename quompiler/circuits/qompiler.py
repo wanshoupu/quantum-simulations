@@ -38,8 +38,10 @@ class Qompiler:
         self.output(code)
 
     def optimize(self, code: Bytecode) -> Bytecode:
+        opt_level = self.config.optimization
         for opt in self.optimizers:
-            code = opt.optimize(code)
+            if opt.level() < opt_level:
+                code = opt.optimize(code)
         return code
 
     def decompose(self, u: NDArray) -> Bytecode:

@@ -152,14 +152,14 @@ class QompilePlatform(Enum):
         return self.name
 
 
-class OptLevel(Enum):
+class OptLevel(IntEnum):
     """
     Optimization level for compiler.
     """
-    O0 = 'O0'  # basic optimization
-    O1 = 'O1'  # mild optimization
-    O2 = 'O2'  # advanced optimization
-    O3 = 'O3'  # bold optimization
+    O0 = 0  # basic optimization
+    O1 = 1  # mild optimization
+    O2 = 2  # advanced optimization
+    O3 = 3  # bold optimization
 
 
 class SU2NetType(Enum):

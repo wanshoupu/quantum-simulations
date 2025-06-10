@@ -22,7 +22,7 @@ def qompile_platform_decoder(dct: dict):
     if "target" in dct:
         dct["target"] = QompilePlatform[dct["target"]]
     if "optimization" in dct:
-        dct["optimization"] = OptLevel[dct["optimization"]]
+        dct["optimization"] = OptLevel(dct["optimization"])
     return dct
 
 

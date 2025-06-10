@@ -39,14 +39,14 @@ def test_to_json():
 
     # verify
     config_str = config.to_json()
-    expected = ('{"source": "source_file.txt", "output": "pyfile.py", "optimization": "O0", "debug": false, "warnings": '
+    expected = ('{"source": "source_file.txt", "output": "pyfile.py", "optimization": 0, "debug": false, "warnings": '
                 '{"all": true, "as_errors": false}, "target": "CIRQ", "device": {"ancilla_offset": 7}, "emit": 192, '
                 '"rtol": 1e-06, "atol": 1e-09, "lookup_tol": 1e-09}')
     assert config_str == expected
 
 
 def test_from_json():
-    json_str = ('{"source": "source_file.txt", "output": "pyfile.py", "optimization": "O0", "debug": false, "warnings": '
+    json_str = ('{"source": "source_file.txt", "output": "pyfile.py", "optimization": 0, "debug": false, "warnings": '
                 '{"all": true, "as_errors": false}, "target": "CIRQ", "device": {"ancilla_offset": 7}, "emit": 192, '
                 '"rtol": 1e-06, "atol": 1e-09, "lookup_tol": 1e-09}')
     actual = json.loads(json_str, object_hook=qompile_platform_decoder)

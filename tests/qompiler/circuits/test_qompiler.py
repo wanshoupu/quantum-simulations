@@ -135,12 +135,34 @@ def test_compile_precise_decompose(emit_name, seed: int):
     n = 4
     dim = 1 << n
     input_mat = random_unitary(dim)
-    config = ConfigManager().merge(dict(emit=emit_name, ancilla_offset=n)).create_config()
+    config = ConfigManager().merge(dict(emit=emit_name, ancilla_offset=n, optimization='O3')).create_config()
     factory = QFactory(config)
     compiler = factory.get_qompiler()
 
     # execute
     bc = compiler.decompose(input_mat)
+
+    # verify
+    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
+    reduced = reduce(lambda a, b: a @ b, leaves)
+    if isinstance(reduced, UnitaryM):
+        reduced = reduced.inflate()
+    elif isinstance(reduced, CtrlGate):
+        reduced = reduced.dela().inflate()
+    assert allprop(reduced, input_mat)
+    assert np.allclose(reduced, input_mat), f'\ncompiled=\n{formatter.tostr(reduced)},\ninput=\n{formatter.tostr(input_mat)}'
+
+
+def test_compile_optimization():
+    n = 4
+    dim = 1 << n
+    input_mat = cyclic_matrix(dim)
+    config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=n, optimization='O3')).create_config()
+    factory = QFactory(config)
+    compiler = factory.get_qompiler()
+
+    # execute
+    bc = compiler.compile(input_mat)
 
     # verify
     leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
