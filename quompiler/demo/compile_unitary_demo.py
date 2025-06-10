@@ -64,4 +64,4 @@ if __name__ == '__main__':
     with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
         compile_random_unitary(tmp.name)
         render_cirq(tmp.name)
-        # render_qiskit(tmp.name)
+        render_qiskit(tmp.name)
