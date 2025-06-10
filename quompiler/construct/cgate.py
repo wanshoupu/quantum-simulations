@@ -1,5 +1,4 @@
 import copy
-from itertools import chain
 from typing import Union, Sequence
 
 import numpy as np
@@ -30,7 +29,6 @@ class CtrlGate:
         :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
         """
         assert all(isinstance(c, QType) for c in control), f'control contains non-QType items'
-        self._controls = list(control)
         core = ctrl2core(control)
         mat = np.array(gate)
         self.gate = UnivGate.get_prop(mat)
@@ -40,21 +38,21 @@ class CtrlGate:
         elif isinstance(gate, RGate):
             self.gate = gate
         assert mat.shape[0] == len(core), f'matrix shape does not match the control sequence'
-        dim = 1 << len(self._controls)
+        dim = 1 << len(control)
         self._unitary = UnitaryM(dim, core, mat, phase=phase)
 
         if qspace is None:
-            qspace = [Qubit(i) for i in range(len(self._controls))]
+            qspace = [Qubit(i) for i in range(len(control))]
         else:
             # qspace is a sequence
             assert all(isinstance(q, Qubit) for q in qspace), f'qspace contains non-Qubit items'
             assert len(qspace) == len(set(qspace))  # uniqueness
             assert len(qspace) == len(control)  # consistency
         self.qspace = list(qspace)
-        self._qlookup = {q: c for q, c in zip(qspace, control)}
+        self._qontrol = {q: c for q, c in zip(qspace, control)}
 
     def __repr__(self):
-        return f'{repr(self._unitary)},controls={repr(self._controls)},qspace={self.qspace}'
+        return f'{repr(self._unitary)},controls={repr(self.controls())},qspace={self.qspace}'
 
     def order(self) -> int:
         return self._unitary.order()
@@ -93,35 +91,35 @@ class CtrlGate:
     def phase(self):
         return self._unitary.phase
 
-    def controls(self) -> Sequence[QType]:
-        return self._controls
+    def controls(self) -> list[QType]:
+        return [self._qontrol[q] for q in self.qspace]
 
     def __matmul__(self, other: 'CtrlGate') -> 'CtrlGate':
         if not isinstance(other, CtrlGate):
             return NotImplemented(f'cannot matmul with {type(other)}')
         # direct product
-        if self.qspace == other.qspace and self._controls == other._controls:
-            return CtrlGate(self.matrix() @ other.matrix(), self._controls, self.qspace, self.phase() * other.phase())
+        if self.qspace == other.qspace and self.controls() == other.controls():
+            return CtrlGate(self.matrix() @ other.matrix(), self.controls(), self.qspace, self.phase() * other.phase())
         # sort qspace
-        if self._qlookup == other._qlookup:
+        if self._qontrol == other._qontrol:
             return self.sorted() @ other.sorted()
         # resolve ctrl conflict
-        conflicts = {q for q in self._qlookup.keys() & other._qlookup.keys() if self._qlookup[q] != other._qlookup[q]}
+        conflicts = {q for q in self._qontrol.keys() & other._qontrol.keys() if self._qontrol[q] != other._qontrol[q]}
         if conflicts:
             return self.promote(list(conflicts)) @ other.promote(list(conflicts))
         # expand to same qspace
-        univ = self._qlookup.keys() | other._qlookup.keys()
+        univ = self._qontrol.keys() | other._qontrol.keys()
         qspace1 = list(univ - set(self.qspace))
         qspace2 = list(univ - set(other.qspace))
         return self.expand(qspace1) @ other.expand(qspace2)
 
     def __copy__(self):
-        return CtrlGate(self.matrix(), self._controls, self.qspace, self.phase())
+        return CtrlGate(self.matrix(), self.controls(), self.qspace, self.phase())
 
     def __deepcopy__(self, memodict={}):
         if self in memodict:
             return memodict[self]
-        new = CtrlGate(copy.deepcopy(self.matrix(), memodict), copy.deepcopy(self._controls, memodict), copy.deepcopy(self.qspace, memodict), copy.deepcopy(self.phase()))
+        new = CtrlGate(copy.deepcopy(self.matrix(), memodict), copy.deepcopy(self.controls(), memodict), copy.deepcopy(self.qspace, memodict), copy.deepcopy(self.phase()))
         memodict[self] = new
         return new
 
@@ -163,12 +161,13 @@ class CtrlGate:
         if sorting is None:
             sorting = np.argsort(self.qspace)
         else:
-            assert list(range(len(self._controls))) == sorted(sorting)
+            # assert sorting is valid over qspace
+            assert list(range(len(self.qspace))) == sorted(sorting)
 
-        # create the sorted controls
-        controls = [self._controls[i] for i in sorting]
         # create the sorted qspace
         qspace = [self.qspace[i] for i in sorting]
+        # create the sorted controls
+        controls = [self._qontrol[q] for q in qspace]
 
         # create the sorted core matrix
         new_targets = [qid for i, qid in enumerate(qspace) if controls[i] == QType.TARGET]
@@ -181,11 +180,10 @@ class CtrlGate:
         return self.qspace
 
     def control_qids(self) -> list[Qubit]:
-        target = self.target_qids()
-        return [qid for qid in self.qspace if qid not in target]
+        return [qid for qid in self.qspace if self._qontrol[qid] in QType.CONTROL1 | QType.CONTROL0]
 
     def target_qids(self) -> list[Qubit]:
-        return [qid for i, qid in enumerate(self.qspace) if self._controls[i] == QType.TARGET]
+        return [qid for qid in self.qspace if self._qontrol[qid] == QType.TARGET]
 
     def expand(self, qspace: Sequence[Qubit], ctrls: Sequence[QType] = None) -> 'CtrlGate':
         """
@@ -208,14 +206,14 @@ class CtrlGate:
         for i, qid in enumerate(qspace):
             if ctrls[i] == QType.TARGET:
                 mat = kron(mat, np.eye(2))
-        extended_ctrl = list(chain(self._controls, ctrls))
-        extended_qspace = list(chain(self.qspace, qspace))
+        extended_ctrl = self.controls() + list(ctrls)
+        extended_qspace = self.qspace + list(qspace)
         return CtrlGate(mat, extended_ctrl, extended_qspace, self.phase())
 
     def is_idler(self, qubit) -> bool:
-        if qubit not in self._qlookup:
+        if qubit not in self._qontrol:
             return True
-        if self._qlookup[qubit] == QType.CONTROL1:
+        if self._qontrol[qubit] == QType.CONTROL1:
             return False
         idx = self.target_qids().index(qubit)
         return is_idler(self.matrix(), idx)
@@ -252,19 +250,19 @@ class CtrlGate:
          U = CtrlGate(...)  # |01>
          U_eff = U.project(ψ, qubit)
         """
-        assert qubit in self._qlookup, f'Qubit {qubit} not in qspace.'
+        assert qubit in self._qontrol, f'Qubit {qubit} not in qspace.'
         assert state.shape == (2,), f'state vector must be a 1D array of length 2, but got {state.shape}.'
         assert np.isclose(np.linalg.norm(state), 1), f'state vector must normalized but got {state}.'
 
-        ctrl = self._qlookup[qubit]
+        ctrl = self._qontrol[qubit]
         if ctrl == QType.IDLER:
             # nothing need to be changed but to eliminate the qubit
             raise NotImplementedError(f"CtrlGate {ctrl} not implemented.")
             # return CtrlGate(self.matrix(), new_ctrls, new_qspace)
 
         idx = self.qspace.index(qubit)
-        new_ctrls = self._controls[:idx] + self._controls[idx + 1:]
         new_qspace = self.qspace[:idx] + self.qspace[idx + 1:]
+        new_ctrls = [self._qontrol[q] for q in new_qspace]
         if ctrl in QType.CONTROL1 | QType.CONTROL0:
             a, b = state
             u = self.matrix()
@@ -305,16 +303,16 @@ class CtrlGate:
         :param qubits: subset of the qspace to promote.
         :return: a CtrlGate with promoted control sequence.
         """
-        if not qubits or all(self._qlookup[q] == QType.TARGET for q in qubits):
+        if not qubits or all(self._qontrol[q] == QType.TARGET for q in qubits):
             return self
         qubits = set(qubits)
         assert qubits <= set(self.qspace), f'Promoting qubits must be a subset of existing qspace.'
         mat = self.matrix() * self.phase()
         target_count = 0
         new_ctrls = []
-        for i in range(len(self.qspace) - 1, -1, -1):
-            ctrl = self._controls[i]
-            if self.qspace[i] in qubits and ctrl in QType.CONTROL0 | QType.CONTROL1:
+        for q in reversed(self.qspace):
+            ctrl = self._qontrol[q]
+            if q in qubits and ctrl in QType.CONTROL0 | QType.CONTROL1:
                 mat = ctrl_expand(mat, 1 << target_count, ctrl.base[0])
                 target_count += 1
                 new_ctrls.append(QType.TARGET)
