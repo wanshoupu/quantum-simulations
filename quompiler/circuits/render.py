@@ -23,9 +23,10 @@ class QRenderer:
         qspace = collect_qspace(stats)
         self.builder.register(qspace)
         for c in BytecodeRevIter(code):
-            m = c.data
-            if not c.is_leaf():
-                self.builder.build_group(m)
+            if c.skip:
+                continue
+            if c.is_leaf():
+                self.builder.build_gate(c.data)
             else:
-                self.builder.build_gate(m)
+                self.builder.build_group(c.data)
         return self.builder.finish()
