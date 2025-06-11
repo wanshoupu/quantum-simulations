@@ -11,11 +11,15 @@ from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.mfun import herm
 
 
-@dataclass
 class Bytecode:
-    data: Union[NDArray, FactoredM, UnitaryM, CtrlGate, UnivGate]
-    children: List['Bytecode'] = field(default_factory=list)
-    metadata: dict = field(default_factory=dict)
+    def __init__(self, data: Union[NDArray, FactoredM, UnitaryM, CtrlGate, UnivGate], children: List['Bytecode'] = None, metadata: dict = None, skip=False):
+        self.data = data
+        self.children = children or []
+        self.metadata = metadata or dict()
+        self.skip = skip
+
+    def __repr__(self):
+        return f'Bytecode{{{self.skip},{repr(self.data)}}}'
 
     def add_child(self, child: 'Bytecode'):
         self.children.append(child)
@@ -31,9 +35,9 @@ class Bytecode:
         if isinstance(self.data, np.ndarray):
             data = herm(self.data)
         elif isinstance(self.data, UnitaryM):
-            data = UnitaryM(self.data.dimension, herm(self.data.matrix), self.data.core, np.conj(self.data.phase))
+            data = self.data.herm()
         elif isinstance(self.data, CtrlGate):
-            data = CtrlGate(herm(self.data.matrix()), self.data.controls(), self.data.qspace, np.conj(self.data.phase()))
+            data = self.data.herm()
         elif isinstance(self.data, UnivGate):
             data = self.data.herm()
         else:
