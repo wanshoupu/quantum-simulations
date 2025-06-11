@@ -52,7 +52,8 @@ class CtrlGate:
         self._qontrol = {q: c for q, c in zip(qspace, control)}
 
     def __repr__(self):
-        return f'{repr(self._unitary)},controls={repr(self.controls())},qspace={self.qspace}'
+        gate = self.gate if self.gate else self._unitary.matrix
+        return f'CtrlGate{{{repr(gate)},controls={repr(self.controls())},qspace={repr(self.qspace)}}}'
 
     def order(self) -> int:
         return self._unitary.order()

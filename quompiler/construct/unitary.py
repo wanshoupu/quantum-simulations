@@ -62,7 +62,7 @@ class UnitaryM:
         return UnitaryM.deflate(self.inflate() @ other.inflate())
 
     def __repr__(self):
-        return f'{{dimension={self.dimension}, core={self.core}, matrix={self.matrix}}}'
+        return f'UnitaryU{{dimension={self.dimension}, core={self.core}, matrix={self.matrix}}}'
 
     def __array__(self) -> NDArray:
         return self.inflate()
