@@ -11,7 +11,7 @@ from quompiler.construct.su2gate import RGate
 from quompiler.construct.types import QType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.inter_product import ctrl_expand, qproject, is_idler
-from quompiler.utils.mfun import allprop
+from quompiler.utils.mfun import allprop, herm
 from quompiler.utils.permute import Permuter
 
 
@@ -93,6 +93,12 @@ class CtrlGate:
 
     def controls(self) -> list[QType]:
         return [self._qontrol[q] for q in self.qspace]
+
+    def qontrol(self) -> dict[Qubit, QType]:
+        return self._qontrol
+
+    def herm(self) -> 'CtrlGate':
+        return CtrlGate(herm(self.matrix()), self.controls(), self.qspace, self.phase())
 
     def __matmul__(self, other: 'CtrlGate') -> 'CtrlGate':
         if not isinstance(other, CtrlGate):

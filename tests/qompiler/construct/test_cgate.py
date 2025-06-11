@@ -931,3 +931,17 @@ def test_verify_phase_dela():
     assert actual.qspace == expected.qspace
     cmp_indexes = np.ix_(actual.core(), actual.core())
     assert np.allclose(actual.inflate()[cmp_indexes], expected.inflate()[cmp_indexes] * phase)
+
+
+@pytest.mark.parametrize("gate", [
+    CtrlGate(UnivGate.T, [QType.TARGET]),
+    CtrlGate(UnivGate.S, [QType.TARGET, QType.CONTROL0]),
+    CtrlGate(UnivGate.X, [QType.TARGET, QType.CONTROL0, QType.CONTROL1]),
+    CtrlGate(random_unitary(2), [QType.TARGET, QType.CONTROL0, QType.CONTROL1]),
+    CtrlGate(random_unitary(4), [QType.TARGET, QType.CONTROL0, QType.TARGET]),
+])
+def test_herm(gate):
+    h = gate.herm()
+    assert h.qspace == gate.qspace
+    assert np.isclose(h.phase() * gate.phase(), 1)
+    assert np.allclose(np.array(h) @ np.array(gate), np.eye(h.order()))

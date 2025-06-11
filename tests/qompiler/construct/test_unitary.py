@@ -5,7 +5,7 @@ from quompiler.construct.types import UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mat_utils import coreindexes
-from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_phase
+from quompiler.utils.mgen import random_unitary, cyclic_matrix, random_phase, random_UnitaryM
 
 formatter = MatrixFormatter(precision=2)
 
@@ -193,3 +193,14 @@ def test_matmul_with_phase_verify_identity_rows_cols():
 def test_is_singlet(dim, core, size, expected):
     u = UnitaryM(dim, core, random_unitary(size), 1.0)
     assert u.issinglet() == expected, f'Unexpected {u}'
+
+
+@pytest.mark.parametrize("gate", [
+    random_UnitaryM(2, [0, 1], random_phase()),
+    random_UnitaryM(3, [0, 2], random_phase()),
+    random_UnitaryM(8, [0, 3], random_phase()),
+])
+def test_herm(gate):
+    h = gate.herm()
+    assert np.isclose(h.phase * gate.phase, 1)
+    assert np.allclose(np.array(h) @ np.array(gate), np.eye(h.order()))

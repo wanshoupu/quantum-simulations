@@ -9,6 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from quompiler.utils.mat_utils import coreindexes, validm, idindexes
+from quompiler.utils.mfun import herm
 
 
 def ispow2(n):
@@ -104,3 +105,6 @@ class UnitaryM:
         i, j = self.core
         n = i ^ j
         return n & (n - 1) == 0
+
+    def herm(self) -> 'UnitaryM':
+        return UnitaryM(self.dimension, self.core, herm(self.matrix), np.conj(self.phase))
