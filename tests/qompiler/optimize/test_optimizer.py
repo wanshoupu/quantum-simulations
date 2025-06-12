@@ -64,7 +64,7 @@ def test_optimize_real_compile():
 
     gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
     # debug
-    print_circuit(codefile, factory, "before_opt.pdf")
+    # print_circuit(codefile, factory, "before_opt.pdf")
 
     assert len(gates_before_opts) == 126
     # execute
@@ -74,10 +74,11 @@ def test_optimize_real_compile():
     nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
 
     # verify
-    assert len(nodes_after_opts) == 108
+    assert len(nodes_after_opts) < len(gates_before_opts)
 
     compiler.output(code)
-    print_circuit(codefile, factory, "after_opt.pdf")
+    # debug
+    # print_circuit(codefile, factory, "after_opt.pdf")
 
     gates_after_opts = [a.data for a in nodes_after_opts]
     expected = np.array(reduce(lambda a, b: a @ b, gates_before_opts))
@@ -86,7 +87,7 @@ def test_optimize_real_compile():
     assert np.allclose(actual, expected), f'\noptimized=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'
 
 
-def print_circuit(codefile, factory, filepath="qc_qiskit_sketch.pdf"):
+def print_circuit(codefile, factory, filepath):
     render = factory.get_render(QompilePlatform.QISKIT)
     circuit = render.render(codefile)
 

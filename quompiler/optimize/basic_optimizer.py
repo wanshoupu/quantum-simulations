@@ -21,13 +21,18 @@ def cancel_append(prefix: dict[Qubit, list], node):
         return
 
     prior = next(iter(predecessors))
-    product = np.array(prior.data @ node.data)
-    if np.allclose(product, np.eye(product.shape[0])):
+    product = prior.data @ node.data
+    if np.allclose(np.array(product), np.eye(product.order())):
+        # cancel out
         node.skip = True
         prior.skip = True
         # pop prior
         for stack in stacks:
             stack.pop()
+    elif isinstance(product, CtrlGate) and (product.is_std() or product.is_principal()):
+        # combine
+        prior.data = product
+        node.skip = True
     else:
         append_node(node, prefix)
 
