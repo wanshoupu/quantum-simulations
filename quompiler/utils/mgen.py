@@ -168,6 +168,10 @@ def random_rgate():
 
 
 def create_bytecode(gate_seq: str, num_ctrl: int) -> Bytecode:
+    """
+    Create a bytecode from gate_seq and num_ctrl.
+    For example, create_bytecode("S,T,SD,TD", 1) will create a Bytecode tree with root and 4 children, each of control size 1.
+    """
     controls = random_control(num_ctrl, 1)
     children = [CtrlGate(UnivGate[gate.strip()], controls) for gate in gate_seq.split(',')]
     product = reduce(lambda x, y: x @ y, children)

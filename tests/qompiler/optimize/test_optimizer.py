@@ -15,47 +15,39 @@ from quompiler.utils.mgen import random_unitary, random_ctrlgate, create_bytecod
 from tests.qompiler.circuits.test_qompiler import formatter
 
 
-def create_palindromic_code():
+def create_palindromic_code(gates):
+    palindrome = gates + [g.herm() for g in gates[::-1]]
+    product = reduce(lambda x, y: x @ y, palindrome)
+    return Bytecode(product, [Bytecode(g) for g in palindrome])
+
+
+def test_identity_annihilation_multi_target():
     gates = [CtrlGate(UnivGate.X, [QType.TARGET, QType.CONTROL1]),
              random_ctrlgate(4, 2),
-             CtrlGate(UnivGate.X, [QType.TARGET, QType.CONTROL1, QType.CONTROL0]),
-             ]
-    gates = gates + [gates[-1], gates[-2].herm(), gates[-3]]
-    product = reduce(lambda x, y: x @ y, gates)
-    return Bytecode(product, [Bytecode(g) for g in gates])
-
-
-def test_optimize_palindrome():
-    code = create_palindromic_code()
+             CtrlGate(UnivGate.X, [QType.TARGET, QType.CONTROL1, QType.CONTROL0])]
+    code = create_palindromic_code(gates)
     assert np.allclose(np.array(code.data), np.eye(code.data.order()))
 
     gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
-    # debug
-    # print_circuit(codefile, factory)
 
-    assert len(gates_before_opts) == 6
-    config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=8, optimization='O3')).create_config()
-    factory = QFactory(config)
+    length_before_opts = len(gates_before_opts)
 
     # execute
-    for opt in factory.get_optimizers():
-        code = opt.optimize(code)
-
+    opt = SlidingWindowOptimizer(length_before_opts, emit=EmitType.CLIFFORD_T)
+    code = opt.optimize(code)
     nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
 
     # verify
     assert len(nodes_after_opts) == 0
 
 
-@pytest.mark.parametrize('seq, ctrl_num, emit, expected', [
-    ['T,SD,S,T', 2, EmitType.CLIFFORD_T, 1],
-    ['T,SD', 3, EmitType.SINGLET, 1],
-    ["S,T,TD,SD", 1, EmitType.CLIFFORD_T, 0],
-    # TODO Fix unit tests
-    # ["S,T,SD", 1, EmitType.CLIFFORD_T, 1],
-    # ["S,T,SD,TD", 1, EmitType.CLIFFORD_T, 0],
+@pytest.mark.parametrize('seq, ctrl_num, emit', [
+    ['X,X', 3, EmitType.SINGLET],
+    ['SD,S', 3, EmitType.SINGLET],
+    ['T,SD,S,TD', 2, EmitType.CLIFFORD_T],
+    ["S,T,TD,SD", 1, EmitType.CLIFFORD_T],
 ])
-def test_optimize_combine(seq, ctrl_num, emit, expected):
+def test_identity_annihilation_std(seq, ctrl_num, emit):
     code = create_bytecode(seq, ctrl_num)
     gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
     length_before_opts = len(gates_before_opts)
@@ -67,7 +59,56 @@ def test_optimize_combine(seq, ctrl_num, emit, expected):
     # verify
     nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
     # print(nodes_after_opts)
-    assert len(nodes_after_opts) == expected
+    assert len(nodes_after_opts) == 0
+
+
+@pytest.mark.parametrize('seq, ctrl_num, emit', [
+    ['T,SD,S', 3, EmitType.SINGLET],
+    ['SD,S,X', 2, EmitType.CLIFFORD_T],
+])
+def test_identity_reduce_std(seq, ctrl_num, emit):
+    code = create_bytecode(seq, ctrl_num)
+    gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
+    length_before_opts = len(gates_before_opts)
+
+    # execute
+    opt = SlidingWindowOptimizer(length_before_opts, emit=emit)
+    code = opt.optimize(code)
+
+    # verify
+    nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
+    # print(nodes_after_opts)
+    assert len(nodes_after_opts) == 1
+    expected = np.array(reduce(lambda a, b: a @ b, gates_before_opts))
+    actual = np.array(nodes_after_opts[0].data)
+    assert actual.shape == expected.shape
+    assert np.allclose(actual, expected), f'\noptimized=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'
+
+
+@pytest.mark.parametrize('seq, ctrl_num, emit, count', [
+    ['T,SD', 3, EmitType.SINGLET, 1],
+    ['T,SD,S,T', 2, EmitType.CLIFFORD_T, 1],
+    # TODO Fix unit tests
+    # ["S,T,SD", 1, EmitType.CLIFFORD_T, 1],
+    # ["S,T,SD,TD", 1, EmitType.CLIFFORD_T, 0],
+])
+def test_merge_std(seq, ctrl_num, emit, count):
+    code = create_bytecode(seq, ctrl_num)
+    gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
+    length_before_opts = len(gates_before_opts)
+
+    # execute
+    opt = SlidingWindowOptimizer(length_before_opts, emit=emit)
+    code = opt.optimize(code)
+
+    # verify
+    nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
+    # print(nodes_after_opts)
+    assert len(nodes_after_opts) == count
+    expected = np.array(reduce(lambda a, b: a @ b, gates_before_opts))
+    actual = np.array(nodes_after_opts[0].data)
+    assert actual.shape == expected.shape
+    assert np.allclose(actual, expected), f'\noptimized=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'
 
 
 def test_optimize_combine_four():
