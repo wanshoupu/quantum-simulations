@@ -23,7 +23,7 @@ class QFactory:
         return QDevice(self._config.device)
 
     def get_optimizers(self) -> list[Optimizer]:
-        return [SlidingWindowOptimizer(2)]
+        return [SlidingWindowOptimizer(window=0, emit=self._config.emit)]
 
     def get_qompiler(self) -> Qompiler:
         result = Qompiler(self._config, self.get_device())

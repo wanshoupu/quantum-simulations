@@ -1,23 +1,23 @@
 import os
-import tempfile
 from functools import reduce
 
 import numpy as np
+import pytest
 from matplotlib import pyplot as plt
 
 from quompiler.circuits.qfactory import QFactory
 from quompiler.config.config_manager import ConfigManager
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import QompilePlatform, UnivGate, QType
-from quompiler.utils.file_io import CODE_FILE_EXT
-from quompiler.utils.mgen import random_unitary, random_ctrlgate
+from quompiler.construct.types import QompilePlatform, UnivGate, QType, EmitType
+from quompiler.optimize.basic_optimizer import SlidingWindowOptimizer
+from quompiler.utils.mgen import random_unitary, random_ctrlgate, create_bytecode
 from tests.qompiler.circuits.test_qompiler import formatter
 
 
 def create_palindromic_code():
     gates = [CtrlGate(UnivGate.X, [QType.TARGET, QType.CONTROL1]),
-             (random_ctrlgate(4, 2)),
+             random_ctrlgate(4, 2),
              CtrlGate(UnivGate.X, [QType.TARGET, QType.CONTROL1, QType.CONTROL0]),
              ]
     gates = gates + [gates[-1], gates[-2].herm(), gates[-3]]
@@ -34,6 +34,50 @@ def test_optimize_palindrome():
     # print_circuit(codefile, factory)
 
     assert len(gates_before_opts) == 6
+    config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=8, optimization='O3')).create_config()
+    factory = QFactory(config)
+
+    # execute
+    for opt in factory.get_optimizers():
+        code = opt.optimize(code)
+
+    nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
+
+    # verify
+    assert len(nodes_after_opts) == 0
+
+
+@pytest.mark.parametrize('seq, ctrl_num, emit, expected', [
+    ['T,SD,S,T', 2, EmitType.CLIFFORD_T, 1],
+    ['T,SD', 3, EmitType.SINGLET, 1],
+    ["S,T,TD,SD", 1, EmitType.CLIFFORD_T, 0],
+    # TODO Fix unit tests
+    # ["S,T,SD", 1, EmitType.CLIFFORD_T, 1],
+    # ["S,T,SD,TD", 1, EmitType.CLIFFORD_T, 0],
+])
+def test_optimize_combine(seq, ctrl_num, emit, expected):
+    code = create_bytecode(seq, ctrl_num)
+    gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
+    length_before_opts = len(gates_before_opts)
+
+    # execute
+    opt = SlidingWindowOptimizer(length_before_opts, emit=emit)
+    code = opt.optimize(code)
+
+    # verify
+    nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
+    # print(nodes_after_opts)
+    assert len(nodes_after_opts) == expected
+
+
+def test_optimize_combine_four():
+    code = create_bytecode("S,T,SD,TD", 1)
+
+    gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
+    # debug
+    # print_circuit(codefile, factory)
+
+    assert len(gates_before_opts) == 4
     config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=8, optimization='O3')).create_config()
     factory = QFactory(config)
 

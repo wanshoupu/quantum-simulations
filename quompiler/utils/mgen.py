@@ -1,10 +1,12 @@
 import random
+from functools import reduce
 from typing import Sequence
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import unitary_group
 
+from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.qspace import Qubit
 from quompiler.construct.su2gate import RGate
@@ -163,3 +165,10 @@ def random_rgate():
     phi = random.uniform(0, 2 * np.pi)
     gate = RGate(angle, [theta, phi])
     return gate
+
+
+def create_bytecode(gate_seq: str, num_ctrl: int) -> Bytecode:
+    controls = random_control(num_ctrl, 1)
+    children = [CtrlGate(UnivGate[gate.strip()], controls) for gate in gate_seq.split(',')]
+    product = reduce(lambda x, y: x @ y, children)
+    return Bytecode(product, [Bytecode(g) for g in children])

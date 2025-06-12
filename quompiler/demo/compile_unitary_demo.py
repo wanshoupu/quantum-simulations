@@ -21,7 +21,7 @@ def compile_random_unitary(filename):
     dim = 1 << n
     u = random_unitary(dim)
     print(formatter.tostr(u))
-    config = create_config(emit="PRINCIPAL", ancilla_offset=100, output=filename)
+    config = create_config(emit="CLIFFORD_T", ancilla_offset=100, output=filename)
     factory = QFactory(config)
     compiler = factory.get_qompiler()
     compiler.compile(u)
@@ -48,7 +48,6 @@ def render_qiskit(filename):
     render = factory.get_render(QompilePlatform.QISKIT)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
-    circuit = transpile(circuit, optimization_level=1)
     dag = circuit_to_dag(circuit)
     layers = list(dag.layers())
     # for m in layers:
