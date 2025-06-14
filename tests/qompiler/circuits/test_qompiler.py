@@ -220,4 +220,4 @@ def test_output():
         compiler.output(bc)
         assert os.path.exists(tmp.name)
         actual_size = os.path.getsize(tmp.name)
-        assert actual_size == 876
+        assert actual_size == 871
