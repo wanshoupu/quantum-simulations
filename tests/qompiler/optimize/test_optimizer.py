@@ -88,9 +88,8 @@ def test_identity_reduce_std(seq, ctrl_num, emit):
 @pytest.mark.parametrize('seq, ctrl_num, emit, count', [
     ['T,SD', 3, EmitType.SINGLET, 1],
     ['T,SD,S,T', 2, EmitType.CLIFFORD_T, 1],
-    # TODO Fix unit tests
-    # ["S,T,SD", 1, EmitType.CLIFFORD_T, 1],
-    # ["S,T,SD,TD", 1, EmitType.CLIFFORD_T, 0],
+    ["S,T,SD", 1, EmitType.CLIFFORD_T, 1],
+    ["S,T,SD,TD", 1, EmitType.CLIFFORD_T, 0],
 ])
 def test_merge_std(seq, ctrl_num, emit, count):
     code = create_bytecode(seq, ctrl_num)
@@ -106,7 +105,8 @@ def test_merge_std(seq, ctrl_num, emit, count):
     # print(nodes_after_opts)
     assert len(nodes_after_opts) == count
     expected = np.array(reduce(lambda a, b: a @ b, gates_before_opts))
-    actual = np.array(nodes_after_opts[0].data)
+    gates = [n.data for n in nodes_after_opts]
+    actual = np.array(reduce(lambda a, b: a @ b, gates, np.eye(expected.shape[0])))
     assert actual.shape == expected.shape
     assert np.allclose(actual, expected), f'\noptimized=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'
 

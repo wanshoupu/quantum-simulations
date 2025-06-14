@@ -1,109 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Optional
 
-import numpy as np
-from pydantic.utils import defaultdict
 from typing_extensions import override
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import OptLevel, EmitType
 from quompiler.optimize.optimizer import Optimizer
-from quompiler.utils.granularity import granularity
-
-
-class WindowOperator(ABC):
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
-        assert window >= 0
-        self.window = window
-        self.emit = emit
-        self.prefix = defaultdict(list)
-
-    @abstractmethod
-    def run(self, node):
-        pass
-
-
-class AnnihilateOperator(WindowOperator):
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
-        super().__init__(window, emit)
-
-    @override
-    def run(self, node):
-        assert isinstance(node.data, CtrlGate)
-        if np.allclose(node.data.matrix(), np.eye(1 << len(node.data.target_qids()))):
-            return
-        stacks = [self.prefix[q] for q in node.data.qspace]
-        max_length = min(len(s) for s in stacks)
-        window_size = max_length if self.window == 0 else min(max_length, self.window)
-        k = self.compatible_length(stacks, window_size, node.data.qontrol())
-        # add node
-        for stack in stacks:
-            stack.append(node)
-        product = node.data
-        for k in range(2, k + 2):
-            product = stacks[0][-k].data @ product
-            if np.allclose(np.array(product), np.eye(product.order())):
-                # cancel out the tail k nodes
-                for i in range(1, 1 + k):
-                    stacks[0][-i].skip = True
-                # pop skipped nodes
-                for stack in stacks:
-                    while stack and stack[-1].skip:
-                        stack.pop()
-                return
-
-    def compatible_length(self, stacks, window_size, qontrol):
-        for k in range(1, window_size + 1):
-            predecessor = {s[-k] if len(s) >= k else None for s in stacks}
-            if len(predecessor) > 1 or (None in predecessor):
-                return k - 1
-            if predecessor.pop().data.qontrol() != qontrol:
-                return k - 1
-        return window_size
-
-
-class ConsolidateOperator(WindowOperator):
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
-        super().__init__(window, emit)
-
-    @override
-    def run(self, node):
-        assert isinstance(node.data, CtrlGate)
-        if np.allclose(node.data.matrix(), np.eye(1 << len(node.data.target_qids()))):
-            return
-        stacks = [self.prefix[q] for q in node.data.qspace]
-        # add node
-        for stack in stacks:
-            stack.append(node)
-        max_length = min(len(s) for s in stacks) - 1
-        window_size = max_length if self.window == 0 else min(max_length, self.window)
-        k, product = self.compatible(stacks, window_size, node)
-        assert k > 0
-        stacks[0][-k].data = product
-        # mark the tail to be skipped
-        for i in range(1, k):
-            stacks[0][-i].skip = True
-        # pop skipped nodes
-        for stack in stacks:
-            while stack and stack[-1].skip:
-                stack.pop()
-
-    def compatible(self, stacks, window_size, node) -> tuple[int, Any]:
-        qontrol = node.data.qontrol()
-        product = node.data
-        for k in range(2, window_size + 2):
-            predecessor = {s[-k] if len(s) >= k else None for s in stacks}
-            product = stacks[0][-k].data @ product
-            if len(predecessor) > 1 or (None in predecessor):
-                return k - 1, product
-            prior = predecessor.pop()
-            if prior.data.qontrol() != qontrol:
-                return k - 1, product
-            if granularity(product) < self.emit:
-                return k - 1, product
-
-        return window_size + 1, product
+from quompiler.optimize.window import AnnihilateOperator, ConsolidateOperator
 
 
 class SlidingWindowOptimizer(Optimizer):
@@ -133,6 +35,9 @@ class SlidingWindowOptimizer(Optimizer):
     def optimize(self, root: Bytecode) -> Bytecode:
         for op in self.operators:
             self.iterate(root, op)
+        prune(root)
+        # ensure root is not skipped, which should be the case except for test purposes.
+        root.skip = False
         return root
 
     @staticmethod
@@ -144,3 +49,24 @@ class SlidingWindowOptimizer(Optimizer):
                 operator.run(node)
             # Add children in reverse order so leftmost child is processed first
             stack.extend(reversed(node.children))
+
+
+def prune(node: Bytecode) -> Optional[Bytecode]:
+    """
+    clean out the skipped nodes by discarding them.
+    """
+    if node.skip:
+        return None
+    if node.is_leaf():
+        return node
+    children = []
+    for child in node.children:
+        pruned = prune(child)
+        if pruned:
+            children.append(pruned)
+    if not children:
+        return None
+    if len(children) == 1:
+        return children[0]
+    node.children = children
+    return node
