@@ -1,4 +1,5 @@
 import os
+import tempfile
 from functools import reduce
 
 import numpy as np
@@ -11,6 +12,7 @@ from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import QompilePlatform, UnivGate, QType, EmitType
 from quompiler.optimize.basic_optimizer import SlidingWindowOptimizer
+from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.mgen import random_unitary, random_ctrlgate, create_bytecode
 from tests.qompiler.circuits.test_qompiler import formatter
 
@@ -133,43 +135,43 @@ def test_optimize_combine_four():
 
 
 def test_optimize_real_compile():
-    # with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+b", delete=True) as codefile:
-    codefile = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "for_optimize_test.qco"))
-    n = 3
+    with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+b", delete=True) as codefile:
+        # codefile = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "for_optimize_test.qco"))
+        n = 3
 
-    config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=n, optimization='O3', output=codefile)).create_config()
-    factory = QFactory(config)
+        config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=n, optimization='O3', output=codefile.name)).create_config()
+        factory = QFactory(config)
 
-    dim = 1 << n
-    input_mat = random_unitary(dim)
-    compiler = factory.get_qompiler()
-    root = compiler.decompose(input_mat)
-    code = root.children[5]
-    compiler.output(code)
+        dim = 1 << n
+        input_mat = random_unitary(dim)
+        compiler = factory.get_qompiler()
+        root = compiler.decompose(input_mat)
+        code = root.children[5]
+        compiler.output(code)
 
-    gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
-    # debug
-    # print_circuit(codefile, factory, "before_opt.pdf")
+        gates_before_opts = [a.data for a in BytecodeIter(code) if a.is_leaf()]
+        # debug
+        # print_circuit(codefile, factory, "before_opt.pdf")
 
-    assert len(gates_before_opts) == 126
-    # execute
-    for opt in factory.get_optimizers():
-        code = opt.optimize(code)
+        assert len(gates_before_opts) == 126
+        # execute
+        for opt in factory.get_optimizers():
+            code = opt.optimize(code)
 
-    nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
+        nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
 
-    # verify
-    assert len(nodes_after_opts) < len(gates_before_opts)
+        # verify
+        assert len(nodes_after_opts) < len(gates_before_opts)
 
-    compiler.output(code)
-    # debug
-    # print_circuit(codefile, factory, "after_opt.pdf")
+        compiler.output(code)
+        # debug
+        # print_circuit(codefile, factory, "after_opt.pdf")
 
-    gates_after_opts = [a.data for a in nodes_after_opts]
-    expected = np.array(reduce(lambda a, b: a @ b, gates_before_opts))
-    actual = np.array(reduce(lambda a, b: a @ b, gates_after_opts))
-    assert actual.shape == expected.shape
-    assert np.allclose(actual, expected), f'\noptimized=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'
+        gates_after_opts = [a.data for a in nodes_after_opts]
+        expected = np.array(reduce(lambda a, b: a @ b, gates_before_opts))
+        actual = np.array(reduce(lambda a, b: a @ b, gates_after_opts))
+        assert actual.shape == expected.shape
+        assert np.allclose(actual, expected), f'\noptimized=\n{formatter.tostr(actual)},\nexpected=\n{formatter.tostr(expected)}'
 
 
 def print_circuit(codefile, factory, filepath):
