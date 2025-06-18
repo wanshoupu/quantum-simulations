@@ -54,7 +54,6 @@ def test_compile_sing_qubit_circuit():
 
 
 def test_compile_insufficient_qspace_error():
-    # TODO: ancilla_offset=1 is not working
     config = create_config(emit="CTRL_PRUNED", ancilla_offset=1)
     factory = QFactory(config)
     compiler = factory.get_qompiler()
