@@ -83,6 +83,7 @@ Suggestions for improvements, new features, or better documentation are always a
 Planned features and improvements:
 
 - [ ] Support for more quantum frameworks (e.g., Braket, PennyLane)
+- [ ] Parallelization in compilation of high-dimensional Hamiltonions.
 - [ ] Circuit optimization strategies based on hardware constraints
 - [ ] GPU-accelerated simulations
 - [ ] Web-based interface for inputting Hamiltonians and visualizing circuits
