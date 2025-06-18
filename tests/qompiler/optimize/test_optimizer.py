@@ -136,7 +136,6 @@ def test_optimize_combine_four():
 
 def test_optimize_real_compile():
     with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+b", delete=True) as codefile:
-        # codefile = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "for_optimize_test.qco"))
         n = 3
 
         config = ConfigManager().merge(dict(emit='PRINCIPAL', ancilla_offset=n, optimization='O3', output=codefile.name)).create_config()
