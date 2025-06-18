@@ -56,10 +56,7 @@ class SKDecomposer:
     def _sk_decompose(self, U: NDArray, n: int) -> Bytecode:
         """
         TODO:
-         1. the Bytecode.herm may have a bug
-         2. Also minimal testing may be a try approximate a sequence of length + 1
          3. can test _sk_decompose directly with n = 0 and n = 1 and compare the errors
-         4. SU2Net may put on 3D ring topology: use modulo on the nearest neighbor metric for parameters: theta, phi, and alpha
         This implements the main Solovay-Kitaev decomposition algorithm.
         :param U: input 2x2 unitary matrix.
         :param n: recursion depth.
