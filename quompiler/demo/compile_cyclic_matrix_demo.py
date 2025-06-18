@@ -2,7 +2,6 @@ import argparse
 import tempfile
 
 from matplotlib import pyplot as plt
-from qiskit import transpile
 from qiskit.converters import circuit_to_dag
 
 from quompiler.circuits.qfactory import QFactory
@@ -46,14 +45,13 @@ def render_qiskit(filename):
     render = factory.get_render(QompilePlatform.QISKIT)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
-    circuit = transpile(circuit, optimization_level=1)
     dag = circuit_to_dag(circuit)
     layers = list(dag.layers())
     # for m in layers:
     #     print(m)
     print(f'Total {len(layers)} layers in the circuit.')
     circuit.draw('mpl')
-    plt.savefig("qc_qiskit_sketch.pdf", bbox_inches='tight')
+    plt.savefig("cyclic_qiskit.pdf", bbox_inches='tight')
 
 
 if __name__ == '__main__':
