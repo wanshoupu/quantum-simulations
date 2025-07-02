@@ -10,6 +10,7 @@ from quompiler.construct.types import QompilePlatform
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import cyclic_matrix
+import qiskit.qasm3 as qasm
 
 
 def compile_random_unitary(filename):
@@ -45,6 +46,11 @@ def render_qiskit(filename):
     render = factory.get_render(QompilePlatform.QISKIT)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
+
+    # Export to QASM string
+    qasm_code = qasm.dumps(circuit)
+    print(qasm_code)
+
     dag = circuit_to_dag(circuit)
     layers = list(dag.layers())
     # for m in layers:
