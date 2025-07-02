@@ -5,7 +5,8 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()  
 *A generic cross-platform quantum compiler for quantum computing*
 
-Given a Hamiltonian — including the Lindblad form, i.e., Lindbladian — this compiler can compile it into executable quantum circuit on any quantum computing platforms of choice. It currently supports **Cirq**, **Qiskit**,
+Given a Hamiltonian — including the Lindblad form, i.e., Lindbladian — this compiler can compile it into executable quantum circuit on any quantum computing platforms of choice. It currently 
+supports **Cirq**, **Qiskit**, **OpenQASM**
 and is designed to be extensible to other frameworks. For example, an `8x8` cyclic permutation matrix was compiled by this tool into quantum circuit code and then render the circuit on [Qiskit platform](https://github.com/qiskit).
 
 📄 [![Circuit sketch compiled off an 8x8 cyclic unitary matrix](docs/qc_qiskit_sketch.png)](docs/qc_qiskit_sketch.pdf)
