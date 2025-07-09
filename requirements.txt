@@ -169,7 +169,10 @@ markupsafe==3.0.2
     #   jinja2
     #   nbconvert
 matplotlib==3.9.4
-    # via cirq-core
+    # via
+    #   cirq-core
+    #   qiskit
+    #   seaborn
 matplotlib-inline==0.1.7
     # via ipython
 mistune==3.1.1
@@ -209,6 +212,7 @@ numpy==1.26.4
     #   rustworkx
     #   scikit-learn
     #   scipy
+    #   seaborn
 packaging==24.2
     # via
     #   matplotlib
@@ -218,6 +222,7 @@ pandas==2.2.3
     # via
     #   -r requirements.in
     #   cirq-core
+    #   seaborn
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.4
@@ -229,7 +234,9 @@ pexpect==4.9.0
 physics-tenpy==1.0.5
     # via -r requirements.in
 pillow==11.1.0
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   qiskit
 platformdirs==4.3.6
     # via jupyter-core
 pluggy==1.5.0
@@ -264,6 +271,8 @@ pyasn1-modules==0.4.1
     # via google-auth
 pydantic==1.10.21
     # via qcs-api-client
+pydot==4.0.1
+    # via qiskit
 pygments==2.19.1
     # via
     #   ipython
@@ -272,8 +281,12 @@ pygtrie==2.5.0
     # via -r requirements.in
 pyjwt==2.10.1
     # via qcs-api-client
+pylatexenc==2.10
+    # via qiskit
 pyparsing==3.2.1
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   pydot
 pyquil==3.5.4
     # via cirq-rigetti
 pyrsistent==0.20.0
@@ -304,7 +317,7 @@ pyzmq==26.2.1
     #   rpcq
 qcs-api-client==0.21.6
     # via pyquil
-qiskit==1.4.1
+qiskit[visualization]==1.4.1
     # via -r requirements.in
 quimb==1.10.0
     # via -r requirements.in
@@ -344,6 +357,8 @@ scipy==1.13.1
     #   qiskit
     #   quimb
     #   scikit-learn
+seaborn==0.13.2
+    # via qiskit
 six==1.17.0
     # via
     #   python-dateutil

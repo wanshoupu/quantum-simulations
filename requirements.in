@@ -7,7 +7,7 @@ rsa
 psutil
 protobuf
 scipy
-qiskit
+qiskit[visualization]
 physics-tenpy
 quimb
 pytest
