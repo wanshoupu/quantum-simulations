@@ -57,7 +57,9 @@ def render_qiskit(filename):
     #     print(m)
     print(f'Total {len(layers)} layers in the circuit.')
     circuit.draw('mpl')
-    plt.savefig("cyclic_qiskit.pdf", bbox_inches='tight')
+    qiskit_diagram_file = "cyclic_qiskit.pdf"
+    plt.savefig(qiskit_diagram_file, bbox_inches='tight')
+    print(qiskit_diagram_file)
 
 
 if __name__ == '__main__':
