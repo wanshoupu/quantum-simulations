@@ -1,8 +1,10 @@
 import argparse
+import random
 import tempfile
 
+import numpy as np
+import qiskit.qasm3 as qasm
 from matplotlib import pyplot as plt
-from qiskit import transpile
 from qiskit.converters import circuit_to_dag
 
 from quompiler.circuits.qfactory import QFactory
@@ -48,6 +50,11 @@ def render_qiskit(filename):
     render = factory.get_render(QompilePlatform.QISKIT)
     codefile = factory.get_config().output
     circuit = render.render(codefile)
+
+    # Export to QASM string
+    qasm_code = qasm.dumps(circuit)
+    print(qasm_code)
+
     dag = circuit_to_dag(circuit)
     layers = list(dag.layers())
     # for m in layers:
@@ -60,7 +67,9 @@ def render_qiskit(filename):
 
 
 if __name__ == '__main__':
-    formatter = MatrixFormatter(precision=2)
+    formatter = MatrixFormatter(precision=4)
+    random.seed(42)
+    np.random.seed(42)
 
     with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
         compile_random_unitary(tmp.name)
