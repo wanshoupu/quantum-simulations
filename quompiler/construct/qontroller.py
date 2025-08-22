@@ -1,8 +1,6 @@
 from itertools import product
 from typing import Sequence, Tuple
 
-from deprecated import deprecated
-
 from quompiler.construct.types import QType
 
 
