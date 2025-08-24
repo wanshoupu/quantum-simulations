@@ -83,7 +83,7 @@ from quompiler.utils.gray import gray_code
 
 def cnot_decompose(m: UnitaryM, qspace: Sequence[Qubit] = None) -> Tuple[CtrlGate, ...]:
     """
-    Decompose an arbitrary unitary matrix into single-qubit operations in universal gates.
+    Decompose a two-level (2l) unitary matrix into single-qubit operations in universal gates.
     :param m: UnitaryM to be decomposed
     :param qspace: the qubits to be operated on; provided in a list of integer ids. If not provided, will assume the id in the range(n).
     :return: a tuple of ControlledGate objects.
