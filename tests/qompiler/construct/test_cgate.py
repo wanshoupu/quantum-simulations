@@ -713,30 +713,30 @@ def test_dela_del_ctrl():
     assert np.allclose(actual.inflate(), np.eye(4))
 
 
-def test_project_invalid_shape():
+def test_trace_invalid_shape():
     with pytest.raises(AssertionError) as e:
         cg = random_ctrlgate(3, 1, 10)
         qubit = cg.qspace[0]
         state = np.array([[1], [0]])
-        cg.project(qubit, state)
+        cg.trace(qubit, state)
     assert str(e.value) == 'state vector must be a 1D array of length 2, but got (2, 1).'
 
 
-def test_project_unnormalized_state():
+def test_trace_unnormalized_state():
     with pytest.raises(AssertionError) as e:
         cg = random_ctrlgate(3, 1, 10)
         qubit = cg.qspace[0]
         state = np.array([1, 1])
-        cg.project(qubit, state)
+        cg.trace(qubit, state)
     assert str(e.value) == 'state vector must normalized but got [1 1].'
 
 
-def test_project_invalid_qubit():
+def test_trace_invalid_qubit():
     with pytest.raises(AssertionError) as e:
         cg = random_ctrlgate(3, 1, 3)
         qubit = Qubit(10)
         state = np.array([1, 0])
-        cg.project(qubit, state)
+        cg.trace(qubit, state)
     assert str(e.value) == 'Qubit q10 not in qspace.'
 
 
@@ -744,10 +744,10 @@ def test_project_invalid_qubit():
     [QType.CONTROL0, [0, 1]],
     [QType.CONTROL1, [1, 0]],
 ])
-def test_project_CONTROL_eye(ctr, state):
+def test_trace_CONTROL_eye(ctr, state):
     ctrls = [ctr, QType.TARGET]
     cg = random_CtrlGate(ctrls)
-    actual = cg.project(Qubit(0), np.array(state))
+    actual = cg.trace(Qubit(0), np.array(state))
     assert np.array_equal(actual.inflate(), np.eye(2))
 
 
@@ -755,20 +755,20 @@ def test_project_CONTROL_eye(ctr, state):
     [QType.CONTROL0, [1, 0]],
     [QType.CONTROL1, [0, 1]],
 ])
-def test_project_CONTROL_non_eye(ctr, state):
+def test_trace_CONTROL_non_eye(ctr, state):
     ctrls = [ctr, QType.TARGET]
     u = random_unitary(2)
     cg = CtrlGate(u, ctrls)
-    actual = cg.project(Qubit(0), np.array(state))
+    actual = cg.trace(Qubit(0), np.array(state))
     assert np.array_equal(actual.inflate(), u)
 
 
 @pytest.mark.parametrize("ctr", [QType.CONTROL0, QType.CONTROL1])
-def test_project_2x2_base_eye(ctr):
+def test_trace_2x2_base_eye(ctr):
     state = random_state(2)
     ctrls = [ctr, QType.TARGET]
     cg = random_CtrlGate(ctrls)
-    actual = cg.project(Qubit(1), np.array(state))
+    actual = cg.trace(Qubit(1), np.array(state))
     assert np.array_equal(actual.inflate(), np.eye(2))
 
 
@@ -782,7 +782,7 @@ def test_project_2x2_base_eye(ctr):
     [QType.CONTROL1, [1, 0], 1],
     [QType.CONTROL1, [0, 1], 1],
 ])
-def test_project_4x4_base_states(ctrl, state, qidx):
+def test_trace_4x4_base_states(ctrl, state, qidx):
     """
     :param ctrl: ctr type
     :param state: the state vector to project
@@ -795,7 +795,7 @@ def test_project_4x4_base_states(ctrl, state, qidx):
 
     ctrls = [ctrl, QType.TARGET, QType.TARGET]
     cg = CtrlGate(mat, ctrls)
-    actual = cg.project(Qubit(1 + qidx), np.array(state))
+    actual = cg.trace(Qubit(1 + qidx), np.array(state))
     # print()
     # print(formatter.tostr(actual.inflate()))
 
@@ -844,9 +844,9 @@ def test_verify_phase_project():
     mat = kron(random_unitary(2), np.eye(2))
     cg_phase = CtrlGate(mat, ctrls, phase=phase)
     cg_no_phase = CtrlGate(mat, ctrls)
-    actual = cg_phase.project(Qubit(2), np.array([0, 1]))
+    actual = cg_phase.trace(Qubit(2), np.array([0, 1]))
     # print(f'actual:\n{formatter.tostr(actual.inflate())}')
-    expected = cg_no_phase.project(Qubit(2), np.array([0, 1]))
+    expected = cg_no_phase.trace(Qubit(2), np.array([0, 1]))
     # print(f'expected:\n{formatter.tostr(expected.inflate())}')
     # verify that the core matrices differ by phase
     cmp_indexes = np.ix_(actual.core(), actual.core())

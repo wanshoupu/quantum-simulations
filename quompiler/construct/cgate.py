@@ -225,9 +225,9 @@ class CtrlGate:
         idx = self.target_qids().index(qubit)
         return is_idler(self.matrix(), idx)
 
-    def project(self, qubit: Qubit, state: NDArray) -> 'CtrlGate':
+    def trace(self, qubit: Qubit, state: NDArray) -> 'CtrlGate':
         """
-        Project a subsystem consisting the target qubit unto a given pure state |ψ⟩ and compute the CtrlGate for the remaining qubits.
+        Trace out a subsystem consisting the target qubit with a given pure state |ψ⟩ and compute the CtrlGate for the remaining qubits.
 
         This computes the effective operator on the remaining qubits by sandwiching U with |ψ⟩ on the specified qubit.
         That is, it returns:
@@ -235,16 +235,16 @@ class CtrlGate:
 
         Parameters:
         -----------
-        :param state: np.ndarray, state to be used to project the qubit.
+        :param state: np.ndarray, state to be used to trace out the qubit.
             A 2-dimensional complex vector representing a normalized pure state |ψ⟩ of a single qubit.
 
         :param qubit:
-            The qubit subsystem to be projected out, where |ψ⟩ lives.
+            The qubit subsystem to be traced out, where |ψ⟩ lives.
             Note that our matrix is based on [qubit-0 ⨂ qubit-1 ⨂ ...].
 
         Returns:
         --------
-        U_eff : CtrlGate representing the projected operator acting on the remaining n-1 qubits.
+        U_eff : CtrlGate representing the traced operator acting on the remaining n-1 qubits.
 
         Notes:
         ------
@@ -255,7 +255,7 @@ class CtrlGate:
         --------
          ψ = np.array([1, 0])  # |0>
          U = CtrlGate(...)  # |01>
-         U_eff = U.project(ψ, qubit)
+         U_eff = U.trace(ψ, qubit)
         """
         assert qubit in self._qontrol, f'Qubit {qubit} not in qspace.'
         assert state.shape == (2,), f'state vector must be a 1D array of length 2, but got {state.shape}.'
@@ -301,7 +301,7 @@ class CtrlGate:
         ancillas = [q for q in self.qspace if q.ancilla]
         gate = self
         for q in ancillas:
-            gate = gate.project(q, state)
+            gate = gate.trace(q, state)
         return gate
 
     def promote(self, qubits: Sequence[Qubit]) -> 'CtrlGate':
