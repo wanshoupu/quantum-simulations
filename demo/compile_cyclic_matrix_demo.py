@@ -13,7 +13,7 @@ from quompiler.utils.mgen import cyclic_matrix
 import qiskit.qasm3 as qasm
 
 
-def compile_random_unitary(filename):
+def compile_unitary(filename):
     parser = argparse.ArgumentParser(description="Process some input arguments.")
     parser.add_argument("-i", "--input", type=str, help="Number of qubits. CAUTION: do not set n to big numbers as it scales exponentially.", required=False, default=3)
     args, unknown = parser.parse_known_args()
@@ -66,6 +66,6 @@ if __name__ == '__main__':
     formatter = MatrixFormatter(precision=2)
 
     with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
-        compile_random_unitary(tmp.name)
+        compile_unitary(tmp.name)
         render_cirq(tmp.name)
         render_qiskit(tmp.name)

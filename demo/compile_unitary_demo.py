@@ -4,6 +4,7 @@ import tempfile
 
 import numpy as np
 import qiskit.qasm3 as qasm
+from cirq.contrib.svg import circuit_to_svg
 from matplotlib import pyplot as plt
 from qiskit.converters import circuit_to_dag
 
@@ -23,7 +24,7 @@ def compile_random_unitary(filename):
     dim = 1 << n
     u = random_unitary(dim)
     print(formatter.tostr(u))
-    config = create_config(emit="CLIFFORD_T", ancilla_offset=100, output=filename)
+    config = create_config(emit="PRINCIPAL", ancilla_offset=100, output=filename)
     factory = QFactory(config)
     compiler = factory.get_qompiler()
     compiler.compile(u)
@@ -37,7 +38,11 @@ def render_cirq(filename):
     circuit = render.render(codefile)
     from cirq import merge_single_qubit_gates_to_phased_x_and_z
     circuit = merge_single_qubit_gates_to_phased_x_and_z(circuit)
-    print(circuit)
+    print(circuit.to_text_diagram(transpose=True))
+    svg = circuit_to_svg(circuit)
+    with open("cirq_circuit.svg", "w") as f:
+        f.write(svg)
+
     moments = circuit.moments
     # for m in moments:
     #     print(m)
