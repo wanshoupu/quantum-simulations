@@ -1,9 +1,6 @@
-import numpy as np
-from numpy.typing import NDArray
 from pygtrie import Trie
 
 from quompiler.construct.types import UnivGate
-from quompiler.utils.mfun import allprop
 
 
 class SeqOptimizer:
