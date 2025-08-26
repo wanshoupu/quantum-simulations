@@ -1,17 +1,15 @@
 import argparse
 import random
-import tempfile
 
 import numpy as np
 import qiskit.qasm3 as qasm
-from cirq.contrib.svg import circuit_to_svg
 from matplotlib import pyplot as plt
 from qiskit.converters import circuit_to_dag
 
+from quompiler.circuits.cirq_factory.presentation import cirq2svg
 from quompiler.circuits.qfactory import QFactory
 from quompiler.config.config_manager import create_config
 from quompiler.construct.types import QompilePlatform
-from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary
 
@@ -39,7 +37,7 @@ def render_cirq(filename):
     from cirq import merge_single_qubit_gates_to_phased_x_and_z
     circuit = merge_single_qubit_gates_to_phased_x_and_z(circuit)
     print(circuit.to_text_diagram(transpose=True))
-    svg = circuit_to_svg(circuit)
+    svg = cirq2svg(circuit)
     with open("cirq_circuit.svg", "w") as f:
         f.write(svg)
 
@@ -76,7 +74,10 @@ if __name__ == '__main__':
     random.seed(42)
     np.random.seed(42)
 
-    with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
-        compile_random_unitary(tmp.name)
-        render_cirq(tmp.name)
-        render_qiskit(tmp.name)
+    tmp = 'tmp-circuit.qco'
+    render_cirq(tmp)
+
+    # with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
+    #     compile_random_unitary(tmp.name)
+    #     render_cirq(tmp.name)
+    #     render_qiskit(tmp.name)
