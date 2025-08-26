@@ -37,7 +37,7 @@ def render_cirq(filename):
     from cirq import merge_single_qubit_gates_to_phased_x_and_z
     circuit = merge_single_qubit_gates_to_phased_x_and_z(circuit)
     print(circuit.to_text_diagram(transpose=True))
-    svg = cirq2svg(circuit)
+    svg = cirq2svg(circuit, truncate=4)
     with open("cirq_circuit.svg", "w") as f:
         f.write(svg)
 
