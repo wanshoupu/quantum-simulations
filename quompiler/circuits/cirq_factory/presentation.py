@@ -23,7 +23,7 @@ def cirq2svg(circuit: cirq.Circuit, moment_size=15, truncate: int = None):
     chunk_box = []
     chunks = []
     num_chunks = num_chunks if truncate is None else min(truncate, num_chunks)
-    for i in range(truncate or num_chunks):
+    for i in range(num_chunks):
         subcircuit = circuit[i * moment_size: (i + 1) * moment_size]
         svg = circuit_to_svg(subcircuit)
         chunks.append(svg)

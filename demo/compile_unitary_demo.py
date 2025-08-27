@@ -1,5 +1,6 @@
 import argparse
 import random
+import tempfile
 
 import numpy as np
 import qiskit.qasm3 as qasm
@@ -10,6 +11,7 @@ from quompiler.circuits.cirq_factory.presentation import cirq2svg
 from quompiler.circuits.qfactory import QFactory
 from quompiler.config.config_manager import create_config
 from quompiler.construct.types import QompilePlatform
+from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary
 
@@ -74,10 +76,7 @@ if __name__ == '__main__':
     random.seed(42)
     np.random.seed(42)
 
-    tmp = 'tmp-circuit.qco'
-    render_cirq(tmp)
-
-    # with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
-    #     compile_random_unitary(tmp.name)
-    #     render_cirq(tmp.name)
-    #     render_qiskit(tmp.name)
+    with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
+        compile_random_unitary(tmp.name)
+        render_cirq(tmp.name)
+        render_qiskit(tmp.name)

@@ -197,8 +197,8 @@ def inter_product(A, B, m):
     """
     A matrix multiplication operation of special Tracy–Singh product type.
     https://en.wikipedia.org/wiki/Kronecker_product#Tracy%E2%80%93Singh_product
-    Matrix A is first divided up into n x n number of m x m sized blocks;
-    Then B is mesh multiplied between the n x n number of m x m sized blocks.
+    Matrix A is first divided up into n x n blocks, each of size m x m;
+    Then B is multiplied to each of the n x n blocks.
     For example, with a block size of 2x2
         A =
         ⎡a₀₀  a₀₁  a₀₂  a₀₃⎤
@@ -212,7 +212,7 @@ def inter_product(A, B, m):
         ⎡b₀₀  b₀₁⎤
         ⎢        ⎥
         ⎣b₁₀  b₁₁⎦
-        inter_product(A, B) =
+        inter_product(A, B, 2) =
         ⎡a₀₀⋅b₀₀  a₀₁⋅b₀₀  a₀₀⋅b₀₁  a₀₁⋅b₀₁  a₀₂⋅b₀₀  a₀₃⋅b₀₀  a₀₂⋅b₀₁  a₀₃⋅b₀₁⎤
         ⎢                                                                      ⎥
         ⎢a₁₀⋅b₀₀  a₁₁⋅b₀₀  a₁₀⋅b₀₁  a₁₁⋅b₀₁  a₁₂⋅b₀₀  a₁₃⋅b₀₀  a₁₂⋅b₀₁  a₁₃⋅b₀₁⎥
