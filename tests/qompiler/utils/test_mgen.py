@@ -1,4 +1,7 @@
+from itertools import product
 from random import random
+
+import cirq
 
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import *
@@ -76,3 +79,21 @@ def test_gen_gate_seq_custom_candidates():
     seq = random_gate_seq(15, cands)
     expected = [UnivGate[l] for l in 'X,H,X,S,I,S,I,X,H,X,TD,T,H,TD,SD,H'.split(',')]
     assert seq == expected
+
+
+def test_qft_matrix():
+    q0, q1, q2 = cirq.LineQubit.range(3)
+    circuit = cirq.Circuit(
+        cirq.H(q0),
+        cirq.S(q0).controlled_by(q1),
+        cirq.T(q0).controlled_by(q2),
+        cirq.H(q1),
+        cirq.S(q1).controlled_by(q2),
+        cirq.H(q2),
+        cirq.SWAP(q0, q2),
+    )
+    actual = circuit.unitary()
+    # print(formatter.tostr(actual))
+    expected = qft_matrix(3)
+    # print(formatter.tostr(expected))
+    assert np.allclose(actual, expected)

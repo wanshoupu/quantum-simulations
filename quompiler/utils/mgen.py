@@ -125,6 +125,18 @@ def cyclic_matrix(n, i=0, j=None, c=1):
     return permeye(xs)
 
 
+def qft_matrix(n):
+    """
+    create a cyclic permuted matrix from identity
+    :param n: number of qubits
+    :return:
+    """
+    N = 1 << n
+    omega = np.exp(2j * np.pi / N)
+    j, k = np.meshgrid(np.arange(N), np.arange(N))
+    return (omega ** (j * k)) / np.sqrt(N)
+
+
 def random_ctrlgate(ctrnum, targetnum, qnum=None) -> CtrlGate:
     controls = random_control(ctrnum, targetnum)
     if qnum is None:

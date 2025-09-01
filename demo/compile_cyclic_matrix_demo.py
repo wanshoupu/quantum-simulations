@@ -49,7 +49,8 @@ def render_qiskit(filename):
 
     # Export to QASM string
     qasm_code = qasm.dumps(circuit)
-    print(qasm_code)
+    with open("cyclic_qiskit.qasm", "w") as f:  # "w" = write mode, overwrites file
+        f.write(qasm_code)
 
     dag = circuit_to_dag(circuit)
     layers = list(dag.layers())
