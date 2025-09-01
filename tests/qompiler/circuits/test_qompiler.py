@@ -16,7 +16,7 @@ from quompiler.construct.types import EmitType, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
-from quompiler.utils.mgen import cyclic_matrix, random_unitary
+from quompiler.utils.mgen import cyclic_matrix, random_unitary, fft_matrix
 
 formatter = MatrixFormatter(precision=2)
 
@@ -95,8 +95,8 @@ def test_compile_cyclic_8():
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
     assert len(data) == 21
-    leaves = [a.data.inflate() for a in BytecodeIter(bc) if a.is_leaf()]
-    v = reduce(lambda a, b: a @ b, leaves)
+    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
+    v = reduce(lambda a, b: a @ b, leaves).inflate()
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 
 
@@ -112,9 +112,26 @@ def test_compile_cyclic_4():
     assert bc is not None
     data = [a.data for a in BytecodeIter(bc)]
     assert len(data) == 7
-    leaves = [a.data.inflate() for a in BytecodeIter(bc) if a.is_leaf()]
+    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
     assert len(leaves) == 4
-    v = reduce(lambda a, b: a @ b, leaves)
+    v = reduce(lambda a, b: a @ b, leaves).inflate()
+    assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
+
+
+def test_compile_qft_3():
+    n = 3
+    u = fft_matrix(n)
+    config = create_config(emit="PRINCIPAL", ancilla_offset=n)
+    factory = QFactory(config)
+    compiler = factory.get_qompiler()
+
+    # execute
+    bc = compiler.decompose(u)
+    # print(bc)
+    assert bc is not None
+    leaves = [a.data for a in BytecodeIter(bc) if a.is_leaf()]
+    v1 = reduce(lambda a, b: a @ b, leaves)
+    v = v1.dela().inflate()
     assert np.allclose(v, u), f'circuit != input:\ncompiled=\n{formatter.tostr(v)},\ninput=\n{formatter.tostr(u)}'
 
 

@@ -1,0 +1,72 @@
+import argparse
+import tempfile
+
+import qiskit.qasm3 as qasm
+from matplotlib import pyplot as plt
+from qiskit.converters import circuit_to_dag
+
+from quompiler.circuits.qfactory import QFactory
+from quompiler.config.config_manager import create_config
+from quompiler.construct.types import QompilePlatform
+from quompiler.utils.file_io import CODE_FILE_EXT
+from quompiler.utils.format_matrix import MatrixFormatter
+from quompiler.utils.mgen import fft_matrix
+
+
+def compile_unitary(filename):
+    parser = argparse.ArgumentParser(description="Process some input arguments.")
+    parser.add_argument("-i", "--input", type=str, help="Number of qubits. CAUTION: do not set n to big numbers as it scales exponentially.", required=False, default=3)
+    args, unknown = parser.parse_known_args()
+    n = int(args.input)
+    u = fft_matrix(n)
+    print(formatter.tostr(u))
+    config = create_config(emit="PRINCIPAL", ancilla_offset=100, output=filename)
+    factory = QFactory(config)
+    compiler = factory.get_qompiler()
+    compiler.compile(u)
+
+
+def render_cirq(filename):
+    config = create_config(target="CIRQ", output=filename)
+    factory = QFactory(config)
+    render = factory.get_render(QompilePlatform.CIRQ)
+    codefile = factory.get_config().output
+    circuit = render.render(codefile)
+    print(circuit)
+    moments = circuit.moments
+    # for m in moments:
+    #     print(m)
+    print(formatter.tostr(circuit.unitary()))
+    print(f'Total {len(moments)} moments in the circuit.')
+
+
+def render_qiskit(filename):
+    config = create_config(target="QISKIT", output=filename)
+    factory = QFactory(config)
+    render = factory.get_render(QompilePlatform.QISKIT)
+    codefile = factory.get_config().output
+    circuit = render.render(codefile)
+
+    # Export to QASM string
+    qasm_code = qasm.dumps(circuit)
+    with open("qft_code.qasm", "w") as f:  # "w" = write mode, overwrites file
+        f.write(qasm_code)
+
+    dag = circuit_to_dag(circuit)
+    layers = list(dag.layers())
+    # for m in layers:
+    #     print(m)
+    print(f'Total {len(layers)} layers in the circuit.')
+    circuit.draw('mpl')
+    qiskit_diagram_file = "qft_benchmark_qiskit.pdf"
+    plt.savefig(qiskit_diagram_file, bbox_inches='tight')
+    print(qiskit_diagram_file)
+
+
+if __name__ == '__main__':
+    formatter = MatrixFormatter(precision=2)
+
+    with tempfile.NamedTemporaryFile(suffix=CODE_FILE_EXT, mode="w+", delete=True) as tmp:
+        compile_unitary(tmp.name)
+        render_cirq(tmp.name)
+        render_qiskit(tmp.name)
