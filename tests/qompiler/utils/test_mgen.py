@@ -94,6 +94,6 @@ def test_qft_matrix():
     )
     actual = circuit.unitary()
     # print(formatter.tostr(actual))
-    expected = qft_matrix(3)
+    expected = fft_matrix(3)
     # print(formatter.tostr(expected))
     assert np.allclose(actual, expected)

@@ -125,16 +125,16 @@ def cyclic_matrix(n, i=0, j=None, c=1):
     return permeye(xs)
 
 
-def qft_matrix(n):
+def fft_matrix(n):
     """
-    create a cyclic permuted matrix from identity
+    create a fast fourier transform matrix
     :param n: number of qubits
     :return:
     """
     N = 1 << n
     omega = np.exp(2j * np.pi / N)
     j, k = np.meshgrid(np.arange(N), np.arange(N))
-    return (omega ** (j * k)) / np.sqrt(N)
+    return (omega ** ((j * k) % N)) / np.sqrt(N)
 
 
 def random_ctrlgate(ctrnum, targetnum, qnum=None) -> CtrlGate:
