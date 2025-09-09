@@ -8,7 +8,7 @@ from quompiler.optimize.optimizer import Optimizer
 from quompiler.optimize.window import AnnihilateOperator, ConsolidateOperator
 
 
-class SlidingWindowOptimizer(Optimizer):
+class SlidingWindowCombiner(Optimizer):
     """
     Sliding window optimizer performs optimization on adjacent moments within a sliding window of certain size.
     Example optimization performed:

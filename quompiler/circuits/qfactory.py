@@ -7,7 +7,7 @@ from quompiler.circuits.quimb_factory.quimb_builder import QuimbBuilder
 from quompiler.circuits.render import QRenderer
 from quompiler.config.construct import QompilerConfig
 from quompiler.construct.types import QompilePlatform
-from quompiler.optimize.basic_optimizer import SlidingWindowOptimizer
+from quompiler.optimize.basic_optimizer import SlidingWindowCombiner
 from quompiler.optimize.optimizer import Optimizer
 
 
@@ -23,7 +23,7 @@ class QFactory:
         return QDevice(self._config.device)
 
     def get_optimizers(self) -> list[Optimizer]:
-        return [SlidingWindowOptimizer(window=0, emit=self._config.emit)]
+        return [SlidingWindowCombiner(window=0, emit=self._config.emit)]
 
     def get_qompiler(self) -> Qompiler:
         result = Qompiler(self._config, self.get_device())

@@ -11,7 +11,7 @@ from quompiler.config.config_manager import ConfigManager
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.types import QompilePlatform, UnivGate, QType, EmitType
-from quompiler.optimize.basic_optimizer import SlidingWindowOptimizer
+from quompiler.optimize.basic_optimizer import SlidingWindowCombiner
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.mgen import random_unitary, random_ctrlgate, create_bytecode
 from tests.qompiler.circuits.test_qompiler import formatter
@@ -35,7 +35,7 @@ def test_identity_annihilation_multi_target():
     length_before_opts = len(gates_before_opts)
 
     # execute
-    opt = SlidingWindowOptimizer(length_before_opts, emit=EmitType.CLIFFORD_T)
+    opt = SlidingWindowCombiner(length_before_opts, emit=EmitType.CLIFFORD_T)
     code = opt.optimize(code)
     nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
 
@@ -55,7 +55,7 @@ def test_identity_annihilation_std(seq, ctrl_num, emit):
     length_before_opts = len(gates_before_opts)
 
     # execute
-    opt = SlidingWindowOptimizer(length_before_opts, emit=emit)
+    opt = SlidingWindowCombiner(length_before_opts, emit=emit)
     code = opt.optimize(code)
 
     # verify
@@ -74,7 +74,7 @@ def test_identity_reduce_std(seq, ctrl_num, emit):
     length_before_opts = len(gates_before_opts)
 
     # execute
-    opt = SlidingWindowOptimizer(length_before_opts, emit=emit)
+    opt = SlidingWindowCombiner(length_before_opts, emit=emit)
     code = opt.optimize(code)
 
     # verify
@@ -99,7 +99,7 @@ def test_merge_std(seq, ctrl_num, emit, count):
     length_before_opts = len(gates_before_opts)
 
     # execute
-    opt = SlidingWindowOptimizer(length_before_opts, emit=emit)
+    opt = SlidingWindowCombiner(length_before_opts, emit=emit)
     code = opt.optimize(code)
 
     # verify
