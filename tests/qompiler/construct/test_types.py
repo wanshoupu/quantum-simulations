@@ -4,7 +4,7 @@ from operator import or_
 import numpy as np
 import pytest
 
-from quompiler.construct.types import UnivGate, QType, QompilePlatform, EmitType, PrincipalAxis
+from quompiler.construct.types import UnivGate, QType, QompilePlatform, GateGrain, PrincipalAxis
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_unitary, random_phase
 
@@ -220,8 +220,8 @@ def test_qompile_platform_get_by_name(name, builder):
 
 
 def test_EmitType_comparison():
-    lesser = EmitType.TWO_LEVEL
-    larger = EmitType.UNIV_GATE
+    lesser = GateGrain.TWO_LEVEL
+    larger = GateGrain.UNIV_GATE
     assert lesser < larger
 
 

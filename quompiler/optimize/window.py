@@ -6,12 +6,12 @@ import numpy as np
 from typing_extensions import override
 
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import EmitType
+from quompiler.construct.types import GateGrain
 from quompiler.utils.granularity import granularity
 
 
 class WindowOperator(ABC):
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
+    def __init__(self, window: int = 0, emit=GateGrain.CLIFFORD_T):
         assert window >= 0
         self.window = window
         self.emit = emit
@@ -23,7 +23,7 @@ class WindowOperator(ABC):
 
 
 class AnnihilateOperator(WindowOperator):
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
+    def __init__(self, window: int = 0, emit=GateGrain.CLIFFORD_T):
         super().__init__(window, emit)
 
     @override
@@ -62,7 +62,7 @@ class AnnihilateOperator(WindowOperator):
 
 
 class ConsolidateOperator(WindowOperator):
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
+    def __init__(self, window: int = 0, emit=GateGrain.CLIFFORD_T):
         super().__init__(window, emit)
 
     @override

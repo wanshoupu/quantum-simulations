@@ -3,12 +3,12 @@ import json
 import pytest
 
 from quompiler.config.construct import QompilePlatformEncoder, qompile_platform_decoder, QompilerConfig, QompilerWarnings, DeviceConfig
-from quompiler.construct.types import QompilePlatform, EmitType, OptLevel
+from quompiler.construct.types import QompilePlatform, GateGrain, OptLevel
 
 
 @pytest.mark.parametrize("name, expected", [
     ['target', QompilePlatform.CIRQ],
-    ['emit', EmitType.CTRL_PRUNED],
+    ['emit', GateGrain.CTRL_PRUNED],
     ['optimization', OptLevel.O1],
 ])
 def test_QompilePlatform_serde(name, expected):
@@ -30,7 +30,7 @@ def test_to_json():
         target=QompilePlatform.CIRQ,
         rtol=1e-6,
         atol=1e-9,
-        emit=EmitType.UNIV_GATE,
+        emit=GateGrain.UNIV_GATE,
         warnings=QompilerWarnings(all=True, as_errors=False),
         device=DeviceConfig(ancilla_offset=7),
         lookup_tol=1e-9,
@@ -56,7 +56,7 @@ def test_from_json():
         target=QompilePlatform.CIRQ,
         rtol=1e-6,
         atol=1e-9,
-        emit=EmitType.UNIV_GATE,
+        emit=GateGrain.UNIV_GATE,
         warnings=QompilerWarnings(all=True, as_errors=False),
         device=DeviceConfig(ancilla_offset=7),
         lookup_tol=1e-9,
@@ -79,7 +79,7 @@ def test_from_dict():
         target=QompilePlatform.CIRQ,
         rtol=1e-6,
         atol=1e-9,
-        emit=EmitType.UNIV_GATE,
+        emit=GateGrain.UNIV_GATE,
         warnings=QompilerWarnings(all=True, as_errors=False),
         device=DeviceConfig(ancilla_offset=7),
         lookup_tol=1e-9,

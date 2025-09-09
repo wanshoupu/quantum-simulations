@@ -12,7 +12,7 @@ from quompiler.config.config_manager import ConfigManager, create_config
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.solovay import SKDecomposer
-from quompiler.construct.types import EmitType, UnivGate
+from quompiler.construct.types import GateGrain, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.format_matrix import MatrixFormatter
@@ -142,7 +142,7 @@ def test_compile_qft_3():
     'SINGLET',
     'CTRL_PRUNED',
     'PRINCIPAL',
-], random.sample(range(1 << 20), len(EmitType))))
+], random.sample(range(1 << 20), len(GateGrain))))
 def test_compile_precise_decompose(emit_name, seed: int):
     random.seed(seed)
     np.random.seed(seed)
@@ -171,7 +171,7 @@ def test_compile_precise_decompose(emit_name, seed: int):
 @pytest.mark.parametrize("emit_name,seed", zip([
     'UNIV_GATE',
     'CLIFFORD_T',
-], random.sample(range(1 << 20), len(EmitType))))
+], random.sample(range(1 << 20), len(GateGrain))))
 def test_compile_sk_approx(mock_approx, emit_name, seed: int):
     # mocked_sk = mocker.patch('quompiler.construct.solovay.SKDecomposer')
     random.seed(seed)

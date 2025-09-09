@@ -3,7 +3,7 @@ import random
 
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.su2gate import RGate
-from quompiler.construct.types import EmitType, UnivGate, PrincipalAxis
+from quompiler.construct.types import GateGrain, UnivGate, PrincipalAxis
 from quompiler.utils.granularity import granularity
 from quompiler.utils.format_matrix import MatrixFormatter
 from quompiler.utils.mgen import random_UnitaryM, random_indexes, random_CtrlGate, random_control, random_unitary
@@ -17,7 +17,7 @@ def test_granularity_unitary():
     indexes = random_indexes(dim, dim)
     u = random_UnitaryM(dim, indexes)
     grain = granularity(u)
-    assert grain == EmitType.UNITARY
+    assert grain == GateGrain.UNITARY
 
 
 def test_granularity_two_level():
@@ -26,7 +26,7 @@ def test_granularity_two_level():
     indexes = random_indexes(dim, 2)
     u = random_UnitaryM(dim, indexes)
     grain = granularity(u)
-    assert grain == EmitType.TWO_LEVEL
+    assert grain == GateGrain.TWO_LEVEL
 
 
 def test_granularity_multi_target():
@@ -34,7 +34,7 @@ def test_granularity_multi_target():
     ctrl = random_control(n, n)
     u = random_CtrlGate(ctrl)
     grain = granularity(u)
-    assert grain == EmitType.MULTI_TARGET
+    assert grain == GateGrain.MULTI_TARGET
 
 
 def test_granularity_singlet():
@@ -42,7 +42,7 @@ def test_granularity_singlet():
     ctrl = random_control(n, 1)
     u = random_CtrlGate(ctrl)
     grain = granularity(u)
-    assert grain == EmitType.SINGLET
+    assert grain == GateGrain.SINGLET
 
 
 def test_granularity_ctrl_pruned():
@@ -50,7 +50,7 @@ def test_granularity_ctrl_pruned():
     ctrl = random_control(n, 1)
     u = random_CtrlGate(ctrl)
     grain = granularity(u)
-    assert grain == EmitType.CTRL_PRUNED
+    assert grain == GateGrain.CTRL_PRUNED
 
 
 def test_granularity_std_ctrl_pruned():
@@ -61,7 +61,7 @@ def test_granularity_std_ctrl_pruned():
     ctrl = random_control(n, 1)
     u = random_CtrlGate(ctrl)
     grain = granularity(u)
-    assert grain == EmitType.CTRL_PRUNED
+    assert grain == GateGrain.CTRL_PRUNED
 
 
 def test_granularity_std_clifford_t():
@@ -69,7 +69,7 @@ def test_granularity_std_clifford_t():
     ctrl = random_control(n, 1)
     u = CtrlGate(UnivGate.H, ctrl)
     grain = granularity(u)
-    assert grain == EmitType.CLIFFORD_T
+    assert grain == GateGrain.CLIFFORD_T
 
 
 def test_granularity_rgate():
@@ -79,7 +79,7 @@ def test_granularity_rgate():
     gate = RGate(angle, PrincipalAxis.Z)
     u = CtrlGate(gate, ctrl)
     grain = granularity(u)
-    assert grain == EmitType.PRINCIPAL
+    assert grain == GateGrain.PRINCIPAL
 
 
 def test_granularity_invalid():
@@ -87,4 +87,4 @@ def test_granularity_invalid():
     dim = 1 << n
     mat = random_unitary(dim)
     grain = granularity(mat)
-    assert grain == EmitType.INVALID
+    assert grain == GateGrain.INVALID

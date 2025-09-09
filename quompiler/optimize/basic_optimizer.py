@@ -3,7 +3,7 @@ from typing import Optional
 from typing_extensions import override
 
 from quompiler.construct.bytecode import Bytecode
-from quompiler.construct.types import OptLevel, EmitType
+from quompiler.construct.types import OptLevel, GateGrain
 from quompiler.optimize.optimizer import Optimizer
 from quompiler.optimize.window import AnnihilateOperator, ConsolidateOperator
 
@@ -19,7 +19,7 @@ class SlidingWindowCombiner(Optimizer):
     - Eliminate I
     """
 
-    def __init__(self, window: int = 0, emit=EmitType.CLIFFORD_T):
+    def __init__(self, window: int = 0, emit=GateGrain.CLIFFORD_T):
         """
         Create a sliding window optimizer. it will try to combine consecutive (window + 1) gates on the same qspace with identical control sequences.
         :param window: window size. Window is >= 0. when window = 0, the window size is infinite.

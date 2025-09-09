@@ -10,7 +10,7 @@ from quompiler.circuits.qfactory import QFactory
 from quompiler.config.config_manager import ConfigManager
 from quompiler.construct.bytecode import BytecodeIter, Bytecode
 from quompiler.construct.cgate import CtrlGate
-from quompiler.construct.types import QompilePlatform, UnivGate, QType, EmitType
+from quompiler.construct.types import QompilePlatform, UnivGate, QType, GateGrain
 from quompiler.optimize.basic_optimizer import SlidingWindowCombiner
 from quompiler.utils.file_io import CODE_FILE_EXT
 from quompiler.utils.mgen import random_unitary, random_ctrlgate, create_bytecode
@@ -35,7 +35,7 @@ def test_identity_annihilation_multi_target():
     length_before_opts = len(gates_before_opts)
 
     # execute
-    opt = SlidingWindowCombiner(length_before_opts, emit=EmitType.CLIFFORD_T)
+    opt = SlidingWindowCombiner(length_before_opts, emit=GateGrain.CLIFFORD_T)
     code = opt.optimize(code)
     nodes_after_opts = [a for a in BytecodeIter(code) if a.is_leaf() and not a.skip]
 
@@ -44,10 +44,10 @@ def test_identity_annihilation_multi_target():
 
 
 @pytest.mark.parametrize('seq, ctrl_num, emit', [
-    ['X,X', 3, EmitType.SINGLET],
-    ['SD,S', 3, EmitType.SINGLET],
-    ['T,SD,S,TD', 2, EmitType.CLIFFORD_T],
-    ["S,T,TD,SD", 1, EmitType.CLIFFORD_T],
+    ['X,X', 3, GateGrain.SINGLET],
+    ['SD,S', 3, GateGrain.SINGLET],
+    ['T,SD,S,TD', 2, GateGrain.CLIFFORD_T],
+    ["S,T,TD,SD", 1, GateGrain.CLIFFORD_T],
 ])
 def test_identity_annihilation_std(seq, ctrl_num, emit):
     code = create_bytecode(seq, ctrl_num)
@@ -65,8 +65,8 @@ def test_identity_annihilation_std(seq, ctrl_num, emit):
 
 
 @pytest.mark.parametrize('seq, ctrl_num, emit', [
-    ['T,SD,S', 3, EmitType.SINGLET],
-    ['SD,S,X', 2, EmitType.CLIFFORD_T],
+    ['T,SD,S', 3, GateGrain.SINGLET],
+    ['SD,S,X', 2, GateGrain.CLIFFORD_T],
 ])
 def test_identity_reduce_std(seq, ctrl_num, emit):
     code = create_bytecode(seq, ctrl_num)
@@ -88,10 +88,10 @@ def test_identity_reduce_std(seq, ctrl_num, emit):
 
 
 @pytest.mark.parametrize('seq, ctrl_num, emit, count', [
-    ['T,SD', 3, EmitType.SINGLET, 1],
-    ['T,SD,S,T', 2, EmitType.CLIFFORD_T, 1],
-    ["S,T,SD", 1, EmitType.CLIFFORD_T, 1],
-    ["S,T,SD,TD", 1, EmitType.CLIFFORD_T, 0],
+    ['T,SD', 3, GateGrain.SINGLET, 1],
+    ['T,SD,S,T', 2, GateGrain.CLIFFORD_T, 1],
+    ["S,T,SD", 1, GateGrain.CLIFFORD_T, 1],
+    ["S,T,SD,TD", 1, GateGrain.CLIFFORD_T, 0],
 ])
 def test_merge_std(seq, ctrl_num, emit, count):
     code = create_bytecode(seq, ctrl_num)

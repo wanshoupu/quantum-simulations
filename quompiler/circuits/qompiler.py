@@ -11,7 +11,7 @@ from quompiler.config.construct import QompilerConfig
 from quompiler.construct.bytecode import Bytecode
 from quompiler.construct.cgate import CtrlGate
 from quompiler.construct.solovay import SKDecomposer
-from quompiler.construct.types import EmitType, UnivGate
+from quompiler.construct.types import GateGrain, UnivGate
 from quompiler.construct.unitary import UnitaryM
 from quompiler.utils.cnot_decompose import cnot_decompose
 from quompiler.utils.ctrl_decompose import ctrl_decompose
@@ -83,7 +83,7 @@ class Qompiler:
 
     def _decompose_std(self, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
         if gate.is_std():
-            if self.emit == EmitType.UNIV_GATE or gate.gate in UnivGate.cliffordt():
+            if self.emit == GateGrain.UNIV_GATE or gate.gate in UnivGate.cliffordt():
                 return [gate], {}
             meta = {'method': 'cliffordt_decompose'} if self.debug else {}
             return cliffordt_decompose(gate), meta
@@ -92,17 +92,17 @@ class Qompiler:
         meta = {'method': 'sk_approx'} if self.debug else {}
         return constituents, meta
 
-    def _decompose_ctrlgate(self, grain: EmitType, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
+    def _decompose_ctrlgate(self, grain: GateGrain, gate: CtrlGate) -> tuple[list[CtrlGate], dict]:
         # EmitType.MULTI_TARGET is disabled atm
         # if g < EmitType.MULTI_TARGET:
         #     result = ctrl_decompose(u, clength=2, aspace=self.aspace)
-        if grain < EmitType.CTRL_PRUNED:
+        if grain < GateGrain.CTRL_PRUNED:
             result = ctrl_decompose(gate, self.device, clength=1)
             meta = {'method': 'ctrl_decompose'} if self.debug else {}
             return result, meta
 
         euler_coms = euler_decompose(gate)
-        if self.emit <= EmitType.PRINCIPAL:
+        if self.emit <= GateGrain.PRINCIPAL:
             return euler_coms, ({'method': 'euler_decompose'} if self.debug else {})
         result = []
         meta = dict()
@@ -113,10 +113,10 @@ class Qompiler:
                 meta.update(meta1)
         return result, meta
 
-    def _decompose_unitary(self, grain: EmitType, u: UnitaryM, qspace) -> tuple[list[Union[UnitaryM, CtrlGate]], dict]:
+    def _decompose_unitary(self, grain: GateGrain, u: UnitaryM, qspace) -> tuple[list[Union[UnitaryM, CtrlGate]], dict]:
         meta = dict()
 
-        if grain < EmitType.TWO_LEVEL:
+        if grain < GateGrain.TWO_LEVEL:
             result = mat2l_decompose(u)
             meta['method'] = 'mat2l_decompose'
         else:

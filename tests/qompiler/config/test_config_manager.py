@@ -7,7 +7,7 @@ from jsonschema import ValidationError
 
 from quompiler.config.config_manager import ConfigManager, merge_dicts
 from quompiler.config.construct import QompilerConfig, QompilerWarnings, DeviceConfig
-from quompiler.construct.types import EmitType, OptLevel, QompilePlatform
+from quompiler.construct.types import GateGrain, OptLevel, QompilePlatform
 
 fpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "test_compiler_config.json"))
 
@@ -17,7 +17,7 @@ def test_parse_default_config():
     config = parser.create_config()
     assert config.device is not None
     assert config.target == QompilePlatform.CIRQ
-    assert config.emit in list(EmitType)
+    assert config.emit in list(GateGrain)
 
 
 @pytest.mark.parametrize("dict1,dict2,expected", [
@@ -95,7 +95,7 @@ def test_load_config():
     man.merge(data)
 
     config = man.create_config()
-    assert EmitType.TWO_LEVEL == config.emit != default.emit
+    assert GateGrain.TWO_LEVEL == config.emit != default.emit
 
 
 def test_enum_invalid_emit():
@@ -109,8 +109,8 @@ def test_enum_invalid_emit():
         man.create_config()
 
 
-@pytest.mark.parametrize("emit", list(EmitType))
-def test_in_sync_args_enum_emit(mocker, emit: EmitType):
+@pytest.mark.parametrize("emit", list(GateGrain))
+def test_in_sync_args_enum_emit(mocker, emit: GateGrain):
     test_args = ['pyfile.py', 'source_file.txt', "--emit", emit.name]
     mocker.patch('sys.argv', test_args)
     config_man = ConfigManager()
@@ -119,7 +119,7 @@ def test_in_sync_args_enum_emit(mocker, emit: EmitType):
     assert config.emit == emit
 
 
-@pytest.mark.parametrize("emit", list(EmitType))
+@pytest.mark.parametrize("emit", list(GateGrain))
 def test_in_sync_enum_emit(emit):
     man = ConfigManager()
     data = {

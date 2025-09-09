@@ -6,7 +6,7 @@ from typing import Dict
 
 from jsonschema import validate
 
-from quompiler.construct.types import QompilePlatform, OptLevel, EmitType
+from quompiler.construct.types import QompilePlatform, OptLevel, GateGrain
 
 
 class QompilePlatformEncoder(json.JSONEncoder):
@@ -18,7 +18,7 @@ class QompilePlatformEncoder(json.JSONEncoder):
 
 def qompile_platform_decoder(dct: dict):
     if "emit" in dct:
-        dct["emit"] = EmitType(dct["emit"])
+        dct["emit"] = GateGrain(dct["emit"])
     if "target" in dct:
         dct["target"] = QompilePlatform[dct["target"]]
     if "optimization" in dct:
@@ -82,7 +82,7 @@ class QompilerConfig:
     warnings: QompilerWarnings
     target: QompilePlatform
     device: DeviceConfig
-    emit: EmitType
+    emit: GateGrain
     rtol: float
     atol: float
     lookup_tol: float
@@ -99,7 +99,7 @@ class QompilerConfig:
             debug=data["debug"],
             warnings=warnings,
             target=QompilePlatform[data["target"]],
-            emit=EmitType[data["emit"]],
+            emit=GateGrain[data["emit"]],
             device=device,
             rtol=float(data["rtol"]),
             atol=float(data["atol"]),

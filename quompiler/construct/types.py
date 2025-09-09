@@ -123,7 +123,7 @@ class QType(IntFlag):
         return repr(int(self))
 
 
-class EmitType(IntEnum):
+class GateGrain(IntEnum):
     """
     This enum specifies the granularity level of unitary operator.
 
